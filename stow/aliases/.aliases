@@ -1,0 +1,28 @@
+# Exa
+alias l="exa --all --long --header --classify --icons --git --group-directories-first"
+alias dirs="exa --list-dirs"
+alias tree="exa --tree --level=2"
+
+# New commands
+alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
+# XCompatability
+alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
+
+# Directories
+alias dot="~/Documents/Code/dotfiles"
+alias sshk="/mnt/veracrypt1/ssh/"
+
+# Shortcuts
+alias h="history"
+
+# XCompatability
+#alias sass="sassc"
+
+# Git
+alias gpom="git push origin master"
+alias gs="git status"
+alias gb="git branch"
+alias gco="git checkout"
+
+# ssh
+alias ssh="kitty +kitten ssh -F /mnt/veracrypt1/ssh/config"
