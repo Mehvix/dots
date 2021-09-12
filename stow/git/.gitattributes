@@ -1,0 +1,23 @@
+# https://github.com/github/linguist/blob/master/docs/overrides.md
+
+tempatle.html   linguist-detectable=false
+docs/**         linguist-detectable=true
+docs/**         linguist-vendored=false
+docs/**         linguist-documentation=false
+
+*.bibtex        diff=bibtex
+*.cpp           diff=cpp
+*.md            diff=markdown
+*.pl            diff=perl
+*.perl          diff=perl
+*.php           diff=php
+*.py            diff=python
+*.python        diff=python
+*.rb            diff=ruby
+*.ruby          diff=ruby
+*.tex           diff=tex
+*.el            diff=lisp
+*.scm           diff=lisp
+*.sc            diff=sclang
+*.scd           diff=sclang
+*.schelp        diff=schelp
