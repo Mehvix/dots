@@ -1,0 +1,35 @@
+[user]
+	name = Max Vogel
+	email = mehvix@protonmail.com
+
+[core]
+	# Ignore line end changes (Win -> *nix)
+	filemode = false
+	autocrlf = input
+
+	editor = vim	
+
+[github]
+    user = Mehvix
+
+[merge]
+	tool = vimdiff
+
+
+[color]
+	ui = true
+
+[color "diff-highlight"]
+	oldNormal = red bold
+	oldHighlight = red bold 52
+	newNormal = green bold
+	newHighlight = green bold 22
+
+[color "diff"]
+	meta = yellow
+	frag = magenta bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
+    
