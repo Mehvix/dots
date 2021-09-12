@@ -5,7 +5,6 @@ alias tree="exa --tree --level=2"
 
 # New commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
-# XCompatability
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 
 # Directories
@@ -23,6 +22,11 @@ alias gpom="git push origin master"
 alias gs="git status"
 alias gb="git branch"
 alias gco="git checkout"
+
+# YT-DLP
+alias youtube-dl="yt-dlp"
+alias ytv='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "/home/max/Pictures/Computer Misc/%(title)s.%(ext)s"'
+alias yta='yt-dlp --yes-playlist -x -o /home/max/Music/Misc/%(title)s.%(ext)'
 
 # ssh
 alias ssh="kitty +kitten ssh -F /mnt/veracrypt1/ssh/config"
