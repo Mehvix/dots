@@ -30,3 +30,7 @@ alias yta='yt-dlp --yes-playlist -x -o /home/max/Music/Misc/%(title)s.%(ext)'
 
 # ssh
 alias ssh="kitty +kitten ssh -F /mnt/veracrypt1/ssh/config"
+
+# ptpython (better repl)
+alias py="ptpython --vi"
+
