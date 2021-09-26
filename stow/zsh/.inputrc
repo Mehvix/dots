@@ -1,4 +1,10 @@
+# General
 set bell-style none
+set show-all-if-ambiguous on
+set completion-ignore-case on
+
+# C+n goes back a dir
+'\C-n':'cd ..\n'
 
 # Color files by types
 # Note that this may cause completion text blink in some terminals (e.g. xterm).

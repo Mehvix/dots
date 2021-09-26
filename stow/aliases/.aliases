@@ -1,15 +1,27 @@
-# Exa
+# Alternatives
+alias vim=nvim
+alias cat="bat --config-file=~/.config/bat/config"
+alias cat=bat
 alias l="exa --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="exa --list-dirs"
 alias tree="exa --tree --level=2"
 
+# Interactive improvements
+alias mv="mv -iv"
+alias cp="cp -riv"
+alias mkdir="mkdir -vp"
+alias rm="rm -v"
+
 # New commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
+function mkcd { 
+    mkdir -p $1 && cd $1 
+}
 
 # Directories
 alias dot="~/Documents/Code/dotfiles"
-alias sshk="/mnt/veracrypt1/ssh/"
+alias www="/var/www"
 
 # Shortcuts
 alias h="history"
@@ -23,13 +35,20 @@ alias gs="git status"
 alias gb="git branch"
 alias gco="git checkout"
 
-# YT-DLP
+# ffmpeg
+function ff-c {
+    ffmpeg -i $1.mp4 -vcodec h264 -acodec mp2 $1-compressed.mp4
+}
+
+# YT-DLP / youtube-dl
 alias youtube-dl="yt-dlp"
 alias ytv='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "/home/max/Pictures/Computer Misc/%(title)s.%(ext)s"'
 alias yta='yt-dlp --yes-playlist -x -o /home/max/Music/Misc/%(title)s.%(ext)'
 
 # ssh
-alias ssh="kitty +kitten ssh -F /mnt/veracrypt1/ssh/config"
+alias ssh="kitty +kitten ssh"
+alias sshe="kitty +kitten ssh -F /mnt/veracrypt1/ssh/config"
+alias sshk="/mnt/veracrypt1/ssh/"
 
 # ptpython (better repl)
 alias py="ptpython --vi"

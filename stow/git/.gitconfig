@@ -6,15 +6,22 @@
 	# Ignore line end changes (Win -> *nix)
 	filemode = false
 	autocrlf = input
-
-	editor = vim	
+	editor = vim
 
 [github]
     user = Mehvix
 
+[diff]
+    tool = vimdiff
+
 [merge]
 	tool = vimdiff
 
+[push]
+    default = current
+
+[log]
+    decorate = short
 
 [color]
 	ui = true
@@ -33,3 +40,5 @@
 	new = green bold
 	whitespace = red reverse
     
+[init]
+	defaultBranch = main
