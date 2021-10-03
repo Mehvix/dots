@@ -2,6 +2,12 @@
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
+" Set shell to zsh
+set shell=/usr/bin/zsh
+
+" Yank copies to system clipoard (needs xsel)
+set clipboard=unnamedplus
+
 " Colorscheme / Theme
 let g:onedark_terminal_italics=1
 
@@ -25,6 +31,7 @@ endif
 
 let g:onedark_color_overrides = {
 \ "comment_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
+\ "gutter_fg_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
 \}
 
 " Extensions
@@ -64,7 +71,7 @@ xnoremap <S-Up>   :<C-u>silent! '<,'>move-2<CR>gv=gv
 xnoremap <S-Down> :<C-u>silent! '<,'>move'>+<CR>gv=gv
 
 " Refreshes screen
-nnoremap <Enter>    :nohl<CR><C-l><Enter>
+""nnoremap <Enter>    :nohl<CR><C-l><Enter>
 
 " Wrap beginning of next / end of previous
 :set whichwrap+=>,l

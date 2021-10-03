@@ -10,7 +10,8 @@ alias tree="exa --tree --level=2"
 alias mv="mv -iv"
 alias cp="cp -riv"
 alias mkdir="mkdir -vp"
-alias rm="rm -v"
+alias rm="rm -rfv"
+alias rmdir="rmdir -p"
 
 # New commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"

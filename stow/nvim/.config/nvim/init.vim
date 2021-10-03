@@ -1,7 +1,6 @@
 set runtimepath^=~/.vim runtimepath+=~/.vim/after
 let &packpath = &runtimepath
 
-
 " Specify a directory for plugins
 " - For Neovim: stdpath('data') . '/plugged'
 " - Avoid using standard Vim directory names like 'plugin'
@@ -12,8 +11,8 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
 Plug 'itchyny/lightline.vim'
 Plug 'rakr/vim-one'
 Plug 'joshdick/onedark.vim'
-
+Plug 'edkolev/tmuxline.vim'
 " Initialize plugin system
 call plug#end()
 
-source ~/.vimrc     " Load vim settings
+source ~/.vimrc " Load vim settings
