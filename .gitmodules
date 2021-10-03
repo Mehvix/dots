@@ -1,6 +1,3 @@
-[submodule "stow/joplin3/.config/joplin-desktop"]
-	path = stow/joplin3/.config/joplin-desktop
-	url = https://github.com/Mehvix/joplin-one-dark
 [submodule "stow/joplin/.config/joplin-desktop"]
 	path = stow/joplin/.config/joplin-desktop
 	url = https://github.com/Mehvix/joplin-one-dark
