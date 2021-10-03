@@ -52,8 +52,8 @@ colorscheme onedark
 set background=dark 
 
 " Airline
-" let g:airline_powerline_fonts = 1
-" let g:airline_theme='onedark'
+""let g:airline_powerline_fonts = 1
+""let g:airline_theme='onedark'
 
 
 " For colemak-dh
@@ -86,13 +86,13 @@ set history=500     " Keep x lines of command line history
 
 " Information
 set showcmd         " Show (partial) command in status line
-" set showmode        " Show the current mode
+""set showmode        " Show the current mode
 set laststatus=2    " Always show status line
 set statusline=%.40F%=%m\ %Y\ Line:\ %3l/%L[%3p%%]
 
 " Navigation
 set nu              " Set line numbering
-" set relativenumber  " Show relative line numbers
+""set relativenumber  " Show relative line numbers
 set scrolloff=5     " Keep at least 5 lines above/below cursor
 set mouse=a         " Enable mouse usage in all modes
 set mousehide       " Hide the mouse when typing
