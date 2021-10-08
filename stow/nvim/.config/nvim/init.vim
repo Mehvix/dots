@@ -15,4 +15,51 @@ Plug 'edkolev/tmuxline.vim'
 " Initialize plugin system
 call plug#end()
 
+" Colorscheme / Theme
+let g:onedark_terminal_italics=1
+
+" One Theme
+if has('autocmd') && !has('gui_running')
+    augroup colorset
+        autocmd!
+        autocmd ColorScheme one silent!
+                    \ call one#highlight('Normal', '', 'none', '')
+    augroup END
+endif
+
+" onedark.vim
+if (has("autocmd") && !has("gui_running"))
+    augroup colorset
+        autocmd!
+        let s:white = { "gui": "#ABB2BF", "cterm": "145", "cterm16" : "7" }
+        autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) " `bg` will not be styled since there is no `bg` setting
+    augroup END
+endif
+
+let g:onedark_color_overrides = {
+\ "comment_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
+\ "gutter_fg_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
+\}
+
+" Extensions
+" Lightline
+if !has('gui_running')
+    set t_Co=256
+endif
+
+set noshowmode      " Remove mode
+let g:airline_theme='one'
+let g:lightline = {
+            \ 'colorscheme': 'onedark',
+            \ 'separator': { 'left': "\ue0b0", 'right': "\ue0b2" },
+		    \ 'subseparator': { 'left': "\ue0b1", 'right': "\ue0b3" },
+            \ }
+
+colorscheme onedark
+set background=dark 
+
+" Airline
+""let g:airline_powerline_fonts = 1
+""let g:airline_theme='onedark'
+
 source ~/.vimrc " Load vim settings

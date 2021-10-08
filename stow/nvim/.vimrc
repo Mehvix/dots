@@ -8,53 +8,6 @@ set shell=/usr/bin/zsh
 " Yank copies to system clipoard (needs xsel)
 set clipboard=unnamedplus
 
-" Colorscheme / Theme
-let g:onedark_terminal_italics=1
-
-" One Theme
-if has('autocmd') && !has('gui_running')
-    augroup colorset
-        autocmd!
-        autocmd ColorScheme one silent!
-                    \ call one#highlight('Normal', '', 'none', '')
-    augroup END
-endif
-
-" onedark.vim
-if (has("autocmd") && !has("gui_running"))
-    augroup colorset
-        autocmd!
-        let s:white = { "gui": "#ABB2BF", "cterm": "145", "cterm16" : "7" }
-        autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) " `bg` will not be styled since there is no `bg` setting
-    augroup END
-endif
-
-let g:onedark_color_overrides = {
-\ "comment_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
-\ "gutter_fg_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
-\}
-
-" Extensions
-" Lightline
-if !has('gui_running')
-    set t_Co=256
-endif
-
-set noshowmode      " Remove mode
-let g:airline_theme='one'
-let g:lightline = {
-            \ 'colorscheme': 'onedark',
-            \ 'separator': { 'left': "\ue0b0", 'right': "\ue0b2" },
-		    \ 'subseparator': { 'left': "\ue0b1", 'right': "\ue0b3" },
-            \ }
-
-colorscheme onedark
-set background=dark 
-
-" Airline
-""let g:airline_powerline_fonts = 1
-""let g:airline_theme='onedark'
-
 " For colemak-dh
 ""noremap h k
 ""noremap j h
@@ -99,13 +52,12 @@ set mouse=a         " Enable mouse usage in all modes
 set mousehide       " Hide the mouse when typing
 
 " Tabs
-set smarttab
-set smartindent
-set autoindent
-set expandtab       " Uses spaces instead of tabs
 set tabstop=4       " Each tab is 4 spaces
-set shiftwidth=4    " Sets the >> and << width
 set shiftwidth=4    " Sets >> and << width
+set expandtab       " Uses spaces instead of tabs
+set autoindent      " Continue indent when pasting
+set smartindent     " Reacts to the synthax of the code
+set smarttab        " Automatically indent newlines
 
 " Searching
 set ignorecase      " Do case insensitive matching
