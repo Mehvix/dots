@@ -10,6 +10,7 @@ alias tree="exa --tree --level=2"
 alias mv="mv -iv"
 alias cp="cp -riv"
 alias mkdir="mkdir -vp"
+alias mk=mkdir
 alias rm="rm -rfv"
 alias rmdir="rmdir -p"
 
