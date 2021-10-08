@@ -1,6 +1,7 @@
 [user]
     name = Max Vogel
     email = mehvix@protonmail.com
+	signingkey = 716AED528DDCB0EF 
 
 [core]
     # Ignore line end changes (Win -> *nix)
