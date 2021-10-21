@@ -25,16 +25,18 @@ nnoremap <S-Down> :<C-u>silent! move+<CR>==
 xnoremap <S-Up>   :<C-u>silent! '<,'>move-2<CR>gv=gv
 xnoremap <S-Down> :<C-u>silent! '<,'>move'>+<CR>gv=gv
 
-" Refreshes screen
-""nnoremap <Enter>    :nohl<CR><C-l><Enter>
-
 " Misc
-syntax on           " Syntax highlighting
 set noerrorbells    " Gets rid of beeping sound
 set autowrite       " Auto-save before commands like :next and :make
 set backspace=indent,eol,start  " Allow backspacing over everything in insert mode
 set history=1000    " Keep x lines of command line history
 set encoding=utf-8
+
+" Syntax HL
+syntax on           " Syntax highlighting
+filetype plugin indent on
+au BufRead,BufNewFile .aliases set syn=bash
+au BufRead,BufNewFile *ssh/config*,*sshd* set syn=sshconfig
 
 " Information
 set showcmd         " Show (partial) command in status line
@@ -65,9 +67,8 @@ set smartcase       " Do smart case matching
 set incsearch       " Incremental search
 set hlsearch        " highlight searches
 set showmatch       " Show matching brackets.
-" Unhighlight the last search pattern on Enter
-nn <silent> <cr> :nohlsearch<cr><cr>
-
+nnoremap <esc> :noh<return><esc>    " Clear highlight on pressing esc
+""autocmd InsertEnter * :let @/=""    " Clear highlight when entering insert mode
 
 " Turn on persistent undo
 if has('persistent_undo')
@@ -83,11 +84,8 @@ set writebackup
 set backupdir=~/.vim/backup//
 
 " Use a specified swap folder
-" Source:
-"   http://stackoverflow.com/a/15317146
+" Source:   http://stackoverflow.com/a/15317146
 set directory=~/.vim/swap//
-
-
 
 if has('nvim') 
     " Neovim Specific Settings
