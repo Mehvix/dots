@@ -35,8 +35,10 @@ set encoding=utf-8
 " Syntax HL
 syntax on           " Syntax highlighting
 filetype plugin indent on
-au BufRead,BufNewFile .aliases set syn=bash
-au BufRead,BufNewFile *ssh/config*,*sshd* set syn=sshconfig
+au BufRead,BufNewFile .aliases          set syn=bash
+au BufRead,BufNewFile *ssh/config*,*sshd*   set syn=sshconfig
+au BufRead,BufNewFile .prettier*        set syn=json
+au BufRead,BufNewFile .gitattributes    set syn=json
 
 " Information
 set showcmd         " Show (partial) command in status line
@@ -67,8 +69,8 @@ set smartcase       " Do smart case matching
 set incsearch       " Incremental search
 set hlsearch        " highlight searches
 set showmatch       " Show matching brackets.
-nnoremap <esc> :noh<return><esc>    " Clear highlight on pressing esc
-""autocmd InsertEnter * :let @/=""    " Clear highlight when entering insert mode
+autocmd VimEnter * nnoremap <esc> :nohlsearch<return><esc>    " Clear highlight on pressing esc
+autocmd InsertEnter * :let @/=""    " Clear highlight when entering insert mode
 
 " Turn on persistent undo
 if has('persistent_undo')

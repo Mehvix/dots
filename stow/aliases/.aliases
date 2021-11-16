@@ -1,10 +1,5 @@
-# Alternatives
-alias vim=nvim
-alias cat="bat --config-file=~/.config/bat/config"
-alias cat=bat
-alias l="exa --all --long --header --classify --icons --git --group-directories-first"
-alias dirs="exa --list-dirs"
-alias tree="exa --tree --level=2"
+#!/bin/bash
+
 
 # Sensible Defaults / Interactive improvements
 alias mv="mv -iv"
@@ -16,46 +11,72 @@ alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
+alias h=history
+
+# Alternatives
+alias vim=nvim
+alias cat="bat --config-file=~/.config/bat/config"
+alias cat=bat
+alias l="exa --all --long --header --classify --icons --git --group-directories-first"
+alias dirs="exa --list-dirs"
+alias tree="exa --tree --level=2"
+
+# Directories
+alias code="~/Documents/Code/"
+alias notes="~/Documents/Code/notes/hugo/static/docs/"
+alias sch="~/Documents/School/"
+alias dot="~/Documents/Code/dotfiles/"
+alias www="/var/www/"
+alias comp="~/Pictures/Computer\ Misc/"
+alias pics="~/Pictures/"
 
 # New commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
-function mkcd { 
-    mkdir -p $1 && cd $1 
+
+function mkcd() { 
+    command mkdir -p $1 && cd $1 
 }
 
-# Directories
-alias dot="~/Documents/Code/dotfiles"
-alias www="/var/www"
+# Image convert
+function img2w() {
+    command convert $1 -background white -flatten $2
+}
 
-# Shortcuts
-alias h="history"
+# ffmpeg
+function ff3() {
+    command ffmpeg -i $1 -acodec libmp3lame $2
+}
 
-# XCompatability
-#alias sass="sassc"
+function ff3art() {
+    command mkdir withArt
+    for i in *.mp3
+    do 
+        command ffmpeg -y -i "$i" -i $1 -map 0:0 -map 1:0 -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" "withArt/$i"
+    done
+    cd withArt
+}
+
+function ff4() {
+    command ffmpeg -i $1 -codec copy -map_metadata 0 -movflags use_metadata_tags $2
+}
+
+function ff4c() {
+    command ffmpeg -i $1 -vcodec h264 -acodec mp2 $1-compressed.mp4
+}
+
+
+# YT-DLP / youtube-dl
+alias youtube-dl="yt-dlp"
+alias ytva='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
+alias ytv='yt-dlp -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
+alias yta='yt-dlp --yes-playlist -x -o "~/Music/Misc/%(title)s.%(ext)s"'
 
 # Git
 alias gpom="git push origin master"
 alias gs="git status"
 alias gb="git branch"
 alias gco="git checkout"
-
-# ffmpeg
-function ff3 {
-    command ffmpeg -i $1 -acodec libmp3lame $2
-}
-function ff4 {
-    command ffmpeg -i $1 -codec copy $2
-}
-function ff4c {
-    command ffmpeg -i $1 -vcodec h264 -acodec mp2 $1-compressed.mp4
-}
-
-# YT-DLP / youtube-dl
-alias youtube-dl="yt-dlp"
-alias ytv='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
-alias yta='yt-dlp --yes-playlist -x -o "~/Music/Misc/%(title)s.%(ext)s"'
-
 
 # ssh
 alias ssh="kitty +kitten ssh"
@@ -64,4 +85,7 @@ alias sshk="/mnt/veracrypt1/ssh/"
 
 # ptpython (better repl)
 alias py="ptpython --vi"
+
+# XCompatability
+#alias sass="sassc"
 

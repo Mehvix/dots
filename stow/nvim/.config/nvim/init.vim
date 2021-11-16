@@ -12,6 +12,7 @@ Plug 'itchyny/lightline.vim'
 Plug 'rakr/vim-one'
 Plug 'joshdick/onedark.vim'
 Plug 'edkolev/tmuxline.vim'
+Plug 'fladson/vim-kitty'
 " Initialize plugin system
 call plug#end()
 
