@@ -48,13 +48,33 @@ function ff3() {
     command ffmpeg -i $1 -acodec libmp3lame $2
 }
 
+# todo make this one ff3meta command
 function ff3art() {
     command mkdir withArt
     for i in *.mp3
     do 
-        command ffmpeg -y -i "$i" -i $1 -map 0:0 -map 1:0 -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (Front)" "withArt/$i"
+        command ffmpeg -y -i "$i" -i $1 -map 0:0 -map 1:0 -codec copy -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" "withArt/$i"
     done
     cd withArt
+}
+
+function ff3album() {
+    command mkdir withAlbum
+    for i in *.mp3
+    do 
+        command ffmpeg -y -i "$i" -c copy -metadata album="$1"  "withAlbum/$i"
+    done
+    cd withAlbum
+}
+
+
+function ff3artist() {
+    command mkdir withArtist
+    for i in *.mp3
+    do 
+        command ffmpeg -y -i "$i" -c copy -metadata album_artist="$2" -metadata artist="$2" "withArtist/$i"
+    done
+    cd withArtist
 }
 
 function ff4() {
@@ -70,7 +90,7 @@ function ff4c() {
 alias youtube-dl="yt-dlp"
 alias ytva='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
-alias yta='yt-dlp --yes-playlist -x -o "~/Music/Misc/%(title)s.%(ext)s"'
+alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/Misc/%(title)s.%(ext)s"'
 
 # Git
 alias gpom="git push origin master"
