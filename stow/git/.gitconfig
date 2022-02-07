@@ -1,6 +1,6 @@
 [user]
-    name = Max Vogel
-    email = mehvix@protonmail.com
+	name = Max Vogel
+	email = max-v@berkeley.edu
     signingkey = DA2E597476F671AA 
 
 [core]
@@ -19,7 +19,7 @@
     tool = vimdiff
 
 [push]
-    default = current
+	default = simple
 
 [log]
     decorate = short

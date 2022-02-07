@@ -20,6 +20,7 @@ alias cat=bat
 alias l="exa --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="exa --list-dirs"
 alias tree="exa --tree --level=2"
+alias t=tree
 
 # Directories
 alias code="~/Documents/Code/"
