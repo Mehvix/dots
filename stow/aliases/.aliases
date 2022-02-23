@@ -19,14 +19,16 @@ alias cat="bat --config-file=~/.config/bat/config"
 alias cat=bat
 alias l="exa --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="exa --list-dirs"
-alias tree="exa --tree --level=2"
 alias t=tree
+alias tree3="exa --tree --level=3 -l"
+alias tree2="exa --tree --level=2 -l"
 
 # Directories
 alias code="~/Documents/Code/"
 alias notes="~/Documents/Code/notes/hugo/static/docs/"
 alias sch="~/Documents/School/"
 alias dot="~/Documents/Code/dotfiles/"
+alias dots=dot
 alias www="/var/www/"
 alias comp="~/Pictures/Computer\ Misc/"
 alias pics="~/Pictures/"

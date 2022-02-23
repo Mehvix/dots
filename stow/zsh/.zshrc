@@ -121,3 +121,11 @@ export TERM=xterm-256color
 d=~/.dircolors
 test -r $d && eval "$(dircolors $d)"
 
+# cs61B
+# source /home/max/Documents/Code/cs61b-software/adm/login
+
+# chruby
+source /usr/share/chruby/chruby.sh
+source /usr/share/chruby/auto.sh
+RUBIES=(/opt/ruby* $HOME/.rubies/*)
+
