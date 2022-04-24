@@ -109,8 +109,16 @@ export LC_TYPE=en_US.UTF-8
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
+# cs61B
+source ~/Documents/Code/cs61b-software/adm/login
+
+source ~/.async.zsh
+
 # Environment Variables
 source ~/.aliases
+
+# dot file scripts
+export PATH="/home/max/Documents/Code/dotfiles/scripts:$PATH"
 
 # Add colors to Terminal
 export CLICOLOR=1
@@ -121,8 +129,6 @@ export TERM=xterm-256color
 d=~/.dircolors
 test -r $d && eval "$(dircolors $d)"
 
-# cs61B
-# source /home/max/Documents/Code/cs61b-software/adm/login
 
 # chruby
 source /usr/share/chruby/chruby.sh

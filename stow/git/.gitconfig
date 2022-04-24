@@ -7,7 +7,7 @@
     # Ignore line end changes (Win -> *nix)
     filemode = false
     autocrlf = input
-    editor = vim
+	editor = nvim
 
 [github]
     user = Mehvix
@@ -42,5 +42,7 @@
     whitespace = red reverse
     
 [init]
-    defaultBranch = master 
+	defaultBranch = master
 
+[alias]
+    tree = log --graph --decorate --pretty=oneline --abbrev-commit

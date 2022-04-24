@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Sensible Defaults / Interactive improvements
 alias mv="mv -iv"
 alias cp="cp -riv"      # Ask confirmation
@@ -27,8 +26,8 @@ alias tree2="exa --tree --level=2 -l"
 alias code="~/Documents/Code/"
 alias notes="~/Documents/Code/notes/hugo/static/docs/"
 alias sch="~/Documents/School/"
-alias dot="~/Documents/Code/dotfiles/"
-alias dots=dot
+alias dots="~/Documents/Code/dotfiles/"
+alias dot=dots
 alias www="/var/www/"
 alias comp="~/Pictures/Computer\ Misc/"
 alias pics="~/Pictures/"
@@ -100,6 +99,11 @@ alias gpom="git push origin master"
 alias gs="git status"
 alias gb="git branch"
 alias gco="git checkout"
+
+## gitlet cs61b
+alias gl="make -C /home/max/Documents/Code/cs61b-akx/proj3/gitlet/ default && java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.Main"
+alias gld="make -C /home/max/Documents/Code/cs61b-akx/proj3/gitlet/ default && java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.DumpObj"
+
 
 # ssh
 alias ssh="kitty +kitten ssh"
