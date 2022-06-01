@@ -46,3 +46,7 @@
 
 [alias]
     tree = log --graph --decorate --pretty=oneline --abbrev-commit
+[credentials]
+	helper = UseHttpPath=true
+[credential]
+	helper = store
