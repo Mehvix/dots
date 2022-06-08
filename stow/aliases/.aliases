@@ -1,18 +1,30 @@
 #!/bin/bash
 
-# Sensible Defaults / Interactive improvements
+# sensible Defaults + Interactive improvements
 alias mv="mv -iv"
 alias cp="cp -riv"      # Ask confirmation
 alias mkdir="mkdir -vp" 
-alias mk=mkdir
 alias rm="rm -rv"
 alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
-alias h=history
 
-# Alternatives
+# shortcuts
+alias mk=mkdir
+alias h=history
+alias v="nvim"
+alias t="touch"
+alias x="exit"
+alias c="clear"
+alias o="open ."
+alias x+="chmod +x"
+alias get="curl -O -L"
+alias restart="sudo reboot"
+alias bye="sudo shutdown -r now"
+alias reload="source ~/.zshrc"
+
+# alternatives
 alias vim=nvim
 alias cat="bat --config-file=~/.config/bat/config"
 alias cat=bat
@@ -22,7 +34,7 @@ alias t=tree
 alias tree3="exa --tree --level=3 -l"
 alias tree2="exa --tree --level=2 -l"
 
-# Directories
+# directories
 alias code="~/Documents/Code/"
 alias notes="~/Documents/Code/notes/hugo/static/docs/"
 alias sch="~/Documents/School/"
@@ -32,7 +44,7 @@ alias www="/var/www/"
 alias comp="~/Pictures/Computer\ Misc/"
 alias pics="~/Pictures/"
 
-# New commands
+# new commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 
@@ -40,7 +52,7 @@ function mkcd() {
     command mkdir -p $1 && cd $1 
 }
 
-# Image convert
+# image convert
 function img2w() {
     command convert $1 -background white -flatten $2
 }
@@ -88,23 +100,23 @@ function ff4c() {
 }
 
 
-# YT-DLP / youtube-dl
+# yt-dlp / youtube-dl
 alias youtube-dl="yt-dlp"
 alias ytva='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
 alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/Misc/%(title)s.%(ext)s"'
 
-# Git
+# git
 alias gpom="git push origin master"
 alias gs="git status"
 alias gb="git branch"
 alias gco="git checkout"
 
-# gitlet cs61b
-alias gl="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.Main"
-alias glb="make -C /home/max/Documents/Code/cs61b-akx/proj3/gitlet/ default && gl"
-alias gld="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.DumpObj"
-alias gitlet=gl
+## gitlet cs61b
+#alias gl="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.Main"
+#alias glb="make -C /home/max/Documents/Code/cs61b-akx/proj3/gitlet/ default && gl"
+#alias gld="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.DumpObj"
+#alias gitlet=gl
 
 # ssh
 alias ssh="kitty +kitten ssh"
@@ -114,6 +126,6 @@ alias sshk="/mnt/veracrypt1/ssh/"
 # ptpython (better repl)
 alias py="ptpython --vi"
 
-# XCompatability
+# xcompatability
 #alias sass="sassc"
 
