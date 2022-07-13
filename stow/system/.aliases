@@ -15,16 +15,15 @@ alias mk=mkdir
 alias h=history
 alias v="nvim"
 alias t="touch"
-alias x="exit"
 alias c="clear"
 alias o="open ."
-alias x+="chmod +x"
+alias x="chmod +x"
 alias get="curl -O -L"
 alias restart="sudo reboot"
 alias bye="sudo shutdown -r now"
 alias reload="source ~/.zshrc"
 
-# alternatives
+# alternatives + program shortcuts
 alias vim=nvim
 alias cat="bat --config-file=~/.config/bat/config"
 alias cat=bat
@@ -33,6 +32,7 @@ alias dirs="exa --list-dirs"
 alias t=tree
 alias tree3="exa --tree --level=3 -l"
 alias tree2="exa --tree --level=2 -l"
+alias json=fx
 
 # directories
 alias code="~/Documents/Code/"
