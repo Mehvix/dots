@@ -40,6 +40,7 @@ au BufRead,BufNewFile  */yapf/*         set syn=bash
 au BufRead,BufNewFile *ssh/config*,*sshd*   set syn=sshconfig
 au BufRead,BufNewFile .prettier*        set syn=json
 au BufRead,BufNewFile .gitattributes    set syn=json
+au BufRead,BufNewFile *.conf            set syn=conf
 
 " information
 set showcmd         " show (partial) command in status line
@@ -72,7 +73,7 @@ set smartcase       " do smart case matching
 set incsearch       " incremental search
 set hlsearch        " highlight searches
 set showmatch       " show matching brackets.
-autocmd VimEnter * nnoremap <esc> :nohlsearch<return><esc>    " clear highlight on pressing esc
+"autocmd VimEnter * nnoremap <esc> :nohlsearch<return><esc>    " clear highlight on pressing esc
 autocmd InsertEnter * :let @/=""    " clear highlight when entering insert mode
 
 " turn on persistent undo

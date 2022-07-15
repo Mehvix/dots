@@ -1,0 +1,363 @@
+{
+	"LaTeX: Quick Fraction": {
+		"prefix": "frac",
+		"body": [
+			"\\frac{$1}{$2} $3"
+		],
+	},
+	"LaTeX: Theorem": {
+		"prefix": "thm",
+		"body": [
+			"\\begin{thm} $1 \\end{thm} $0"
+		]
+	},
+	"LaTeX: Itemize": {
+		"prefix": "itemize",
+		"body": [
+			"\\begin{itemize}",
+			"\t\\item $1",
+			"\\end{itemize}",
+			"$0"
+		]
+	},
+	"LaTeX: Enumerate": {
+		"prefix": "enum",
+		"body": [
+			"\\begin{enumerate}",
+			"\t\\item $1",
+			"\\end{enumerate}",
+			"$0"
+		]
+	},
+	"LaTeX: Environment": {
+		"prefix": "beg",
+		"body": [
+			"\\begin{${1:name}}",
+			"\t$0",
+			"\\end{${1:name}}"
+		]
+	},
+	"LaTeX: Text": {
+		"prefix": "txt",
+		"body": [
+			"\\text{$0}"
+		]
+	},
+	"LaTeX: Image": {
+		"prefix": "img",
+		"body": [
+			"\\begin{figure}[H]",
+			"\t\\centering",
+			"\t\\includegraphics[width=0.5\\textwidth]{${1:${TM_SELECTED_TEXT}}}",
+			"\t\\caption{${2:caption}\\label{fig:${3:sample}}}",
+			"\\end{figure}",
+			"$0"
+		]
+	},
+	"LaTeX: BB": {
+		"prefix": "bb",
+		"body": [
+			"\\mathbb{$1}$2"
+		],
+	},
+	"LaTeX: Real N": {
+		"prefix": "realn",
+		"body": [
+			"\\mathbb{R}"
+		],
+	},
+	"LaTeX: Long Right Arrow": {
+		"prefix": [
+			"lra",
+		],
+		"body": [
+			"\\Longrightarrow$1"
+		],
+		"description": "Long Right Arrow"
+	},
+	"LaTeX: sin": {
+		"prefix": "sin",
+		"body": [
+			"\\sin($1)$2"
+		],
+		"description": "Quick sin"
+	},
+	"LaTeX: cos": {
+		"prefix": "cos",
+		"body": [
+			"\\cos($1)$2"
+		],
+		"description": "Quick cos"
+	},
+	"LaTeX: tan": {
+		"prefix": "tan",
+		"body": [
+			"\\tan($1)$2"
+		],
+		"description": "Quick tan"
+	},
+	"LaTeX: LHS": {
+		"prefix": "lhs",
+		"body": [
+			"\\text{LHS}$1"
+		],
+		"description": "LHS"
+	},
+	"LaTeX: RHS": {
+		"prefix": "rhs",
+		"body": [
+			"\\text{RHS}$1"
+		],
+		"description": "RHS"
+	},
+	"LaTeX: piecewise": {
+		"prefix": "piece",
+		"body": [
+			"\\begin{cases}",
+			"    $1 : & $2 \\\\\\\\",
+			"    $3 : & $4 \\\\\\\\",
+			"\\end{cases}$5"
+		],
+		"description": "Quick piecewise"
+	},
+	"LaTeX: Matrix 2x2": {
+		"prefix": "matrix22",
+		"body": [
+			"\\begin{bmatrix}",
+			"    ${1:a}  & ${2:b} \\\\\\\\",
+			"    ${3:c}  & ${4:d}",
+			"\\end{bmatrix}$5"
+		],
+		"description": "Quick 2x2 Matrix"
+	},
+	"LaTeX: Vector 2x1": {
+		"prefix": "vec21",
+		"body": [
+			"\\begin{bmatrix}",
+			"    ${1:a} \\\\\\\\",
+			"    ${2:b}",
+			"\\end{bmatrix}$3"
+		],
+		"description": "Quick 2x1 Vector"
+	},
+	"LaTeX: Matrix 3x3": {
+		"prefix": "matrix33",
+		"body": [
+			"\\begin{bmatrix}",
+			"    x_{11}  & \\dots  & x_{1n} \\\\\\\\",
+			"    \\vdots & \\ddots & \\vdots \\\\\\\\",
+			"    x_{m1}  & \\dots  & x_{mn}",
+			"\\end{bmatrix}"
+		],
+		"description": "Quick 3x3 Matrix"
+	},
+	"LaTeX: Integral": {
+		"prefix": "int",
+		"body": [
+			"\\int_{${1:0}}^{${2:\\infty}} $0"
+		]
+	},
+	"LaTeX: Sum": {
+		"prefix": "sum",
+		"body": [
+			"\\sum_{${1:i=0}}^{${2:\\infty}} $0"
+		]
+	},
+	"Hugo Book: Figure": {
+		"prefix": "figure",
+		"body": [
+			"{{< figure  src=\"$1\" >}}"
+		],
+		"description": "Figure"
+	},
+	"Hugo Book: Details": {
+		"prefix": "details",
+		"body": [
+			"{{< details \"$1Answer\" >}}\n$2\n{{< /details >}}\n$3"
+		],
+		"description": "Details"
+	},
+	"Hugo Book: Columns": {
+		"prefix": "col",
+		"body": [
+			"{{< columns >}}<!-- mathjax fix -->\n$1\n<---><!-- mathjax fix -->\n$2\n{{< /columns >}}\n$3"
+		],
+		"description": "Book: Columns"
+	},
+	"Hugo Book: Hint": {
+		"prefix": "hint",
+		"body": [
+			"{{< hint \"info\" >}}<!-- mathjax fix -->\n$1\n{{< /hint >}}\n$2"
+		],
+	},
+	"Hugo Book: Katex": {
+		"prefix": "katex",
+		"body": [
+			"{{< katex />}}"
+		],
+		"description": "Book: Hint"
+	},
+	"Hugo Book: Center": {
+		"prefix": "center",
+		"body": [
+			"{{% center %}}<!-- mathjax fix -->\n$1\n{{% /center %}}\n$2"
+		],
+	},
+	"Hugo Book: Title Header + Katex": {
+		"prefix": "title",
+		"body": [
+			"---",
+			"title: \"$1\"",
+			"---\n",
+			"{{< katex />}}\n$2",
+		],
+	},
+	"Insert table": {
+		"prefix": "table",
+		"body": [
+			"| ${1:Column1}  | ${2:Column2}   | ${3:Column3}   |",
+			"|-------------- | -------------- | -------------- |",
+			"| ${4:Item1}    | ${5:Item1}     | ${6:Item1}     |",
+			"${0}"
+		],
+		"description": "Insert table with 2 rows and 3 columns. First row is heading."
+	},
+	"Insert 2x1 table": {
+		"prefix": "2x1table",
+		"body": [
+			"| ${1:Column1}  |",
+			"|-------------- |",
+			"| ${2:Item1}    |",
+			"${0}"
+		],
+		"description": "Insert table with 2 rows and 1 column. First row is heading."
+	},
+	"Insert 3x1 table": {
+		"prefix": "3x1table",
+		"body": [
+			"| ${1:Column1}  |",
+			"|-------------- |",
+			"| ${2:Item1}    |",
+			"| ${3:Item2}    |",
+			"${0}"
+		],
+		"description": "Insert table with 3 rows and 1 column. First row is heading."
+	},
+	"Insert 4x1 table": {
+		"prefix": "4x1table",
+		"body": [
+			"| ${1:Column1}  |",
+			"|-------------- |",
+			"| ${2:Item1}    |",
+			"| ${3:Item2}    |",
+			"| ${4:Item3}    |",
+			"${0}"
+		],
+		"description": "Insert table with 4 rows and 1 column. First row is heading."
+	},
+	"Insert 5x1 table": {
+		"prefix": "5x1table",
+		"body": [
+			"| ${1:Column1}  |",
+			"|-------------- |",
+			"| ${2:Item1}    |",
+			"| ${3:Item2}    |",
+			"| ${4:Item3}    |",
+			"| ${5:Item4}    |",
+			"${0}"
+		],
+		"description": "Insert table with 5 rows and 1 column. First row is heading."
+	},
+	"Insert 2x2 table": {
+		"prefix": "2x2table",
+		"body": [
+			"| ${1:Column1}   | ${2:Column2}    |",
+			"|--------------- | --------------- |",
+			"| ${3:Item1.1}   | ${4:Item2.1}   |",
+			"${0}"
+		],
+		"description": "Insert table with 2 rows and 2 columns. First row is heading."
+	},
+	"Insert 3x2 table": {
+		"prefix": "3x2table",
+		"body": [
+			"| ${1:Column1}   | ${2:Column2}    |",
+			"|--------------- | --------------- |",
+			"| ${3:Item1.1}   | ${4:Item2.1}   |",
+			"| ${5:Item1.2}   | ${6:Item2.2}   |",
+			"${0}"
+		],
+		"description": "Insert table with 3 rows and 2 columns. First row is heading."
+	},
+	"Insert 4x2 table": {
+		"prefix": "4x2table",
+		"body": [
+			"| ${1:Column1}   | ${2:Column2}    |",
+			"|--------------- | --------------- |",
+			"| ${3:Item1.1}   | ${4:Item2.1}   |",
+			"| ${5:Item1.2}   | ${6:Item2.2}   |",
+			"| ${7:Item1.3}   | ${8:Item2.3}   |",
+			"${0}"
+		],
+		"description": "Insert table with 4 rows and 2 columns. First row is heading."
+	},
+	"Insert 5x2 table": {
+		"prefix": "5x2table",
+		"body": [
+			"| ${1:Column1}   | ${2:Column2}    |",
+			"|--------------- | --------------- |",
+			"| ${3:Item1.1}   | ${4:Item2.1}   |",
+			"| ${4:Item1.2}   | ${5:Item2.2}   |",
+			"| ${6:Item1.3}   | ${7:Item2.3}   |",
+			"| ${8:Item1.4}   | ${9:Item2.4}   |",
+			"${0}"
+		],
+		"description": "Insert table with 5 rows and 2 columns. First row is heading."
+	},
+	"Insert 2x3 table": {
+		"prefix": "2x3table",
+		"body": [
+			"| ${1:Column1}    | ${2:Column2}    | ${3:Column3}    |",
+			"|---------------- | --------------- | --------------- |",
+			"| ${4:Item1.1}    | ${5:Item2.1}    | ${6:Item3.1}    |",
+			"${0}"
+		],
+		"description": "Insert table with 2 rows and 3 columns. First row is heading."
+	},
+	"Insert 3x3 table": {
+		"prefix": "3x3table",
+		"body": [
+			"| ${1:Column1}    | ${2:Column2}    | ${3:Column3}    |",
+			"|---------------- | --------------- | --------------- |",
+			"| ${4:Item1.1}    | ${5:Item2.1}    | ${6:Item3.1}    |",
+			"| ${7:Item1.2}    | ${8:Item2.2}    | ${9:Item3.2}    |",
+			"${0}"
+		],
+		"description": "Insert table with 3 rows and 3 columns. First row is heading."
+	},
+	"Insert 4x3 table": {
+		"prefix": "4x3table",
+		"body": [
+			"| ${1:Column1}    | ${2:Column2}    | ${3:Column3}    |",
+			"|---------------- | --------------- | --------------- |",
+			"| ${4:Item1.1}    | ${5:Item2.1}    | ${6:Item3.1}    |",
+			"| ${7:Item1.2}    | ${8:Item2.2}    | ${9:Item3.2}    |",
+			"| ${10:Item1.3}   | ${11:Item2.3}   | ${12:Item3.3}   |",
+			"${0}"
+		],
+		"description": "Insert table with 4 rows and 3 columns. First row is heading."
+	},
+	"Insert 5x3 table": {
+		"prefix": "5x3table",
+		"body": [
+			"| ${1:Column1}    | ${2:Column2}    | ${3:Column3}    |",
+			"|---------------- | --------------- | --------------- |",
+			"| ${4:Item1.1}    | ${5:Item2.1}    | ${6:Item3.1}    |",
+			"| ${7:Item1.2}    | ${8:Item2.2}    | ${9:Item3.2}    |",
+			"| ${10:Item1.3}   | ${11:Item2.3}   | ${12:Item3.3}   |",
+			"| ${13:Item1.4}   | ${14:Item2.4}   | ${15:Item3.4}   |",
+			"${0}"
+		],
+		"description": "Insert table with 5 rows and 3 columns. First row is heading."
+	}
+}

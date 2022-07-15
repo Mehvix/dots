@@ -1,8 +1,3 @@
-"""
-Configuration example for ``ptpython``.
-Copy this file to $XDG_CONFIG_HOME/ptpython/config.py
-On Linux, this is: ~/.config/ptpython/config.py
-"""
 from prompt_toolkit.filters import ViInsertMode
 from prompt_toolkit.key_binding.key_processor import KeyPress
 from prompt_toolkit.keys import Keys
@@ -58,7 +53,7 @@ def configure(repl):
 
     # Complete while typing. (Don't require tab before the
     # completion menu is shown.)
-    repl.complete_while_typing = True
+    repl.complete_while_typing = False 
 
     # Fuzzy and dictionary completion.
     repl.enable_fuzzy_completion = False
@@ -82,7 +77,7 @@ def configure(repl):
     # Note: When enable, please disable the `complete_while_typing` option.
     #       otherwise, when there is a completion available, the arrows will
     #       browse through the available completions instead of the history.
-    repl.enable_history_search = False
+    repl.enable_history_search = True 
 
     # Enable auto suggestions. (Pressing right arrow will complete the input,
     # based on the history.)
@@ -97,7 +92,7 @@ def configure(repl):
     repl.enable_system_bindings = True
 
     # Ask for confirmation on exit.
-    repl.confirm_exit = True
+    repl.confirm_exit = False 
 
     # Enable input validation. (Don't try to execute when the input contains
     # syntax errors.)
@@ -107,11 +102,10 @@ def configure(repl):
     repl.use_code_colorscheme("paraiso-dark")
 
     # Set color depth (keep in mind that not all terminals support true color).
-
     # repl.color_depth = "DEPTH_1_BIT"  # Monochrome.
     # repl.color_depth = "DEPTH_4_BIT"  # ANSI colors only.
-    repl.color_depth = "DEPTH_8_BIT"  # The default, 256 colors.
-    # repl.color_depth = "DEPTH_24_BIT"  # True color.
+    # repl.color_depth = "DEPTH_8_BIT"  # The default, 256 colors.
+    repl.color_depth = "DEPTH_24_BIT"  # True color.
 
     # Min/max brightness
     repl.min_brightness = 0.0  # Increase for dark terminal backgrounds.
