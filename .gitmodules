@@ -1,3 +1,6 @@
 [submodule "stow/joplin/.config/joplin-desktop"]
 	path = stow/joplin/.config/joplin-desktop
 	url = https://github.com/Mehvix/joplin-one-dark
+	branch = master
+[submodule]
+	recurse = true
