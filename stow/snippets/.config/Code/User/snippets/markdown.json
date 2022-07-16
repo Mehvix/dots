@@ -190,6 +190,12 @@
 			"{{< hint \"info\" >}}<!-- mathjax fix -->\n$1\n{{< /hint >}}\n$2"
 		],
 	},
+	"Hugo Book: Thm": {
+		"prefix": "thm",
+		"body": [
+			"{{< hint \"info\" >}}<!-- mathjax fix -->\n### ${1:Theorem }\n$2{{< /hint >}}\n$3"
+		],
+	},
 	"Hugo Book: Katex": {
 		"prefix": "katex",
 		"body": [

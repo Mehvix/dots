@@ -109,20 +109,12 @@ export LC_TYPE=en_US.UTF-8
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# cs61B
-# source ~/Documents/Code/cs61b-software/adm/login
-
 # https://github.com/mafredri/zsh-async
 source ~/.async.zsh
 
 # Environment Variables
 source ~/.aliases
-
-# pipenv
-export PIPENV_VENV_IN_PROJECT=1
-
-# dot file scripts
-export PATH="/home/max/Documents/Code/dotfiles/scripts:$PATH"
+source ~/.profile
 
 # Add colors to Terminal
 export CLICOLOR=1

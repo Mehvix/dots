@@ -9,3 +9,10 @@ export PIPENV_VENV_IN_PROJECT=1 # Place the virtual environment at `gfauto/.venv
 export PIPENV_VERBOSITY=-1
 export PIPENV_VENV_IN_PROJECT=true
 export PIPENV_IGNORE_VIRTUALENVS=true # Always create a pipenv venv (useful when running from vim)
+
+# cs61B
+# source ~/Documents/Code/cs61b-software/adm/login
+
+# dot file scripts
+export PATH="/home/max/Documents/Code/dotfiles/scripts:${PATH}"
+

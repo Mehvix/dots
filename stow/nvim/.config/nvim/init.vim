@@ -14,6 +14,7 @@ Plug 'joshdick/onedark.vim'
 Plug 'edkolev/tmuxline.vim'
 Plug 'fladson/vim-kitty'
 Plug 'tpope/vim-fugitive'
+Plug 'lervag/vimtex'
 " Initialize plugin system
 call plug#end()
 
