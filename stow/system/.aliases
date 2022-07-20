@@ -9,6 +9,7 @@ alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
+touch() { mkdir -p $( dirname "$1") && /usr/bin/touch "$1" }
 
 # shortcuts
 alias mk=mkdir

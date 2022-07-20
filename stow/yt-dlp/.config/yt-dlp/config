@@ -1,0 +1,11 @@
+--cookies-from-browser "brave"
+--download-archive
+
+--sponsorblock-mark 
+
+#Metadata
+--write-info-json
+--clean-info-json
+--no-write-playlist-metafiles
+--embed-metadata
+
