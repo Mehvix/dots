@@ -14,7 +14,7 @@ def configure(repl):
     :param repl: `PythonRepl` instance.
     """
     # Show function signature (bool).
-    repl.show_signature = True
+    repl.show_signature = False 
 
     # Show docstring (bool).
     repl.show_docstring = False

@@ -20,10 +20,10 @@ set whichwrap+=<,>,h,l,[,]
 nnoremap ; :
 
 " move line
-nnoremap <S-Up>   :<C-u>silent! move-2<CR>==
-nnoremap <S-Down> :<C-u>silent! move+<CR>==
-xnoremap <S-Up>   :<C-u>silent! '<,'>move-2<CR>gv=gv
-xnoremap <S-Down> :<C-u>silent! '<,'>move'>+<CR>gv=gv
+nnoremap <A-Up>   :<C-u>silent! move-2<CR>==
+nnoremap <A-Down> :<C-u>silent! move+<CR>==
+xnoremap <A-Up>   :<C-u>silent! '<,'>move-2<CR>gv=gv
+xnoremap <A-Down> :<C-u>silent! '<,'>move'>+<CR>gv=gv
 
 " misc
 set noerrorbells    " gets rid of beeping sound

@@ -121,13 +121,20 @@ export CLICOLOR=1
 export LSCOLORS=ExFxBxDxCxegedabagacad
 export TERM=xterm-256color
 
-
 d=~/.dircolors
 test -r $d && eval "$(dircolors $d)"
-
 
 # chruby
 source /usr/share/chruby/chruby.sh
 source /usr/share/chruby/auto.sh
 RUBIES=(/opt/ruby* $HOME/.rubies/*)
+
+# pipx
+autoload -U bashcompinit
+bashcompinit
+eval "$(register-python-argcomplete pipx)"
+
+# pyenv
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
 
