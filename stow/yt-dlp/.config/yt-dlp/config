@@ -1,11 +1,13 @@
 --cookies-from-browser "brave"
---download-archive
+--download-archive ~/.config/yt-dlp/done.txt
 
 --sponsorblock-mark 
 
-#Metadata
+# Metadata
+--add-metadata
 --write-info-json
 --clean-info-json
 --no-write-playlist-metafiles
 --embed-metadata
 
+--embed-subs

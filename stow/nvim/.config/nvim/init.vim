@@ -8,6 +8,7 @@ call plug#begin(has('nvim') ? stdpath('data') . '/plugged' : '~/.vim/plugged')
 
 " Plug 'vim-airline/vim-airline'
 " Plug 'vim-airline/vim-airline-themes'
+Plug 'airblade/vim-gitgutter'
 Plug 'itchyny/lightline.vim'
 Plug 'rakr/vim-one'
 Plug 'joshdick/onedark.vim'
@@ -64,5 +65,12 @@ set background=dark
 " Airline
 ""let g:airline_powerline_fonts = 1
 ""let g:airline_theme='onedark'
+
+" Use fontawesome icons as signs
+let g:gitgutter_sign_added = '+'
+let g:gitgutter_sign_modified = '>'
+let g:gitgutter_sign_removed = '-'
+let g:gitgutter_sign_removed_first_line = '^'
+let g:gitgutter_sign_modified_removed = '<'
 
 source ~/.vimrc " Load vim settings
