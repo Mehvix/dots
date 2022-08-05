@@ -4,10 +4,10 @@
     signingkey = DA2E597476F671AA 
 
 [core]
-    # Ignore line end changes (Win -> *nix)
-    filemode = false
+    filemode = false    # Ignore line end changes (Win -> *nix)
     autocrlf = input
 	editor = nvim
+    pager = delta
 
 [github]
     user = Mehvix
@@ -46,7 +46,38 @@
 
 [alias]
     tree = log --graph --decorate --pretty=oneline --abbrev-commit
+
 [credentials]
 	helper = UseHttpPath=true
+
 [credential]
 	helper = store
+
+[delta]
+    #side-by-side = true
+    
+    # https://github.com/dandavison/delta/blob/master/themes.gitconfig
+    # author: https://github.com/torarnv
+    dark = true
+    file-style = omit
+    hunk-header-decoration-style = omit
+    hunk-header-file-style = magenta
+    hunk-header-line-number-style = dim magenta
+    hunk-header-style = file line-number syntax
+    line-numbers = false
+    minus-emph-style = bold red 52
+    minus-empty-line-marker-style = normal "#3f0001"
+    minus-non-emph-style = dim red
+    minus-style = bold red
+    plus-emph-style = bold green 22
+    plus-empty-line-marker-style = normal "#002800"
+    plus-non-emph-style = dim green
+    plus-style = bold green
+    syntax-theme = OneHalfDark
+    whitespace-error-style = reverse red
+    zero-style = dim syntax
+
+[delta "interactive"]
+    keep-plus-minus-markers = false
+
+

@@ -25,6 +25,10 @@ nnoremap <A-Down> :<C-u>silent! move+<CR>==
 xnoremap <A-Up>   :<C-u>silent! '<,'>move-2<CR>gv=gv
 xnoremap <A-Down> :<C-u>silent! '<,'>move'>+<CR>gv=gv
 
+" Better tabbing
+vnoremap < <gv
+vnoremap > >gv
+
 " misc
 set noerrorbells    " gets rid of beeping sound
 set autowrite       " auto-save before commands like :next and :make

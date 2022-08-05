@@ -1,7 +1,7 @@
 --cookies-from-browser "brave"
 --download-archive ~/.config/yt-dlp/done.txt
 
---sponsorblock-mark 
+#--sponsorblock-mark 
 
 # Metadata
 --add-metadata

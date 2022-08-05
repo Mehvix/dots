@@ -17,6 +17,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Uncomment the following line to use case-sensitive completion.
 CASE_SENSITIVE="false"
+unsetopt CASE_GLOB
 
 # Uncomment the following line to use hyphen-insensitive completion.
 # Case-sensitive completion must be off. _ and - will be interchangeable.
@@ -74,6 +75,8 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting history-substring-searc
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
+# vi mode
+# bindkey -v
 
 # History
 bindkey "^[[A" history-substring-search-up
@@ -110,7 +113,11 @@ export LC_TYPE=en_US.UTF-8
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # https://github.com/mafredri/zsh-async
-source ~/.async.zsh
+source ~/.async.zsh     # todo outsource this to plugin manager
+
+# fzf
+source /usr/share/fzf/key-bindings.zsh
+source /usr/share/fzf/completion.zsh
 
 # Environment Variables
 source ~/.aliases
