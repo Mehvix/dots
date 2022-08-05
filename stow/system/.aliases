@@ -49,6 +49,14 @@ alias pics="~/Pictures/"
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 
+# find with posix regex as default
+# findr ./ -regex "./([^.]*)+"
+function findr() {
+   dir=$1;
+   shift;
+   find $dir -regextype posix-extended $*
+}
+
 function mkcd() { 
     command mkdir -p $1 && cd $1 
 }
