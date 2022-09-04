@@ -9,7 +9,9 @@ alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
+alias sudo='sudo '      # https://askubuntu.com/q/22037
 touch() { mkdir -p $( dirname "$1") && /usr/bin/touch "$1" }
+
 
 # shortcuts
 alias mk=mkdir
@@ -22,7 +24,13 @@ alias x="chmod +x"
 alias get="curl -O -L"
 alias restart="sudo reboot"
 alias bye="sudo shutdown -r now"
-alias reload="source ~/.zshrc"
+alias q=exit
+alias what=type
+
+# reloads
+alias rz="source ~/.zshrc"
+alias ra="source ~/.aliases"
+alias rp="source ~/.profile"
 
 # alternatives + program shortcuts
 alias vim=nvim
@@ -36,16 +44,17 @@ alias tree2="exa --tree --level=2 -l"
 alias json=fx
 
 # directories
-alias code="~/Documents/Code/"
-alias notes="~/Documents/Code/notes/hugo/static/docs/"
+alias code="cd \${CODE_ROOT}" 
+alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
 alias sch="~/Documents/School/"
-alias dots="~/Documents/Code/dotfiles/"
+alias dots="cd \${CODE_ROOT}/dotfiles/"
 alias dot=dots
 alias www="/var/www/"
 alias comp="~/Pictures/Computer\ Misc/"
 alias pics="~/Pictures/"
 
 # new commands
+alias charge="sudo tlp fullcharge"
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 
@@ -119,6 +128,10 @@ alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/Misc/%(title)
 alias gpom="git push origin master"
 alias gs="git status"
 alias gb="git branch"
+alias ga="git add"
+alias gaa="git add ."
+alias gcm="git commit -m"
+alias gp="git push"
 alias gco="git checkout"
 
 ## gitlet cs61b
@@ -129,8 +142,7 @@ alias gco="git checkout"
 
 # ssh
 alias ssh="kitty +kitten ssh"
-alias sshe="kitty +kitten ssh -F /mnt/veracrypt1/ssh/config"
-alias sshk="/mnt/veracrypt1/ssh/"
+alias ssht="command ssh"    # ignore existing ssh alias
 
 # ptpython (better repl)
 alias py="ptpython --vi"

@@ -1,0 +1,9 @@
+[flake8]
+# 4.x no longer supports global config
+# Workaround: pass `--append-config=~/.config/flake8`
+max-line-length = 88 
+extend-ignore = E203
+dummy-variables-rgx=_$|dummy
+
+extend-select = B950    # bugbear
+

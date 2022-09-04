@@ -5,6 +5,10 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
+# Environment Variables
+source ~/.profile
+source ~/.aliases
+
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -89,6 +93,7 @@ export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LC_TYPE=en_US.UTF-8
+export LC_CTYPE=C
 
 # Preferred editor for local and remote sessions
 # if [[ -n $SSH_CONNECTION ]]; then
@@ -119,9 +124,6 @@ source ~/.async.zsh     # todo outsource this to plugin manager
 source /usr/share/fzf/key-bindings.zsh
 source /usr/share/fzf/completion.zsh
 
-# Environment Variables
-source ~/.aliases
-source ~/.profile
 
 # Add colors to Terminal
 export CLICOLOR=1
@@ -142,6 +144,24 @@ bashcompinit
 eval "$(register-python-argcomplete pipx)"
 
 # pyenv
+export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+
+# nvm 
+#source /usr/share/nvm/init-nvm.sh 
+
+# https://stackoverflow.com/questions/23556330/run-nvm-use-automatically-every-time-theres-a-nvmrc-file-on-the-directory/50378304#50378304
+#_nvmrc_hook() {
+#  if [[ $PWD == $PREV_PWD ]]; then
+#    return
+#  fi
+#  
+#  PREV_PWD=$PWD
+#  [[ -f ".nvmrc" ]] && nvm use
+#}
+#
+#if ! [[ "${PROMPT_COMMAND:-}" =~ _nvmrc_hook ]]; then
+#  PROMPT_COMMAND="_nvmrc_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+#fi
 

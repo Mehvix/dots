@@ -2,6 +2,7 @@
 " this must be first, because it changes other options as a side effect.
 set nocompatible
 
+
 " set shell to zsh
 set shell=/usr/bin/zsh
 
@@ -19,7 +20,7 @@ set whichwrap+=<,>,h,l,[,]
 " enter command mode easier
 nnoremap ; :
 
-" move line
+" move line with alt
 nnoremap <A-Up>   :<C-u>silent! move-2<CR>==
 nnoremap <A-Down> :<C-u>silent! move+<CR>==
 xnoremap <A-Up>   :<C-u>silent! '<,'>move-2<CR>gv=gv
@@ -28,6 +29,9 @@ xnoremap <A-Down> :<C-u>silent! '<,'>move'>+<CR>gv=gv
 " Better tabbing
 vnoremap < <gv
 vnoremap > >gv
+
+" Allow saving of files as sudo when I forgot to start vim using sudo.
+cnoremap w!! execute 'silent! write !sudo tee % >/dev/null' <bar> edit!
 
 " misc
 set noerrorbells    " gets rid of beeping sound
@@ -77,7 +81,7 @@ set smartcase       " do smart case matching
 set incsearch       " incremental search
 set hlsearch        " highlight searches
 set showmatch       " show matching brackets.
-"autocmd VimEnter * nnoremap <esc> :nohlsearch<return><esc>    " clear highlight on pressing esc
+""autocmd VimEnter * nnoremap <esc> :nohlsearch<return><esc>    " clear highlight on pressing esc
 autocmd InsertEnter * :let @/=""    " clear highlight when entering insert mode
 
 " turn on persistent undo
@@ -96,6 +100,12 @@ set backupdir=~/.vim/backup//
 " use a specified swap folder
 " src:   http://stackoverflow.com/a/15317146
 set directory=~/.vim/swap//
+
+" Uncomment the following to have Vim jump to the last position when
+" reopening a file
+if has("autocmd")
+  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+endif
 
 if has('nvim') 
     " neovim specific settings

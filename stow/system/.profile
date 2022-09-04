@@ -1,6 +1,7 @@
 export EDITOR=/usr/bin/nvim
 export LANG=en_US.UTF-8
 export LC_COLLATE="en_US.UTF-8"
+export LC_CTYPE=C
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
 export QT_QPA_PLATFORMTHEME="qt5ct"
@@ -15,14 +16,24 @@ export PATH="$HOME/.pyenv/bin:$PATH"
 export PYENV_ROOT="$HOME/.pyenv"
 
 # pipenv
-export PIPENV_VENV_IN_PROJECT=1 # Place the virtual environment at `.venv`.
 export PIPENV_VERBOSITY=-1
-export PIPENV_VENV_IN_PROJECT=true
+export PIPENV_VENV_IN_PROJECT=1 # Place the virtual environment at `.venv`.
 export PIPENV_IGNORE_VIRTUALENVS=true # Always create a pipenv venv (useful when running from vim)
 
 # cs61B
 # source ~/Documents/Code/cs61b-software/adm/login
 
+# Personal Directories
+export CODE_ROOT="${HOME}/Documents/Code"
+
 # dot file scripts
-export PATH="/home/max/Documents/Code/dotfiles/scripts:${PATH}"
+export PATH="${CODE_ROOT}/dotfiles/scripts:${PATH}"
+
+# npm
+export PATH=~/.npm-global/bin:$PATH
+#export npm_config_prefix="$HOME/.local"
+
+# nvm 
+#export NVM_LAZY=1
+#export NVM_DIR="$HOME/.nvm"
 

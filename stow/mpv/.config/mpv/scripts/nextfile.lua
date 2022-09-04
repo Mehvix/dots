@@ -9,10 +9,15 @@ local settings = {
   },
 
   --linux(true)/windows(false)/auto(nil)
-  linux_over_windows = true,
+  linux_over_windows = nil,
 
   --at end of directory jump to start and vice versa
   allow_looping = true,
+  
+  --order by natural (version) numbers, thus behaving case-insensitively and treating multi-digit numbers atomically
+  --e.x.: true will result in the following order:   09A 9A  09a 9a  10A 10a
+  --      while false will result in:                09a 09A 10a 10A 9a  9A
+  version_flag = true,
 }
 
 local filetype_lookup = {}
@@ -28,16 +33,6 @@ if settings.linux_over_windows==nil then
   else
     settings.linux_over_windows = true
   end
-end
-
--- https://github.com/jonniek/mpv-nextfile/pull/11/commits/4db0ea362912434b9d5aa3885826d65857e9c573#diff-197acfb01c50c24f220417f22a8ea546e0365dc853d95b16a1df5a398f065755
-function alphanumsort(o)
-  local function padnum(d) local dec, n = string.match(d, "(%.?)0*(.+)")
-    return #dec > 0 and ("%.12f"):format(d) or ("%s%03d%s"):format(dec, #n, n) end
-  table.sort(o, function(a,b)
-    return tostring(a):gsub("%.?%d+",padnum)..("%3d"):format(#b)
-         < tostring(b):gsub("%.?%d+",padnum)..("%3d"):format(#a) end)
-  return o
 end
 
 function nexthandler()
@@ -70,9 +65,10 @@ function get_files_windows(dir)
 end
 
 function get_files_linux(dir)
-  local args = { 'find', dir, '-iname', '-type', 'f', '-printf', '%f/' }
+  local flags = ('-1p' .. (version_flag and 'v' or ''))
+  local args = { 'ls', flags, dir }
   local process = utils.subprocess({ args = args, cancellable = false })
-  return parse_files(process, '/')
+  return parse_files(process, '\n')
 end
 
 function parse_files(res, delimiter)
@@ -103,7 +99,6 @@ function movetofile(forward)
   local files, error
   if settings.linux_over_windows then
     files, error = get_files_linux(dir)
-    alphanumsort(files)
   else
     files, error = get_files_windows(dir)
   end

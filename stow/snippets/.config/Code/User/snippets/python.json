@@ -1,15 +1,27 @@
 {
+	"bang": {
+		"prefix": "bang",
+		"body": [
+			"#!/usr/bin/env python3",
+		]
+	},
 	"logger": {
-		"prefix": "logger",
+		"prefix": "implog",
 		"body": [
 			"from logging import getLogger",
 			"logger = getLogger(name=__name__)"
 		]
 	},
-	"bang": {
-		"prefix": "bang",
+	"datetime": {
+		"prefix": "impdatetime",
 		"body": [
-			"#!/usr/bin/env python3",
+			"from datetime import datetime"
+		]
+	},
+	"bs4": {
+		"prefix": "impbs4",
+		"body": [
+			"from bs4 import BeautifulSoup"
 		]
 	},
 	"project_root": {

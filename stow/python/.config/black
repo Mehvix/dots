@@ -1,0 +1,4 @@
+[tool.black]
+# See exmaple: https://github.com/psf/black/blob/main/pyproject.toml
+line-length=88 
+preview=true
