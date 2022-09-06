@@ -1,0 +1,8 @@
+[mypy]
+# https://mypy.readthedocs.io/en/stable/config_file.html
+disallow_untyped_defs = true
+check_untyped_defs = true
+#follow_imports = silent
+ignore_missing_imports = True
+show_column_numbers = True
+pretty = True

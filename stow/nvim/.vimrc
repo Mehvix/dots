@@ -45,10 +45,14 @@ syntax on           " syntax highlighting
 filetype plugin indent on
 au BufRead,BufNewFile .aliases          set syn=bash
 au BufRead,BufNewFile  */yapf/*         set syn=bash
+au BufRead,BufNewFile .gitattributes    set syn=bash
 au BufRead,BufNewFile *ssh/config*,*sshd*   set syn=sshconfig
 au BufRead,BufNewFile .prettier*        set syn=json
-au BufRead,BufNewFile .gitattributes    set syn=json
+au BufRead,BufNewFile .jsbeautifyrc     set syn=json
 au BufRead,BufNewFile *.conf            set syn=conf
+au BufRead,BufNewFile black             set syn=cfg
+au BufRead,BufNewFile flake8            set syn=cfg
+au BufRead,BufNewFile *mypy/config      set syn=cfg
 
 " information
 set showcmd         " show (partial) command in status line

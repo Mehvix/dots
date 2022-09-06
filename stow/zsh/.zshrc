@@ -165,3 +165,10 @@ eval "$(pyenv init -)"
 #  PROMPT_COMMAND="_nvmrc_hook${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
 #fi
 
+# Allow parent to initialize shell
+# https://stackoverflow.com/a/60438516/7833617
+if [[ -n $ZSH_INIT_COMMAND ]]; then
+    #echo "Running: $ZSH_INIT_COMMAND"
+    eval "$ZSH_INIT_COMMAND"
+fi
+
