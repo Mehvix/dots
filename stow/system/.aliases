@@ -39,9 +39,12 @@ alias cat=bat
 alias l="exa --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="exa --list-dirs"
 alias t=tree
-alias tree3="exa --tree --level=3 -l"
-alias tree2="exa --tree --level=2 -l"
+alias t3="exa --tree --level=3 -l"
+alias t2="exa --tree --level=2 -l"
 alias json=fx
+alias vs="\\code ."
+alias mvi="mpv -profile image"
+alias attr="vim \${CODE_ROOT}/mehvix.com/static/js/attributes.js"
 
 # directories
 alias code="cd \${CODE_ROOT}" 

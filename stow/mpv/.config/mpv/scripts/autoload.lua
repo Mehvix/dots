@@ -207,11 +207,11 @@ function find_and_add_entries()
 
             if direction == -1 then
                 if pl_current == 1 then -- never add additional entries in the middle
-                    msg.info("Prepending " .. file)
+                    --msg.info("Prepending " .. file)
                     table.insert(append[-1], 1, filepath)
                 end
             else
-                msg.info("Adding " .. file)
+                --msg.info("Adding " .. file)
                 table.insert(append[1], filepath)
             end
         end

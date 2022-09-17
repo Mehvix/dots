@@ -4,6 +4,8 @@
 max-line-length = 88 
 extend-ignore = E203
 dummy-variables-rgx=_$|dummy
+ignore = E266 # too many ## for comment
+
 
 extend-select = B950    # bugbear
 

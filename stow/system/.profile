@@ -5,6 +5,9 @@ export LC_CTYPE=C
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
 export QT_QPA_PLATFORMTHEME="qt5ct"
+export QT_SELECT=5
+export PATH=/usr/local/Qt-5.15.6/bin/:$PATH
+
 export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
 
 # go

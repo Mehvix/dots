@@ -58,14 +58,6 @@ DISABLE_AUTO_UPDATE="true"
 # much, much faster.
 # DISABLE_UNTRACKED_FILES_DIRTY="true"
 
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
@@ -85,6 +77,24 @@ source $ZSH/oh-my-zsh.sh
 # History
 bindkey "^[[A" history-substring-search-up
 bindkey "^[[B" history-substring-search-down
+setopt HIST_IGNORE_ALL_DUPS # do not put duplicated command into history list
+setopt HIST_SAVE_NO_DUPS    # do not save duplicated command
+setopt HIST_REDUCE_BLANKS   # remove unnecessary blanks
+setopt HIST_FIND_NO_DUPS    # step over dups
+setopt INC_APPEND_HISTORY   # append history immediatly, rather than on exit
+export HISTFILE=~/.zsh_history
+export HISTSIZE=10000   #  number of commands that are loaded into memory from $HISTFILE
+export SAVEHIST=10000   # number of commands that are stored from $HISTFILE
+
+# Uncomment the following line if you want to change the command execution time
+# stamp shown in the history command output.
+# You can set one of the optional three formats:
+# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
+# or set a custom format using the strftime function format specifications,
+# see 'man strftime' for details.
+setopt INC_APPEND_HISTORY_TIME  # append command to history file immediately after execution
+HIST_STAMPS="yy/mm/dd"
+
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
