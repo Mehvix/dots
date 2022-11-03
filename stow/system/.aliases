@@ -2,14 +2,18 @@
 
 # sensible Defaults + Interactive improvements
 alias mv="mv -iv"
-alias cp="cp -riv"      # Ask confirmation
+alias cp="cp -rivL"     # Ask confirmation, verbose, follow symlinks
+alias cpf="yes | cp -rL"      # No confirmation
 alias mkdir="mkdir -vp" 
 alias rm="rm -rv"
 alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
-alias sudo='sudo '      # https://askubuntu.com/q/22037
+alias sudo="sudo "      # https://askubuntu.com/q/22037
+alias grep="grep -R --line-number --extended-regexp --color=always"
+alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
+alias exiftool="exiftool -n"    # numerical value output
 touch() { mkdir -p $( dirname "$1") && /usr/bin/touch "$1" }
 
 
@@ -26,25 +30,33 @@ alias restart="sudo reboot"
 alias bye="sudo shutdown -r now"
 alias q=exit
 alias what=type
+alias lock="dm-tool lock"
 
-# reloads
+# reload
 alias rz="source ~/.zshrc"
 alias ra="source ~/.aliases"
 alias rp="source ~/.profile"
 
+# edit files
+alias vz="vim ~/.zshrc"
+alias va="vim ~/.aliases"
+alias vp="vim ~/.profile"
+alias attr="vim \${CODE_ROOT}/mehvix.com/static/js/attributes.js"
+
 # alternatives + program shortcuts
 alias vim=nvim
-alias cat="bat --config-file=~/.config/bat/config"
+alias json=fx
 alias cat=bat
+alias py=ptpython
+alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
 alias l="exa --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="exa --list-dirs"
 alias t=tree
 alias t3="exa --tree --level=3 -l"
 alias t2="exa --tree --level=2 -l"
-alias json=fx
 alias vs="\\code ."
 alias mvi="mpv -profile image"
-alias attr="vim \${CODE_ROOT}/mehvix.com/static/js/attributes.js"
+alias f8="cp -L ~/.config/flake8 ./.flake8" # no global conf my ass
 
 # directories
 alias code="cd \${CODE_ROOT}" 
@@ -53,7 +65,7 @@ alias sch="~/Documents/School/"
 alias dots="cd \${CODE_ROOT}/dotfiles/"
 alias dot=dots
 alias www="/var/www/"
-alias comp="~/Pictures/Computer\ Misc/"
+#alias comp=""
 alias pics="~/Pictures/"
 
 # new commands
@@ -146,9 +158,6 @@ alias gco="git checkout"
 # ssh
 alias ssh="kitty +kitten ssh"
 alias ssht="command ssh"    # ignore existing ssh alias
-
-# ptpython (better repl)
-alias py="ptpython --vi"
 
 # xcompatability
 #alias sass="sassc"

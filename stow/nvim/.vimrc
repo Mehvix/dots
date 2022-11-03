@@ -50,10 +50,10 @@ au BufRead,BufNewFile *ssh/config*,*sshd*   set syn=sshconfig
 au BufRead,BufNewFile .prettier*        set syn=json
 au BufRead,BufNewFile .jsbeautifyrc     set syn=json
 au BufRead,BufNewFile *.conf            set syn=conf
+au BufRead,BufNewFile .megarc           set syn=dosini
 au BufRead,BufNewFile mpv.conf          set syn=cfg
-au BufRead,BufNewFile black             set syn=cfg
-au BufRead,BufNewFile flake8            set syn=cfg
-au BufRead,BufNewFile *mypy/config      set syn=cfg
+au BufRead,BufNewFile black,flake8,*mypy/config set syn=cfg
+set re=1
 
 " information
 set showcmd         " show (partial) command in status line

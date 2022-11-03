@@ -1,0 +1,6 @@
+[Network]
+ParallelTransfers = 6
+
+[UI]
+Colors = true
+

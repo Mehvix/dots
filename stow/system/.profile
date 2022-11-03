@@ -3,6 +3,9 @@ export LANG=en_US.UTF-8
 export LC_COLLATE="en_US.UTF-8"
 export LC_CTYPE=C
 export BASH_SILENCE_DEPRECATION_WARNING=1
+#export PKG_CONFIG_PATH=/usr/lib/pkgconfig
+export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
+
 
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export QT_SELECT=5

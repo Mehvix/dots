@@ -9,6 +9,9 @@ fi
 source ~/.profile
 source ~/.aliases
 
+setopt cdablevars
+export comp='~/Pictures/Computer\ Misc/'
+
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 

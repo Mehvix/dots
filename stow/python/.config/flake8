@@ -1,11 +1,11 @@
 [flake8]
 # 4.x no longer supports global config
 # Workaround: pass `--append-config=~/.config/flake8`
-max-line-length = 88 
-extend-ignore = E203
+max-line-length = 88
 dummy-variables-rgx=_$|dummy
-ignore = E266 # too many ## for comment
-
-
+extend-ignore = # append to ignores, rather than overwrite
+    E203,   # whitespace before ':'
+    E266,   # too many ## for comment
+    E731    # don't use lamdas
 extend-select = B950    # bugbear
 
