@@ -18,7 +18,7 @@
         "max_preserve_newlines": 4, // Maximum number of line breaks to be preserved in one chunk (0 disables)
         "preserve_newlines": true, // Whether existing line breaks before elements should be preserved (only works before elements, not inside tags or for text)
         "inline": [ "code", "a", "b", "img" ],
-        "content_unformatted": [ "img", "code", "pre", "br" ], // List of tags (defaults to pre) whose content should not be reformatted
+        "content_unformatted": [ "img", "code", "pre", "br", "blockquote" ], // List of tags (defaults to pre) whose content should not be reformatted
         "unformatted": [ ], // List of tags that should not be reformatted
         "wrap_line_length": 125 // Lines should wrap at next opportunity after this number of characters (0 disables)
     },

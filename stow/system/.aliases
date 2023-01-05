@@ -10,8 +10,8 @@ alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
-alias sudo="sudo "      # https://askubuntu.com/q/22037
-alias grep="grep -R --line-number --extended-regexp --color=always"
+#alias sudo="sudo "      # https://askubuntu.com/q/22037
+#alias grep="grep -R --line-number --extended-regexp --color=always"
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
 touch() { mkdir -p $( dirname "$1") && /usr/bin/touch "$1" }
@@ -65,13 +65,14 @@ alias sch="~/Documents/School/"
 alias dots="cd \${CODE_ROOT}/dotfiles/"
 alias dot=dots
 alias www="/var/www/"
-#alias comp=""
+alias comp="~/Pictures/Computer\ Misc/"
 alias pics="~/Pictures/"
 
 # new commands
 alias charge="sudo tlp fullcharge"
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
+alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'
 
 # find with posix regex as default
 # findr ./ -regex "./([^.]*)+"

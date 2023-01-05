@@ -1,3 +1,5 @@
+export XDG_CONFIG_HOME="$HOME/.config"
+
 export EDITOR=/usr/bin/nvim
 export LANG=en_US.UTF-8
 export LC_COLLATE="en_US.UTF-8"
@@ -6,22 +8,27 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 #export PKG_CONFIG_PATH=/usr/lib/pkgconfig
 export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
 
-
 export QT_QPA_PLATFORMTHEME="qt5ct"
 export QT_SELECT=5
 export PATH=/usr/local/Qt-5.15.6/bin/:$PATH
 
 export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
 
+# haskell
+export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
+
 # go
 export GOPATH=$HOME/go
 export PATH="$PATH:$GOPATH/bin"
 
-# pyenv
+# python
+# export PYTHONSTARTUP=~/.pythonrc
+
+## pyenv
 export PATH="$HOME/.pyenv/bin:$PATH"
 export PYENV_ROOT="$HOME/.pyenv"
 
-# pipenv
+## pipenv
 export PIPENV_VERBOSITY=-1
 export PIPENV_VENV_IN_PROJECT=1 # Place the virtual environment at `.venv`.
 export PIPENV_IGNORE_VIRTUALENVS=true # Always create a pipenv venv (useful when running from vim)

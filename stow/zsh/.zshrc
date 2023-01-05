@@ -9,9 +9,6 @@ fi
 source ~/.profile
 source ~/.aliases
 
-setopt cdablevars
-export comp='~/Pictures/Computer\ Misc/'
-
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -185,3 +182,5 @@ if [[ -n $ZSH_INIT_COMMAND ]]; then
     eval "$ZSH_INIT_COMMAND"
 fi
 
+
+[ -f "/home/max/.ghcup/env" ] && source "/home/max/.ghcup/env" # ghcup-env

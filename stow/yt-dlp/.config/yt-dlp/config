@@ -5,7 +5,7 @@
 
 # Metadata
 --add-metadata
---write-description
+#--write-description    # creates file
 --merge-output-format mkv
 --clean-info-json
 --no-write-playlist-metafiles
