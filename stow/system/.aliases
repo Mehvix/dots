@@ -10,7 +10,7 @@ alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
 alias ps="ps -ef"       # All processess running on system
-#alias sudo="sudo "      # https://askubuntu.com/q/22037
+alias sudo="sudo "      # Respect aliases -- https://askubuntu.com/q/22037
 #alias grep="grep -R --line-number --extended-regexp --color=always"
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
@@ -57,6 +57,10 @@ alias t2="exa --tree --level=2 -l"
 alias vs="\\code ."
 alias mvi="mpv -profile image"
 alias f8="cp -L ~/.config/flake8 ./.flake8" # no global conf my ass
+alias sub="subliminal download -l 'en'"
+alias gls="gitlinks set"
+alias topoff="sudo tlp fullcharge"
+alias charge="sudo tlp setcharge 65 80"
 
 # directories
 alias code="cd \${CODE_ROOT}" 
@@ -69,7 +73,6 @@ alias comp="~/Pictures/Computer\ Misc/"
 alias pics="~/Pictures/"
 
 # new commands
-alias charge="sudo tlp fullcharge"
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'

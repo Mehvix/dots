@@ -9,6 +9,7 @@
 	editor = nvim
     pager = delta
 	excludesFile = ~/.gitignore_global
+	askpass = git-gui--askpass
 
 [github]
     user = Mehvix
@@ -82,3 +83,5 @@
     keep-plus-minus-markers = false
 
 
+[http]
+	postBuffer = 524288000  # fix SSH pushing

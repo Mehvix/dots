@@ -1,14 +1,23 @@
 --cookies-from-browser "brave"
 --download-archive ~/.config/yt-dlp/done.txt
 
-#--sponsorblock-mark 
+#--sponsorblock-mark=all
+#--no-check-certificate
+
+--merge-output-format mkv
+--concurrent-fragments 5    # set the number of dash/hlsnative fragments to 5 concurrent download to speed things up
 
 # Metadata
+--embed-thumbnail
 --add-metadata
 #--write-description    # creates file
---merge-output-format mkv
 --clean-info-json
 --no-write-playlist-metafiles
 --embed-metadata
-
 --embed-subs
+
+#--sleep-interval 5 --max-sleep-interval 30`    # Tell yt-dlp to pause between 5 and 30 seconds between 2 download to avoid getting "429 - Too Many Requests".
+
+--no-overwrites
+
+

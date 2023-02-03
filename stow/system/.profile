@@ -14,6 +14,8 @@ export PATH=/usr/local/Qt-5.15.6/bin/:$PATH
 
 export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
 
+export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
+
 # haskell
 export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
 
@@ -49,4 +51,13 @@ export PATH=~/.npm-global/bin:$PATH
 # nvm 
 #export NVM_LAZY=1
 #export NVM_DIR="$HOME/.nvm"
+
+append_path () {
+    case ":$PATH:" in
+        *:"$1":*)
+            ;;
+        *)
+            PATH="${PATH:+$PATH:}$1"
+    esac
+}
 
