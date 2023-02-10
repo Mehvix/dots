@@ -31,6 +31,7 @@ alias bye="sudo shutdown -r now"
 alias q=exit
 alias what=type
 alias lock="dm-tool lock"
+alias jn="jupyter-notebook"
 
 # reload
 alias rz="source ~/.zshrc"
@@ -139,7 +140,7 @@ function ff4c() {
 
 # yt-dlp / youtube-dl
 alias youtube-dl="yt-dlp"
-alias ytva='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
+alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
 alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/Misc/%(title)s.%(ext)s"'
 
