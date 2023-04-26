@@ -85,3 +85,6 @@
 
 [http]
 	postBuffer = 524288000  # fix SSH pushing
+
+[url "ssh://github.com/"]
+	pushInsteadOf = https://github.com/

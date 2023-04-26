@@ -16,6 +16,9 @@ export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
 
 export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 # haskell
 export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
 
@@ -27,8 +30,8 @@ export PATH="$PATH:$GOPATH/bin"
 # export PYTHONSTARTUP=~/.pythonrc
 
 ## pyenv
-export PATH="$HOME/.pyenv/bin:$PATH"
 export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
 
 ## pipenv
 export PIPENV_VERBOSITY=-1

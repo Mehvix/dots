@@ -184,3 +184,6 @@ fi
 
 
 [ -f "/home/max/.ghcup/env" ] && source "/home/max/.ghcup/env" # ghcup-env
+autoload -Uz compinit
+zstyle ':completion:*' menu select
+fpath+=~/.zfunc

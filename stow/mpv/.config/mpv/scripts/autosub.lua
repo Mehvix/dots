@@ -34,9 +34,9 @@ local languages = {
 --          If you use any of these services, simply uncomment it
 --          and replace 'USERNAME' and 'PASSWORD' with your own:
 local logins = {
---          { '--addic7ed', 'USERNAME', 'PASSWORD' },
+          { '--addic7ed', 'globalsharewarebind8shield.net', 'sGgBP5aVDvtTOw' },
 --          { '--legendastv', 'USERNAME', 'PASSWORD' },
---          { '--opensubtitles', 'USERNAME', 'PASSWORD' },
+          { '--opensubtitles', 'Mehvix', 'ja7V*UNFxVM&vin4' },
 --          { '--subscenter', 'USERNAME', 'PASSWORD' },
 }
 --=============================================================================
@@ -257,3 +257,4 @@ end
 mp.add_key_binding('b', 'download_subs', download_subs)
 mp.add_key_binding('n', 'download_subs2', download_subs2)
 mp.register_event('file-loaded', control_downloads)
+
