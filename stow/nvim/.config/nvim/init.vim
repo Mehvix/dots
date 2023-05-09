@@ -16,8 +16,12 @@ Plug 'edkolev/tmuxline.vim'
 Plug 'fladson/vim-kitty'
 Plug 'tpope/vim-fugitive'
 Plug 'lervag/vimtex'
+Plug 'numToStr/Comment.nvim'
+
 " Initialize plugin system
 call plug#end()
+
+lua require('Comment').setup()
 
 " Colorscheme / Theme
 let g:onedark_terminal_italics=1
