@@ -31,7 +31,8 @@ o = {
     images = true,
     videos = true,
     audio = true,
-    ignore_hidden = true
+    ignore_hidden = true,
+    ignore_dirs = { "Computer Misc" }
 }
 options.read_options(o)
 
@@ -124,6 +125,15 @@ end
 
 local autoloaded = nil
 
+function is_dir_ignored(dir)
+  for _, idir in ipairs(o.ignore_dirs) do
+    if string.find(dir, idir) then
+      return true
+    end
+  end
+  return false
+end
+
 function find_and_add_entries()
     local path = mp.get_property("path", "")
     local dir, filename = utils.split_path(path)
@@ -133,6 +143,9 @@ function find_and_add_entries()
         return
     elseif #dir == 0 then
         msg.verbose("stopping: not a local path")
+        return
+    elseif is_dir_ignored(dir) then
+        mp.msg.info("stopping: file is in an ignored directory")
         return
     end
 

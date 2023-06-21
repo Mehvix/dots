@@ -9,6 +9,9 @@ set shell=/usr/bin/zsh
 " yank copies to system clipoard (needs xsel)
 set clipboard=unnamedplus
 
+" wrap by breaking at spaces, rather than splitting words
+set wrap linebreak nolist
+
 " for colemak-dh
 ""noremap h k
 ""noremap j h
@@ -52,7 +55,7 @@ au BufRead,BufNewFile .jsbeautifyrc     set syn=json
 au BufRead,BufNewFile *.conf            set syn=conf
 au BufRead,BufNewFile .megarc           set syn=dosini
 au BufRead,BufNewFile mpv.conf          set syn=cfg
-au BufRead,BufNewFile black,flake8,*mypy/config set syn=cfg
+au BufRead,BufNewFile black,flake8,*mypy/config,.config/bpython/config set syn=cfg
 au BufRead,BufNewFile ghci.conf         set syn=haskell
 set re=1
 

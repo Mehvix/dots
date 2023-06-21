@@ -28,10 +28,14 @@ export PATH="$PATH:$GOPATH/bin"
 
 # python
 # export PYTHONSTARTUP=~/.pythonrc
+#export PYTHONPATH="./.pyenv/versions/3.11.0b4/lib/python3.11/site-packages:$PYTHONPATH" # https://github.com/bpython/bpython/issues/494#issuecomment-98760418
+
+## pipx
+export PIPX_DEFAULT_PYTHON='python3'    # https://github.com/pypa/pipx/issues/654
 
 ## pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+#export PYENV_ROOT="$HOME/.pyenv"
+#export PATH="$PYENV_ROOT/bin:$PATH"
 
 ## pipenv
 export PIPENV_VERBOSITY=-1

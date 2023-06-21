@@ -8,6 +8,7 @@ fi
 # Environment Variables
 source ~/.profile
 source ~/.aliases
+source ~/.secrets
 
 # If you come from bash you might have to change your $PATH.
 export PATH=$HOME/bin:/usr/local/bin:$PATH
@@ -151,12 +152,16 @@ RUBIES=(/opt/ruby* $HOME/.rubies/*)
 # pipx
 autoload -U bashcompinit
 bashcompinit
-eval "$(register-python-argcomplete pipx)"
+#eval "$(register-python-argcomplete pipx)"
+
+# poetry
+fpath+=~/.zfunc
+autoload -Uz compinit && compinit
 
 # pyenv
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+#export PYENV_ROOT="$HOME/.pyenv"
+#command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+#eval "$(pyenv init -)"
 
 # nvm 
 #source /usr/share/nvm/init-nvm.sh 

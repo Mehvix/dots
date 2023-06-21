@@ -17,7 +17,7 @@ Plug 'fladson/vim-kitty'
 Plug 'tpope/vim-fugitive'
 Plug 'lervag/vimtex'
 Plug 'numToStr/Comment.nvim'
-
+Plug 'kylelaker/riscv.vim'
 " Initialize plugin system
 call plug#end()
 
