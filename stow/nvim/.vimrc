@@ -55,6 +55,7 @@ au BufRead,BufNewFile .jsbeautifyrc     set syn=json
 au BufRead,BufNewFile *.conf            set syn=conf
 au BufRead,BufNewFile .megarc           set syn=dosini
 au BufRead,BufNewFile mpv.conf          set syn=cfg
+au BufRead,BufNewFile *.py              set syn=python
 au BufRead,BufNewFile black,flake8,*mypy/config,.config/bpython/config set syn=cfg
 au BufRead,BufNewFile ghci.conf         set syn=haskell
 set re=1
