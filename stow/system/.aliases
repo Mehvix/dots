@@ -33,6 +33,7 @@ alias q=exit
 alias what=type
 alias lock="dm-tool lock"
 alias jn="jupyter-notebook"
+bright() { xrandr --output HDMI-A-0 --brightness "$1" && xrandr --output eDP --brightness "$1" } 
 
 # reload
 alias rz="source ~/.zshrc"

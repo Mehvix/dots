@@ -19,6 +19,8 @@ export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
+export TESSDATA_PREFIX='/usr/share/tessdata'
+
 # haskell
 export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
 

@@ -82,7 +82,6 @@
 [delta "interactive"]
     keep-plus-minus-markers = false
 
-
 [http]
 	postBuffer = 524288000  # fix SSH pushing
 
