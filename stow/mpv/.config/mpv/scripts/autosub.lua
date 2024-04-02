@@ -36,7 +36,7 @@ local languages = {
 local logins = {
           { '--addic7ed', 'globalsharewarebind8shield.net', 'sGgBP5aVDvtTOw' },
 --          { '--legendastv', 'USERNAME', 'PASSWORD' },
-          { '--opensubtitles', 'Mehvix', 'ja7V*UNFxVM&vin4' },
+       --   { '--opensubtitles', 'vixmeh', 'ja7V*UNFxVM&vin4' },
 --          { '--subscenter', 'USERNAME', 'PASSWORD' },
 }
 --=============================================================================

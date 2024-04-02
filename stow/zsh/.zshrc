@@ -208,3 +208,11 @@ fi
 unset __conda_setup
 # <<< conda initialize <<<
 
+
+# bun completions
+[ -s "/home/max/.local/share/reflex/bun/_bun" ] && source "/home/max/.local/share/reflex/bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.local/share/reflex/bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+autoload -Uz compinit && compinit
