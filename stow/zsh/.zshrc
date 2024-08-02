@@ -67,7 +67,13 @@ DISABLE_AUTO_UPDATE="true"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting history-substring-search)
+plugins=(
+    git 
+    #zsh-autosuggestions 
+    zsh-syntax-highlighting 
+    history-substring-search
+)
+
 
 source $ZSH/oh-my-zsh.sh
 
@@ -145,9 +151,9 @@ d=~/.dircolors
 test -r $d && eval "$(dircolors $d)"
 
 # chruby
-source /usr/share/chruby/chruby.sh
-source /usr/share/chruby/auto.sh
-RUBIES=(/opt/ruby* $HOME/.rubies/*)
+#source /usr/share/chruby/chruby.sh
+#source /usr/share/chruby/auto.sh
+#RUBIES=(/opt/ruby* $HOME/.rubies/*)
 
 # pipx
 autoload -U bashcompinit
@@ -188,8 +194,8 @@ if [[ -n $ZSH_INIT_COMMAND ]]; then
 fi
 
 
-[ -f "/home/max/.ghcup/env" ] && source "/home/max/.ghcup/env" # ghcup-env
-autoload -Uz compinit
+#[ -f "/home/max/.ghcup/env" ] && source "/home/max/.ghcup/env" # ghcup-env
+#autoload -Uz compinit
 zstyle ':completion:*' menu select
 fpath+=~/.zfunc
 
@@ -210,9 +216,9 @@ unset __conda_setup
 
 
 # bun completions
-[ -s "/home/max/.local/share/reflex/bun/_bun" ] && source "/home/max/.local/share/reflex/bun/_bun"
+#[ -s "/home/max/.local/share/reflex/bun/_bun" ] && source "/home/max/.local/share/reflex/bun/_bun"
 
 # bun
-export BUN_INSTALL="$HOME/.local/share/reflex/bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-autoload -Uz compinit && compinit
+#export BUN_INSTALL="$HOME/.local/share/reflex/bun"
+#export PATH="$BUN_INSTALL/bin:$PATH"
+#autoload -Uz compinit && compinit
