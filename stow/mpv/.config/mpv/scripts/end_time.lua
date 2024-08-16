@@ -1,5 +1,5 @@
 mp.register_script_message('end-time', function()
-    when = os.date('%I:%M:%S', os.time() + mp.get_property("time-remaining"))
+    when = os.date('%I:%M:%S', os.time() + mp.get_property("time-remaining") / mp.get_property_number("speed"))
     mp.osd_message(string.format("Movie ends at: %s", when), 3)
 end)
 
