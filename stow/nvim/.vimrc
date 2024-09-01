@@ -85,6 +85,10 @@ set autoindent      " continue indent when pasting
 set smartindent     " reacts to the synthax of the code
 set smarttab        " automatically indent newlines
 
+"" unindent in normal and visual modes
+nnoremap <S-Tab> <<
+vnoremap <S-Tab> <gv
+
 " searching
 set ignorecase      " do case insensitive matching
 set smartcase       " do smart case matching
