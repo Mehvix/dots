@@ -21,6 +21,9 @@ export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
 export TESSDATA_PREFIX='/usr/share/tessdata'
 
+# verilog
+export PATH="$PATH:/usr/bin/verible-verilog-format"
+
 # haskell
 export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
 
@@ -31,6 +34,7 @@ export PATH="$PATH:$GOPATH/bin"
 # python
 # export PYTHONSTARTUP=~/.pythonrc
 #export PYTHONPATH="./.pyenv/versions/3.11.0b4/lib/python3.11/site-packages:$PYTHONPATH" # https://github.com/bpython/bpython/issues/494#issuecomment-98760418
+export PYTHONSTARTUP=~/.config/bpython/startup.py
 
 ## pipx
 export PIPX_DEFAULT_PYTHON='python3'    # https://github.com/pypa/pipx/issues/654

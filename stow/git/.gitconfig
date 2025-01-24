@@ -7,18 +7,12 @@
     filemode = false    # Ignore line end changes (Win -> *nix)
     autocrlf = input
 	editor = nvim
-    pager = delta
+    #pager = delta
 	excludesFile = ~/.gitignore_global
 	askpass = git-gui--askpass
 
 [github]
     user = Mehvix
-
-[diff]
-    tool = vimdiff
-
-[merge]
-    tool = vimdiff
 
 [push]
 	default = simple
@@ -28,20 +22,6 @@
 
 [color]
     ui = true
-
-[color "diff-highlight"]
-    oldNormal = red bold
-    oldHighlight = red bold 52
-    newNormal = green bold
-    newHighlight = green bold 22
-
-[color "diff"]
-    meta = yellow
-    frag = magenta bold
-    commit = yellow bold
-    old = red bold
-    new = green bold
-    whitespace = red reverse
     
 [init]
 	defaultBranch = master
@@ -49,41 +29,71 @@
 [alias]
     tree = log --graph --decorate --pretty=oneline --abbrev-commit
 
-[credentials]
-	helper = UseHttpPath=true
-
 [credential]
-	helper = store
-
-[delta]
-    #side-by-side = true
-    
-    # https://github.com/dandavison/delta/blob/master/themes.gitconfig
-    # author: https://github.com/torarnv
-    dark = true
-    file-style = omit
-    hunk-header-decoration-style = omit
-    hunk-header-file-style = magenta
-    hunk-header-line-number-style = dim magenta
-    hunk-header-style = file line-number syntax
-    line-numbers = false
-    minus-emph-style = bold red 52
-    minus-empty-line-marker-style = normal "#3f0001"
-    minus-non-emph-style = dim red
-    minus-style = bold red
-    plus-emph-style = bold green 22
-    plus-empty-line-marker-style = normal "#002800"
-    plus-non-emph-style = dim green
-    plus-style = bold green
-    syntax-theme = OneHalfDark
-    whitespace-error-style = reverse red
-    zero-style = dim syntax
-
-[delta "interactive"]
-    keep-plus-minus-markers = false
+    #helper = store
+    helper = manager
+    useHttpPath = true
 
 [http]
-	postBuffer = 524288000  # fix SSH pushing
+    postBuffer = 524288000  # fix SSH pushing
 
 [url "ssh://github.com/"]
-	pushInsteadOf = https://github.com/
+    pushInsteadOf = https://github.com/
+
+[diff]
+    external = difft
+
+[difftool]
+    prompt = false     # Run the difftool immediately, don't ask 'are you sure' each time.
+
+[pager]
+    # Use a pager if the difftool output is larger than one screenful,
+    # consistent with the behaviour of `git diff`.
+    difftool = true
+
+[difftool "difftastic"]
+    # See `man git-difftool` for a description of MERGED, LOCAL and REMOTE.
+    cmd = difft "$MERGED" "$LOCAL" "abcdef1" "100644" "$REMOTE" "abcdef2" "100644"
+
+
+; [delta]
+;     #side-by-side = true
+;     
+;     # https://github.com/dandavison/delta/blob/master/themes.gitconfig
+;     # author: https://github.com/torarnv
+;     dark = true
+;     file-style = omit
+;     hunk-header-decoration-style = omit
+;     hunk-header-file-style = magenta
+;     hunk-header-line-number-style = dim magenta
+;     hunk-header-style = file line-number syntax
+;     line-numbers = false
+;     minus-emph-style = bold red 52
+;     minus-empty-line-marker-style = normal "#3f0001"
+;     minus-non-emph-style = dim red
+;     minus-style = bold red
+;     plus-emph-style = bold green 22
+;     plus-empty-line-marker-style = normal "#002800"
+;     plus-non-emph-style = dim green
+;     plus-style = bold green
+;     syntax-theme = OneHalfDark
+;     whitespace-error-style = reverse red
+;     zero-style = dim syntax
+;
+; [delta "interactive"]
+;     keep-plus-minus-markers = false
+;
+; [color "diff-highlight"]
+;     oldNormal = red bold
+;     oldHighlight = red bold 52
+;     newNormal = green bold
+;     newHighlight = green bold 22
+;
+; [color "diff"]
+;     meta = yellow
+;     frag = magenta bold
+;     commit = yellow bold
+;     old = red bold
+;     new = green bold
+;     whitespace = red reverse
+

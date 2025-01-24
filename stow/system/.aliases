@@ -51,6 +51,7 @@ alias attr="vim \${CODE_ROOT}/mehvix.com/static/js/attributes.js"
 alias vim=nvim
 alias json=fx
 alias cat=bat
+alias ccat="bat --wrap=never"
 alias py=bpython    # ptpython
 alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
 alias l="exa --all --long --header --classify --icons --git --group-directories-first"

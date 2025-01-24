@@ -69,11 +69,16 @@ DISABLE_AUTO_UPDATE="true"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
     git 
+    ssh-agent
     #zsh-autosuggestions 
     zsh-syntax-highlighting 
     history-substring-search
 )
 
+zstyle :omz:plugins:ssh-agent agent-forwarding yes
+zstyle :omz:plugins:ssh-agent identities id_151 id_180
+zstyle :omz:plugins:ssh-agent quiet yes
+zstyle :omz:plugins:ssh-agent lazy yes
 
 source $ZSH/oh-my-zsh.sh
 
@@ -133,6 +138,13 @@ export LC_CTYPE=C
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# source .env if present
+if [ -f .env ]; then
+    set -a
+    source .env
+    set +a
+fi
 
 # https://github.com/mafredri/zsh-async
 source ~/.async.zsh     # todo outsource this to plugin manager
