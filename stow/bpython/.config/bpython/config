@@ -29,6 +29,8 @@
 # Number of lines to store in history (set to 0 to disable) (default: 100):
 # hist_length = 100
 
+hist_duplicates=False
+
 # Soft tab size (default: 4, see pep-8):
 # tab_length = 4
 
@@ -44,7 +46,7 @@
 #          atom -nw (Atom)
 # Default is to try $EDITOR and $VISUAL, then vi - but if you uncomment
 # the line below that will take precedence
-# editor = vi
+editor = nvim
 
 # Whether to append .py to the filename while saving session to a file.
 # (default: False)

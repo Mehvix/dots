@@ -76,7 +76,7 @@ plugins=(
 )
 
 zstyle :omz:plugins:ssh-agent agent-forwarding yes
-zstyle :omz:plugins:ssh-agent identities id_151 id_180
+zstyle :omz:plugins:ssh-agent identities id_152 id_bwrc
 zstyle :omz:plugins:ssh-agent quiet yes
 zstyle :omz:plugins:ssh-agent lazy yes
 
@@ -85,6 +85,7 @@ source $ZSH/oh-my-zsh.sh
 # User configuration
 # vi mode
 # bindkey -v
+bindkey '^H' backward-kill-word # ctrl+backspace deletes word
 
 # History
 bindkey "^[[A" history-substring-search-up
