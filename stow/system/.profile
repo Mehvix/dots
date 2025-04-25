@@ -34,7 +34,7 @@ export DATE=$(date "+%A, %B %e  %_I:%M%P")
 
 # fzf
 export FZF_DEFAULT_OPTS="--color 16 --layout=reverse --height 30% --preview='bat -p --color=always {}'"
-export FZF_CTRL_R_OPTS="--color 16 --info inline --no-sort --no-preview"
+export FZF_CTRL_R_OPTS="--info inline --no-sort --no-preview --exact"
 
 # verilog
 export PATH="$PATH:/usr/bin/verible-verilog-format"
