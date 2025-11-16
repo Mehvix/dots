@@ -1,3 +1,13 @@
+if !isdirectory($HOME."/.vim/backup")
+    call mkdir($HOME."/.vim/backup", "p")
+endif
+if !isdirectory($HOME."/.vim/swap")
+    call mkdir($HOME."/.vim/swap", "p")
+endif
+if !isdirectory($HOME."/.vim/undo")
+    call mkdir($HOME."/.vim/undo", "p")
+endif
+
 " use vim settings, rather than vi settings (much better!).
 " this must be first, because it changes other options as a side effect.
 set nocompatible
@@ -7,7 +17,13 @@ set nocompatible
 set shell=/usr/bin/zsh
 
 " yank copies to system clipoard (needs xsel)
-set clipboard=unnamedplus
+if has('win32') || has('win64')
+    set clipboard=unnamed
+elseif has('mac')
+    set clipboard=unnamed
+else
+    set clipboard=unnamedplus
+endif
 
 " wrap by breaking at spaces, rather than splitting words
 set wrap linebreak nolist
