@@ -1,5 +1,6 @@
---cookies-from-browser "brave"
+#--cookies-from-browser "brave"
 --download-archive ~/.config/yt-dlp/done.txt
+--extractor-args "youtube:player_client=android"
 
 #--sponsorblock-mark=all
 #--no-check-certificate
@@ -19,5 +20,4 @@
 #--sleep-interval 5 --max-sleep-interval 30`    # Tell yt-dlp to pause between 5 and 30 seconds between 2 download to avoid getting "429 - Too Many Requests".
 
 --no-overwrites
-
 

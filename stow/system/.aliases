@@ -9,7 +9,7 @@ alias rm="rm -rv"
 alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
-alias ps="ps -ef"       # All processess running on system
+#alias ps="ps -ef"       # All processess running on system
 alias sudo=doas
 #alias sudo="sudo "      # Respect aliases -- https://askubuntu.com/q/22037
 #alias grep="grep -R --line-number --extended-regexp --color=always"
@@ -45,7 +45,7 @@ alias rp="source ~/.profile"
 alias vz="vim ~/.zshrc"
 alias va="vim ~/.aliases"
 alias vp="vim ~/.profile"
-alias attr="vim \${CODE_ROOT}/mehvix.com/static/js/attributes.js"
+alias attr="vim \${CODE_ROOT}/sites/mehvix.com/static/js/attributes.js"
 
 # alternatives + program shortcuts
 alias vim=nvim
@@ -74,7 +74,7 @@ alias sch="~/Documents/School/"
 alias dots="cd \${CODE_ROOT}/dotfiles/"
 alias dot=dots
 alias www="/var/www/"
-alias comp="~/Pictures/Computer\ Misc/"
+alias comp="~/Pictures/photos-pc/Computer\ Misc/"
 alias pics="~/Pictures/"
 
 # new commands

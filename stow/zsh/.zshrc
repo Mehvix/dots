@@ -83,8 +83,7 @@ zstyle :omz:plugins:ssh-agent lazy yes
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
-# vi mode
-# bindkey -v
+bindkey -e # emacs (like bash)
 bindkey '^H' backward-kill-word # ctrl+backspace deletes word
 
 # History

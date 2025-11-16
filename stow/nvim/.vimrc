@@ -77,6 +77,14 @@ set scrolloff=5     " keep at least 5 lines above/below cursor
 set mouse=a         " enable mouse usage in all modes
 set mousehide       " hide the mouse when typing
 
+" word-wrap visual movement-- up/down goes to character visually above/below
+" >insert
+inoremap <expr> <Down> pumvisible() ? '<Down>' : '<C-o>g<Down>'
+inoremap <expr> <Up> pumvisible() ? '<Up>' : '<C-o>g<Up>'
+" >normal
+nnoremap <expr> <Down> v:count ? '<Down>' : 'g<Down>'
+nnoremap <expr> <Up> v:count ? '<Up>' : 'g<Up>'
+
 " tabs
 set tabstop=4       " each tab is 4 spaces
 set shiftwidth=4    " sets >> and << width
@@ -128,4 +136,12 @@ else
     " standard vim specific commands (deprecated in nvim)
     set ttymouse=xterm2
 endif
+
+function! CommentToggle()
+    execute ':silent! s/\([^ ]\)/\/\/ \1/'
+    execute ':silent! s/^\( *\)\/\/ \/\/ \(.*\)/\1\2/'
+endfunction
+
+nnoremap <C-/> :call CommentToggle()<CR>
+vnoremap <C-/> :call CommentToggle()<CR>
 
