@@ -4,7 +4,7 @@
 alias mv="mv -iv"
 alias cp="cp -rivL"     # Ask confirmation, verbose, follow symlinks
 alias cpf="yes | cp -rL"      # No confirmation
-alias mkdir="mkdir -vp" 
+alias mkdir="mkdir -vp"
 alias rm="rm -rv"
 alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
@@ -34,7 +34,7 @@ alias what=type
 alias lock="dm-tool lock"
 alias jn="jupyter-notebook"
 alias shizuku="adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
-bright() { xrandr --output HDMI-A-0 --brightness "$1" && xrandr --output eDP --brightness "$1" } 
+bright() { xrandr --output HDMI-A-0 --brightness "$1" && xrandr --output eDP --brightness "$1" }
 
 # reload
 alias rz="source ~/.zshrc"
@@ -68,7 +68,7 @@ alias topoff="sudo tlp fullcharge"
 alias charge="sudo tlp setcharge 65 80"
 
 # directories
-alias code="cd \${CODE_ROOT}" 
+alias code="cd \${CODE_ROOT}"
 alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
 alias sch="~/Documents/School/"
 alias dots="cd \${CODE_ROOT}/dotfiles/"
@@ -95,8 +95,8 @@ timezsh() {
   for i in $(seq 1 10); do /usr/bin/time $shell -i -c exit; done
 }
 
-function mkcd() { 
-    command mkdir -p $1 && cd $1 
+function mkcd() {
+    command mkdir -p $1 && cd $1
 }
 
 # image convert
@@ -113,7 +113,7 @@ function ff3() {
 function ff3art() {
     command mkdir withArt
     for i in *.mp3
-    do 
+    do
         command ffmpeg -y -i "$i" -i $1 -map 0:0 -map 1:0 -codec copy -id3v2_version 3 -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" "withArt/$i"
     done
     cd withArt
@@ -122,7 +122,7 @@ function ff3art() {
 function ff3album() {
     command mkdir withAlbum
     for i in *.mp3
-    do 
+    do
         command ffmpeg -y -i "$i" -c copy -metadata album="$1"  "withAlbum/$i"
     done
     cd withAlbum
@@ -132,7 +132,7 @@ function ff3album() {
 function ff3artist() {
     command mkdir withArtist
     for i in *.mp3
-    do 
+    do
         command ffmpeg -y -i "$i" -c copy -metadata album_artist="$2" -metadata artist="$2" "withArtist/$i"
     done
     cd withArtist
@@ -161,7 +161,9 @@ alias ga="git add"
 alias gaa="git add ."
 alias gcm="git commit -m"
 alias gp="git push"
+alias gl="git pull"
 alias gco="git checkout"
+alias gd="git diff"
 
 ## gitlet cs61b
 #alias gl="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.Main"
