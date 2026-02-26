@@ -4,3 +4,12 @@
 	branch = master
 [submodule]
 	recurse = true
+[submodule "stow/zsh/.powerlevel10k"]
+	path = stow/zsh/.powerlevel10k
+	url = https://github.com/romkatv/powerlevel10k.git
+[submodule "stow/zsh/.zsh/plugins/zsh-syntax-highlighting"]
+	path = stow/zsh/.zsh/plugins/zsh-syntax-highlighting
+	url = https://github.com/zsh-users/zsh-syntax-highlighting.git
+[submodule "stow/zsh/.zsh/plugins/zsh-history-substring-search"]
+	path = stow/zsh/.zsh/plugins/zsh-history-substring-search
+	url = https://github.com/zsh-users/zsh-history-substring-search.git
