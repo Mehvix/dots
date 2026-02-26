@@ -149,9 +149,9 @@ function ff4c() {
 
 # yt-dlp / youtube-dl
 alias youtube-dl="yt-dlp"
-alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
-alias ytv='yt-dlp -o "~/Pictures/Computer Misc/%(title)s.%(ext)s"'
-alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/Misc/%(title)s.%(ext)s"'
+alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
+alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
+alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/%(title)s.%(ext)s"'
 
 # git
 alias gpom="git push origin master"
