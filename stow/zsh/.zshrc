@@ -6,22 +6,41 @@ fi
 # Environment Variables
 source ~/.profile
 source ~/.aliases
-# source ~/.secrets
+[ -f ~/.secrets ] && source ~/.secrets
 
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
+unsetopt BEEP
+
+# Binds
 bindkey -e # emacs (like bash)
 bindkey '^H' backward-kill-word # ctrl+backspace deletes word
 
-# ============================================================================
-# Theme: Powerlevel10k
-# ============================================================================
-source ~/.powerlevel10k/powerlevel10k.zsh-theme
+bindkey '\e[1;5D' backward-word       # Ctrl+Left
+bindkey '\e[1;5C' forward-word        # Ctrl+Right
+
+# cd-up-widget() {
+#     builtin cd ..
+#     local precmd
+#     for precmd in $precmd_functions; do
+#         $precmd
+#     done
+#     zle .reset-prompt
+# }
+cd-up-widget() {
+    BUFFER='cd ..'
+    zle accept-line
+}
+zle -N cd-up-widget
+bindkey '^N' cd-up-widget
+zle -N cd-up-widget
+bindkey '^N' cd-up-widget            # Ctrl+n: go up a directory
 
 
 # ============================================================================
 # Completion System
 # ============================================================================
+fpath+=~/.zfunc
 autoload -Uz compinit
 unsetopt CASE_GLOB
 
@@ -35,16 +54,23 @@ fi
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path ~/.zsh/cache
 
-
 # case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 zstyle ':completion:*' menu select
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 
+# uv
+eval "$(uv generate-shell-completion zsh)"
+eval "$(uvx --generate-shell-completion zsh)"
+
 # ============================================================================
 # Plugins
 # ============================================================================
 ZPLUGINDIR=~/.zsh/plugins
+
+# p10k
+source ~/.powerlevel10k/powerlevel10k.zsh-theme
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # syntax highlighting
 [[ -f $ZPLUGINDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
@@ -54,8 +80,9 @@ ZPLUGINDIR=~/.zsh/plugins
 [[ -f $ZPLUGINDIR/zsh-history-substring-search/zsh-history-substring-search.zsh ]] && \
     source $ZPLUGINDIR/zsh-history-substring-search/zsh-history-substring-search.zsh
 
-bindkey "^[[A" history-substring-search-up
-bindkey "^[[B" history-substring-search-down
+bindkey "^[[A" history-substring-search-up      # up arrow
+bindkey "^[[B" history-substring-search-down    # down arrow
+HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
 
 # ============================================================================
 # History Configuration
@@ -102,16 +129,6 @@ source <(fzf --zsh)
 # ============================================================================
 source ~/.async.zsh
 
-# ============================================================================
-# UV (Python)
-# ============================================================================
-eval "$(uv generate-shell-completion zsh)"
-eval "$(uvx --generate-shell-completion zsh)"
-
-# ============================================================================
-# Additional completion paths
-# ============================================================================
-fpath+=~/.zfunc
 
 # ============================================================================
 # Environment source
@@ -123,10 +140,6 @@ if [ -f .env ]; then
     set +a
 fi
 
-# ============================================================================
-# Powerlevel10k config
-# ============================================================================
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # ============================================================================
 # Parent initialization
