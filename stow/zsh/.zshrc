@@ -6,7 +6,7 @@ fi
 # Environment Variables
 source ~/.profile
 source ~/.aliases
-source ~/.secrets
+# source ~/.secrets
 
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -93,8 +93,9 @@ test -r $d && eval "$(dircolors $d)"
 # ============================================================================
 # FZF
 # ============================================================================
-source /usr/share/fzf/key-bindings.zsh
-source /usr/share/fzf/completion.zsh
+# source /usr/share/fzf/key-bindings.zsh
+# source /usr/share/fzf/completion.zsh
+source <(fzf --zsh)
 
 # ============================================================================
 # Async

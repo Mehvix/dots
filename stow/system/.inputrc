@@ -1,12 +1,22 @@
-# zsh does not read this file
+#!/bin/bash
+# NOTE: zsh does not read this file
 
 # General
 set bell-style none
 set show-all-if-ambiguous on
 set completion-ignore-case on
 
-# C+n goes back a dir
-'\C-n':'cd ..\n'
+"\e[1;5D": backward-word      # Ctrl+Left
+"\e[1;5C": forward-word       # Ctrl+Right
+
+"\e[3;5~": kill-word          # Ctrl+Delete (forward)
+"\e[3^": kill-word            # Alternative Ctrl+Delete
+"\C-h": backward-kill-word    # Ctrl+Backspace (backward)
+"\C-w": backward-kill-word    # Alternative backward
+"\ed": kill-word              # Alt+d (forward)
+"\e\C-?": backward-kill-word  # Alt+Backspace (backward)
+
+'\C-n':'cd ..\n'              # C+n goes back a dir
 
 # Color files by types
 # Note that this may cause completion text blink in some terminals (e.g. xterm).

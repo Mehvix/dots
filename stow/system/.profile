@@ -1,3 +1,7 @@
+#!/bin/bash
+
+[[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal
+
 # personal dirs
 export CODE_ROOT="${HOME}/Documents/Code"
 export PATH="${HOME}/dots/scripts:${PATH}"
@@ -59,7 +63,6 @@ export PATH=~/.npm-global/bin:$PATH
 export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
-
 append_path () {
     case ":$PATH:" in
         *:"$1":*)
@@ -68,3 +71,5 @@ append_path () {
             PATH="${PATH:+$PATH:}$1"
     esac
 }
+
+[ -f ~/.profile_amzn ] && source ~/.profile_amzn
