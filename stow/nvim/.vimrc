@@ -12,14 +12,12 @@ endif
 " this must be first, because it changes other options as a side effect.
 set nocompatible
 
-
-" set shell to zsh
-set shell=/usr/bin/zsh
+" set shell to zsh, login
+set shell=zsh
+set shellcmdflag=-lc
 
 " yank copies to system clipoard (needs xsel)
-if has('win32') || has('win64')
-    set clipboard=unnamed
-elseif has('mac')
+if has('win32') || has('win64') || has('mac')
     set clipboard=unnamed
 else
     set clipboard=unnamedplus
@@ -53,11 +51,22 @@ vnoremap > >gv
 cnoremap w!! execute 'silent! write !sudo tee % >/dev/null' <bar> edit!
 
 " misc
-set noerrorbells    " gets rid of beeping sound
-set autowrite       " auto-save before commands like :next and :make
+set noerrorbells        " gets rid of beeping sound
+set autowrite           " auto-save before commands like :next and :make
 set backspace=indent,eol,start  " allow backspacing over everything in insert mode
-set history=1000    " keep x lines of command line history
+set history=1000        " keep x lines of command line history
 set encoding=utf-8
+set complete-=i         " prevent autocomplete #include, sloh
+set nrformats-=octal    " who tf uses octals
+set autoread            " read file changes auto
+
+" don't save settings in session/view 
+set sessionoptions-=options
+set viewoptions-=options
+
+" plugin compliance
+set nolangremap
+set viminfo^=!
 
 " syntax HL
 syntax on           " syntax highlighting
@@ -82,14 +91,20 @@ set showcmd         " show (partial) command in status line
 set laststatus=2    " always show status line
 set statusline=%.40F%=%m\ %Y\ Line:\ %3l/%L[%3p%%]
 set cmdheight=1
-
-""set ruler
 set shortmess=aI     " don't show the startup message and hide 'Hit ENTER to continue'
+" handled by lightline
+"set ruler
+"set wildmenu
+
+set listchars=tab:>\ ,trail:-,extends:>,precedes:<,nbsp:+
 
 " navigation
 set nu              " set line numbering
 ""set relativenumber  " show relative line numbers
 set scrolloff=5     " keep at least 5 lines above/below cursor
+set sidescrolloff=2
+"display+=lastline   " show last line not soley ''@@@''
+"display+=truncate   " indicate truncation, ||
 set mouse=a         " enable mouse usage in all modes
 set mousehide       " hide the mouse when typing
 
@@ -116,11 +131,12 @@ vnoremap <S-Tab> <gv
 " searching
 set ignorecase      " do case insensitive matching
 set smartcase       " do smart case matching
-set incsearch       " incremental search
+set incsearch       " show incremental search matches
 set hlsearch        " highlight searches
 set showmatch       " show matching brackets.
 ""autocmd VimEnter * nnoremap <esc> :nohlsearch<return><esc>    " clear highlight on pressing esc
 autocmd InsertEnter * :let @/=""    " clear highlight when entering insert mode
+let g:is_posix = 1  " fix hl on $(), in .sh
 
 " turn on persistent undo
 if has('persistent_undo')
@@ -139,11 +155,14 @@ set backupdir=~/.vim/backup//
 " src:   http://stackoverflow.com/a/15317146
 set directory=~/.vim/swap//
 
-" Uncomment the following to have Vim jump to the last position when
-" reopening a file
+" jump to the last position when re-opening
 if has("autocmd")
   au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
+if $SUDO_USER != ""
+  let &shadafile = "/home/" . $SUDO_USER . "/.local/share/nvim/shada/main.shada"
+endif
+
 
 if has('nvim') 
     " neovim specific settings
@@ -153,11 +172,4 @@ else
     set ttymouse=xterm2
 endif
 
-function! CommentToggle()
-    execute ':silent! s/\([^ ]\)/\/\/ \1/'
-    execute ':silent! s/^\( *\)\/\/ \/\/ \(.*\)/\1\2/'
-endfunction
-
-nnoremap <C-/> :call CommentToggle()<CR>
-vnoremap <C-/> :call CommentToggle()<CR>
 

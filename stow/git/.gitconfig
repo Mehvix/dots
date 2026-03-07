@@ -56,6 +56,7 @@
     cmd = difft "$MERGED" "$LOCAL" "abcdef1" "100644" "$REMOTE" "abcdef2" "100644"
 
 
+; TODO bring back diff theme 
 ; [delta]
 ;     #side-by-side = true
 ;     

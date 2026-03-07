@@ -1,2 +1,6 @@
 *.bak
 .zsh/cache
+
+stow/nvim/.vim/undo/
+stow/nvim/.vim/swap/
+stow/nvim/.vim/plugged/

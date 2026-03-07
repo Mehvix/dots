@@ -23,7 +23,7 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CACHE_HOME="$HOME/.cache"
 
 # defaults
-export EDITOR=/usr/bin/nvim
+#export EDITOR=/usr/bin/nvim
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
