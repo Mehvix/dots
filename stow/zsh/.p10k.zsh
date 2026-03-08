@@ -211,7 +211,15 @@
 
   ##################################[ dir: current directory ]##################################
   # Current directory background color.
-  typeset -g POWERLEVEL9K_DIR_BACKGROUND=4
+  if [[ "$HOST" == "houdini" ]]; then
+    typeset -g POWERLEVEL9K_DIR_BACKGROUND=5      # pink
+  elif [[ "$HOST" == "wayside" ]]; then
+    typeset -g POWERLEVEL9K_DIR_BACKGROUND=6      # cyan
+  elif [[ "$HOST" == "max" ]]; then
+    typeset -g POWERLEVEL9K_DIR_BACKGROUND=2      # green
+  else
+    typeset -g POWERLEVEL9K_DIR_BACKGROUND=7      # default gray
+  fi
   # Default current directory foreground color.
   typeset -g POWERLEVEL9K_DIR_FOREGROUND=254
   # If directory is too long, shorten some of its segments to the shortest possible unique

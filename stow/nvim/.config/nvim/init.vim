@@ -14,7 +14,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-sleuth'
 Plug 'tpope/vim-commentary'
 Plug 'fladson/vim-kitty'
-Plug 'lervag/vimtex'
+"Plug 'lervag/vimtex'
 Plug 'kylelaker/riscv.vim'
 
 call plug#end() " init plugin system
@@ -25,7 +25,7 @@ endif
 
 " theme
 colorscheme onedark
-set background=dark 
+set background=dark
 let g:onedark_terminal_italics=1
 
 " onedark.vim
