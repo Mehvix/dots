@@ -62,3 +62,28 @@ vmap <C-/> gc
 
 source ~/.vimrc " vim settings
 
+" https://github.com/neovim/neovim/discussions/28010#discussioncomment-13098110
+" clipboard off
+set clipboard=
+
+" yank to + so OSC52 can send it
+augroup ClipAuto
+  autocmd!
+  autocmd TextYankPost * silent! call setreg('+', getreg('"'), v:event.regtype)
+augroup END
+
+" osc52 write only (paste disabled)
+lua << EOF
+local osc52 = require('vim.ui.clipboard.osc52')
+vim.g.clipboard = {
+  name = 'osc52-write',
+  copy = {
+    ['+'] = osc52.copy('+'),
+    ['*'] = osc52.copy('*'),
+  },
+  paste = {
+    ['+'] = function() return { {}, 'v' } end,
+    ['*'] = function() return { {}, 'v' } end,
+  },
+}
+EOF

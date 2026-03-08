@@ -16,13 +16,6 @@ set nocompatible
 set shell=zsh
 set shellcmdflag=-lc
 
-" yank copies to system clipoard (needs xsel)
-if has('win32') || has('win64') || has('mac')
-    set clipboard=unnamed
-else
-    set clipboard=unnamedplus
-endif
-
 " wrap by breaking at spaces, rather than splitting words
 set wrap linebreak nolist
 
@@ -60,7 +53,7 @@ set complete-=i         " prevent autocomplete #include, sloh
 set nrformats-=octal    " who tf uses octals
 set autoread            " read file changes auto
 
-" don't save settings in session/view 
+" don't save settings in session/view
 set sessionoptions-=options
 set viewoptions-=options
 
@@ -164,12 +157,20 @@ if $SUDO_USER != ""
 endif
 
 
-if has('nvim') 
+if has('nvim')
     " neovim specific settings
     tnoremap <Esc> <C-\><C-n>
 else
     " standard vim specific commands (deprecated in nvim)
     set ttymouse=xterm2
+
+    " nvim has osc52 setup so clipboard works over SSH
+    " yank copies to system clipoard (needs xsel)
+    if has('win32') || has('win64') || has('mac')
+        set clipboard=unnamed
+    else
+        set clipboard=unnamedplus
+    endif
 endif
 
 
