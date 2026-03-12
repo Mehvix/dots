@@ -60,7 +60,6 @@ let g:gitgutter_sign_modified_removed = '<'
 nmap <C-/> gcc
 vmap <C-/> gc
 
-source ~/.vimrc " vim settings
 
 " https://github.com/neovim/neovim/discussions/28010#discussioncomment-13098110
 " clipboard off
@@ -87,3 +86,16 @@ vim.g.clipboard = {
   },
 }
 EOF
+
+" vscode incompat w latest v12 CSI u keeb protocol (?)
+lua << EOF
+if vim.env.TERM_PROGRAM == 'vscode' then
+  vim.schedule(function()
+    io.stdout:write('\x1b[>0u')    -- disable CSI u (kitty keyboard protocol)
+    io.stdout:write('\x1b[>4;0m')  -- disable modifyOtherKeys
+    io.stdout:flush()
+  end)
+end
+EOF
+
+source ~/.vimrc " vim settings

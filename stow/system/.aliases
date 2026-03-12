@@ -56,12 +56,12 @@ alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
 alias py=bpython    # ptpython
-alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
-alias l="exa --all --long --header --classify --icons --git --group-directories-first"
-alias dirs="exa --list-dirs"
+# alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
+alias l="eza --all --long --header --classify --icons --git --group-directories-first"
+alias dirs="eza --list-dirs"
 alias t=tree
-alias t3="exa --tree --level=3 -l"
-alias t2="exa --tree --level=2 -l"
+alias t3="eza --tree --level=3 -l"
+alias t2="eza --tree --level=2 -l"
 alias vs="\\code ."
 alias mvi="mpv -profile image"
 alias f8="cp -L ~/.config/flake8 ./.flake8" # no global conf my ass

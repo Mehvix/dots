@@ -217,8 +217,10 @@
     typeset -g POWERLEVEL9K_DIR_BACKGROUND=6      # cyan
   elif [[ "$HOST" == "max" ]]; then
     typeset -g POWERLEVEL9K_DIR_BACKGROUND=2      # green
+  elif [[ "$HOST" == "etx-maxv" ]]; then
+    typeset -g POWERLEVEL9K_DIR_BACKGROUND=16     # black
   else
-    typeset -g POWERLEVEL9K_DIR_BACKGROUND=7      # default gray
+    typeset -g POWERLEVEL9K_DIR_BACKGROUND=7      # default white
   fi
   # Default current directory foreground color.
   typeset -g POWERLEVEL9K_DIR_FOREGROUND=254
