@@ -1,9 +1,9 @@
+[submodule]
+	recurse = true
 [submodule "stow/joplin/.config/joplin-desktop"]
 	path = stow/joplin/.config/joplin-desktop
 	url = https://github.com/Mehvix/joplin-one-dark
 	branch = master
-[submodule]
-	recurse = true
 [submodule "stow/zsh/.powerlevel10k"]
 	path = stow/zsh/.powerlevel10k
 	url = https://github.com/romkatv/powerlevel10k.git

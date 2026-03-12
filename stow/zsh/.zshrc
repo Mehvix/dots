@@ -103,7 +103,8 @@ setopt HIST_REDUCE_BLANKS       # Remove unnecessary blanks
 setopt HIST_FIND_NO_DUPS        # Don't display duplicates when searching
 setopt INC_APPEND_HISTORY       # Append immediately, not on exit
 setopt INC_APPEND_HISTORY_TIME  # Append with timestamp
-setopt SHARE_HISTORY            # Share history between sessions
+#setopt SHARE_HISTORY            # Share history between sessions
+unsetopt SHARE_HISTORY
 
 HIST_STAMPS="yy/mm/dd"
 
