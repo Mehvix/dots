@@ -16,7 +16,7 @@ alias free="free -m"    # Show sizes in MB
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
 touch() {
-    mkdir -p "$( dirname "$1")" && /usr/bin/touch "$1"
+    mkdir -p "$(dirname "$1")" && command touch "$1"
 }
 
 # shortcuts
