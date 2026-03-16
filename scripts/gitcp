@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# gitcp - Copy only git-tracked files from source to destination,
+#          preserving directory structure.
+#
+# Usage: gitcp <source-dir> <dest-dir>
+#
+
+set -euo pipefail
+
+usage() {
+    echo "Usage: gitcp <source-dir> <dest-dir>"
+    echo ""
+    echo "Copies all git-tracked files from <source-dir> to <dest-dir>,"
+    echo "preserving directory structure. Untracked and ignored files are skipped."
+    exit 1
+}
+
+if [[ $# -ne 2 ]]; then
+    usage
+fi
+
+SRC="$(realpath "$1")"
+DEST="$(realpath -m "$2")"
+
+if [[ ! -d "$SRC" ]]; then
+    echo "Error: Source '$1' is not a directory." >&2
+    exit 1
+fi
+
+# Verify the source is inside a git repository
+GIT_ERR=$(git -C "$SRC" rev-parse --is-inside-work-tree 2>&1) || {
+    if echo "$GIT_ERR" | grep -q "dubious ownership"; then
+        # Extract the repo path from git's error message
+        SAFE_DIR=$(echo "$GIT_ERR" | grep -oP "(?<=safe\.directory ').*(?=')")
+        if [[ -n "$SAFE_DIR" ]]; then
+            echo "Repository at '$SAFE_DIR' is not marked as safe by git." >&2
+            read -rp "Add it to safe.directory? [y/N] " ans
+            if [[ "$ans" =~ ^[Yy]$ ]]; then
+                git config --global --add safe.directory "$SAFE_DIR"
+                echo "Added '$SAFE_DIR' to safe.directory."
+            else
+                echo "Aborted." >&2
+                exit 1
+            fi
+        else
+            echo "Error: $GIT_ERR" >&2
+            exit 1
+        fi
+    else
+        echo "Error: Source '$1' is not inside a git repository." >&2
+        exit 1
+    fi
+}
+
+mkdir -p "$DEST"
+
+# Get git-tracked files + untracked (non-ignored) files, null-delimited
+{ git -C "$SRC" ls-files -z; git -C "$SRC" ls-files -z --others --exclude-standard; } \
+    | rsync -a --files-from=- -0 "$SRC/" "$DEST/"
+
+TRACKED=$(git -C "$SRC" ls-files | wc -l)
+UNTRACKED=$(git -C "$SRC" ls-files --others --exclude-standard | wc -l)
+echo "Copied $TRACKED git-tracked + $UNTRACKED untracked files from $SRC to $DEST"

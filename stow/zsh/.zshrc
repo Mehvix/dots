@@ -8,12 +8,16 @@ source ~/.profile
 source ~/.aliases
 [ -f ~/.secrets ] && source ~/.secrets
 
+b() { bash -c "$*"; } # bash wrapper
+
 export PATH=$HOME/bin:/usr/local/bin:$PATH
 
 unsetopt BEEP
 
 # Binds
 bindkey -e # emacs (like bash)
+
+WORDCHARS=${WORDCHARS//[\/.]}   # 'word' split by these chars
 bindkey '^H' backward-kill-word # ctrl+backspace deletes word
 
 bindkey '\e[1;5D' backward-word       # Ctrl+Left
@@ -46,9 +50,9 @@ unsetopt CASE_GLOB
 
 if [[ -n ${ZDOTDIR}/.zcompdump(#qN.mh+24) ]]; then
     # check cache once per day
-    compinit
+    compinit -i
 else
-    compinit -C
+    compinit -C -i
 fi
 
 zstyle ':completion:*' use-cache on
