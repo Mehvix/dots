@@ -40,11 +40,13 @@ bright() {
 }
 
 # reload
+alias rb="source ~/.bashrc"
 alias rz="source ~/.zshrc"
 alias ra="source ~/.aliases"
 alias rp="source ~/.profile"
 
 # edit files
+alias vb="vim ~/.bashrc"
 alias vz="vim ~/.zshrc"
 alias va="vim ~/.aliases"
 alias vp="vim ~/.profile"
@@ -93,7 +95,7 @@ function findr() {
    find "$dir" -regextype posix-extended "$@"
 }
 
-timezsh() {
+timesh() {
   shell=${1-$SHELL}
   for i in $(seq 1 10); do /usr/bin/time "$shell" -i -c exit; done
 }

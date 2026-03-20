@@ -115,10 +115,6 @@ HIST_STAMPS="yy/mm/dd"
 # ============================================================================
 # Colors
 # ============================================================================
-export CLICOLOR=1
-export LSCOLORS=ExFxBxDxCxegedabagacad
-export TERM=xterm-256color
-
 d=~/.dircolors
 test -r $d && eval "$(dircolors $d)"
 
@@ -133,18 +129,6 @@ source <(fzf --zsh)
 # Async
 # ============================================================================
 source ~/.async.zsh
-
-
-# ============================================================================
-# Environment source
-# ============================================================================
-# Source .env if present in current directory
-if [ -f .env ]; then
-    set -a
-    source .env
-    set +a
-fi
-
 
 # ============================================================================
 # Parent initialization

@@ -1,5 +1,4 @@
 #!/bin/bash
-# NOTE: zsh does not read this file
 
 # General
 set bell-style none
@@ -13,6 +12,10 @@ set completion-ignore-case on
 "\C-h": backward-kill-word    # Ctrl+Backspace (backward)
 
 '\C-n':'cd ..\n'              # C+n goes back a dir
+
+# History search with up/down arrows (ala zsh-history-substring-search)
+"\e[A": history-search-backward
+"\e[B": history-search-forward
 
 # Color files by types
 # Note that this may cause completion text blink in some terminals (e.g. xterm).
