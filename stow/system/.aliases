@@ -66,7 +66,7 @@ alias t3="eza --tree --level=3 -l"
 alias t2="eza --tree --level=2 -l"
 alias vs="\\code ."
 alias mvi="mpv -profile image"
-alias f8="cp -L ~/.config/flake8 ./.flake8" # no global conf my ass
+alias f8="ln -s ~/.config/flake8 ./.flake8" # no global conf my ass
 alias sub="subliminal download -l 'en'"
 alias gls="gitlinks set"
 alias topoff="sudo tlp fullcharge"
