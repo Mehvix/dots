@@ -1,6 +1,17 @@
 #!/bin/bash
 
-[[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal
+append_path () {
+    case ":$PATH:" in
+        *:"$1":*)
+            ;;
+        *)
+            PATH="${PATH:+$PATH:}$1"
+    esac
+}
+
+# append_path "$HOME/bin"
+append_path "$HOME/.local/bin"
+append_path "/usr/local/bin"
 
 # XDG compliance
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -19,6 +30,7 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
 export DISPLAY=:0
 export DATE=$(date "+%A, %B %e  %_I:%M%P")
+export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" || echo "less")
 
 # colors
 export CLICOLOR=1
@@ -70,31 +82,33 @@ case "$(hostname)" in
 
         export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
         export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+        export OMP_HOST_COLOR="#98c379"
+        export OMP_HOST_ICON=$'\uef09'
         ;;
     houdini)
+        export OMP_HOST_COLOR="#c678dd"
+        export OMP_HOST_ICON=$'\uef01'
         ;;
     wayside)
+        export OMP_HOST_COLOR="#56b6c2"
+        export OMP_HOST_ICON=$'\uf0d3a'
         ;;
     etx-maxv)
-        ;;
+        export OMP_HOST_COLOR="#d19a66"
+        export OMP_HOST_ICON=$'\uf2db'
 esac
 
 
-append_path () {
-    case ":$PATH:" in
-        *:"$1":*)
-            ;;
-        *)
-            PATH="${PATH:+$PATH:}$1"
-    esac
-}
-
-# Auto-source .env
+# auto-source .env
 if [ -f .env ]; then
     set -a
     source .env
     set +a
 fi
+
+
+[[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal
 
 
 [ -f ~/.profile_amzn ] && source ~/.profile_amzn

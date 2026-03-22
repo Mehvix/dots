@@ -1,0 +1,122 @@
+{
+  "upgrade": {
+    "notice": true,
+    "interval": "168h",
+    "auto": false,
+    "source": "cdn"
+  },
+  "transient_prompt": {
+    "background": "transparent",
+    "foreground": "#abb2bf",
+    "template": "<#61afef>\u276f</> "
+  },
+  "blocks": [
+    {
+      "alignment": "left",
+      "segments": [
+        {
+          "background": "#3e4452",
+          "foreground": "#61afef",
+          "foreground_templates": [
+            "{{ if .Env.OMP_HOST_COLOR }}{{ .Env.OMP_HOST_COLOR }}{{ end }}"
+          ],
+          "style": "plain",
+          "template": " {{ if .WSL }}WSL at {{ end }}{{ if .Env.OMP_HOST_ICON }}{{ .Env.OMP_HOST_ICON }}{{ else }}{{.Icon}}{{ end }} \ue0b1",
+          "type": "os"
+        },
+        {
+          "background": "#3e4452",
+          "foreground": "#61afef",
+          "foreground_templates": [
+            "{{ if .Env.OMP_HOST_COLOR }}{{ .Env.OMP_HOST_COLOR }}{{ end }}"
+          ],
+          "style": "plain",
+          "template": " \uf0e7 ",
+          "type": "root"
+        },
+        {
+          "background": "#3e4452",
+          "foreground": "#61afef",
+          "foreground_templates": [
+            "{{ if .Env.OMP_HOST_COLOR }}{{ .Env.OMP_HOST_COLOR }}{{ end }}"
+          ],
+          "options": {
+            "style": "full"
+          },
+          "style": "plain",
+          "template": " {{ .Path }} ",
+          "type": "path"
+        },
+        {
+          "background": "#3e4452",
+          "foreground": "#61afef",
+          "foreground_templates": [
+            "{{ if .Env.OMP_HOST_COLOR }}{{ .Env.OMP_HOST_COLOR }}{{ end }}"
+          ],
+          "style": "plain",
+          "template": "\ue0b1 ",
+          "type": "text"
+        },
+        {
+          "background": "#3e4452",
+          "foreground": "#98c379",
+          "style": "plain",
+          "template": "{{ .HEAD }} ",
+          "type": "git"
+        },
+        {
+          "background": "transparent",
+          "foreground": "#3e4452",
+          "style": "plain",
+          "template": "\ue0b0",
+          "type": "text"
+        }
+      ],
+      "type": "prompt"
+    },
+    {
+      "alignment": "right",
+      "segments": [
+        {
+          "background": "#3e4452",
+          "foreground": "#e5c07b",
+          "leading_diamond": "\ue0b2",
+          "style": "diamond",
+          "template": " {{ .UserName }}@{{ .HostName }} <#61afef>\ue0b3</> ",
+          "type": "session"
+        },
+        {
+          "background": "#3e4452",
+          "foreground": "#e5c07b",
+          "options": {
+            "time_format": "15:04:05"
+          },
+          "style": "plain",
+          "template": " {{ .CurrentDate | date .Format }} \uf017 ",
+          "type": "time"
+        }
+      ],
+      "type": "prompt"
+    },
+    {
+      "alignment": "left",
+      "newline": true,
+      "segments": [
+        {
+          "foreground": "#98c379",
+          "foreground_templates": [
+            "{{ if gt .Code 0 }}#e06c75{{ end }}"
+          ],
+          "options": {
+            "always_enabled": true
+          },
+          "style": "plain",
+          "template": "\u276f ",
+          "type": "status"
+        }
+      ],
+      "type": "prompt"
+    }
+  ],
+  "version": 4
+}

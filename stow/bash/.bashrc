@@ -1,17 +1,8 @@
 #!/bin/bash
 
-# Source global definitions
-if [ -f /etc/bashrc ]; then
-    . /etc/bashrc
-fi
+# global
+[ -f ~/.profile_amzn ] && . /etc/bashrc
 
-# Environment
-if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]; then
-    PATH="$HOME/.local/bin:$HOME/bin:$PATH"
-fi
-export PATH="$HOME/bin:/usr/local/bin:$PATH"
-
-# export SYSTEMD_PAGER=
 source ~/.aliases
 source ~/.profile
 [ -f ~/.secrets ] && source ~/.secrets

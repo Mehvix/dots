@@ -1,20 +1,21 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+#!/usr/bin/env zsh
+
+unsetopt BEEP
+
+b() { bash -c "$*"; } # bash wrapper
+
+if [[ -n $ZSH_INIT_COMMAND ]]; then
+    eval "$ZSH_INIT_COMMAND"
 fi
 
-# Environment Variables
+# env
 source ~/.profile
 source ~/.aliases
 [ -f ~/.secrets ] && source ~/.secrets
 
-b() { bash -c "$*"; } # bash wrapper
 
-export PATH=$HOME/bin:/usr/local/bin:$PATH
-
-unsetopt BEEP
-
-# Binds
+# binds
+# ============================================================================
 bindkey -e # emacs (like bash)
 
 WORDCHARS=${WORDCHARS//[\/.]}   # 'word' split by these chars
@@ -41,8 +42,7 @@ zle -N cd-up-widget
 bindkey '^N' cd-up-widget            # Ctrl+n: go up a directory
 
 
-# ============================================================================
-# Completion System
+# completion
 # ============================================================================
 fpath+=~/.zfunc
 autoload -Uz compinit
@@ -67,14 +67,20 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 eval "$(uv generate-shell-completion zsh)"
 eval "$(uvx --generate-shell-completion zsh)"
 
+
+# plugins
 # ============================================================================
-# Plugins
-# ============================================================================
+source <(fzf --zsh)
+source ~/.async.zsh
+
 ZPLUGINDIR=~/.zsh/plugins
 
-# p10k
-source ~/.powerlevel10k/powerlevel10k.zsh-theme
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# # p10k
+# source ~/.powerlevel10k/powerlevel10k.zsh-theme
+# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# omp
+eval "$(oh-my-posh init zsh --config ~/.config/omp/theme.json)"
 
 # syntax highlighting
 [[ -f $ZPLUGINDIR/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && \
@@ -88,8 +94,8 @@ bindkey "^[[A" history-substring-search-up      # up arrow
 bindkey "^[[B" history-substring-search-down    # down arrow
 HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
 
-# ============================================================================
-# History Configuration
+
+# history
 # ============================================================================
 setopt HIST_IGNORE_ALL_DUPS # do not put duplicated command into history list
 setopt HIST_SAVE_NO_DUPS    # do not save duplicated command
@@ -99,7 +105,6 @@ setopt INC_APPEND_HISTORY   # append history immediatly, rather than on exit
 export HISTFILE=~/.zsh_history
 export HISTSIZE=10000   #  number of commands that are loaded into memory from $HISTFILE
 export SAVEHIST=10000   # number of commands that are stored from $HISTFILE
-
 
 setopt HIST_IGNORE_ALL_DUPS     # Don't save duplicates
 setopt HIST_SAVE_NO_DUPS        # Don't save duplicates
@@ -111,28 +116,3 @@ setopt INC_APPEND_HISTORY_TIME  # Append with timestamp
 unsetopt SHARE_HISTORY
 
 HIST_STAMPS="yy/mm/dd"
-
-# ============================================================================
-# Colors
-# ============================================================================
-d=~/.dircolors
-test -r $d && eval "$(dircolors $d)"
-
-# ============================================================================
-# FZF
-# ============================================================================
-# source /usr/share/fzf/key-bindings.zsh
-# source /usr/share/fzf/completion.zsh
-source <(fzf --zsh)
-
-# ============================================================================
-# Async
-# ============================================================================
-source ~/.async.zsh
-
-# ============================================================================
-# Parent initialization
-# ============================================================================
-if [[ -n $ZSH_INIT_COMMAND ]]; then
-    eval "$ZSH_INIT_COMMAND"
-fi

@@ -4,4 +4,5 @@
 stow/nvim/.vim/undo/
 stow/nvim/.vim/swap/
 stow/nvim/.vim/plugged/
+stow/nvim/.vim/backup/
 stow/zsh/.zsh/cache
