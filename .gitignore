@@ -1,4 +1,6 @@
 *.bak
+*.uuid
+
 .zsh/cache
 
 stow/nvim/.vim/undo/

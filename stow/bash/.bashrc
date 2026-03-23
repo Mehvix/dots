@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # global
-[ -f ~/.profile_amzn ] && . /etc/bashrc
+[ -f /etc/bashrc ] && . /etc/bashrc
 
 source ~/.aliases
 source ~/.profile
@@ -24,18 +24,10 @@ eval "$(fzf --bash)"
 eval "$(uv generate-shell-completion bash)"
 eval "$(uvx --generate-shell-completion bash)"
 
-# Prompt (starship)
-eval "$(starship init bash)"
+# Prompt
+# eval "$(starship init bash)"
+eval "$(oh-my-posh init bash --config ~/.config/omp/theme.json)"
 
-# Transient prompt: collapse previous prompts to just the character symbol
-# (starship native transient requires bash 5.1+, this works on 4.4+)
-__transient_prompt_trap() {
-    # Only act when a command is actually being executed (not empty Enter)
-    # and only for interactive prompts (not subshells/scripts)
-    if [[ "$BASH_COMMAND" != "$PROMPT_COMMAND" && "$BASH_COMMAND" != "starship_precmd" ]]; then
-        # Move cursor up to the info line and clear it, then move back down
-        # Starship two-line prompt: line 1 = info, line 2 = character
-        printf '\033[1A\033[2K\033[1B'
-    fi
-}
-trap '__transient_prompt_trap' DEBUG
+
+# Set initial PS1 so VS Code shell integration doesn't capture the default prompt
+PS1='$(_omp_get_primary)'
