@@ -1,8 +1,11 @@
 #!/bin/bash
 
+[[ $- == *i* ]] && source -- $HOME/.local/share/blesh/ble.sh --attach=none
+
 # env
 [ -f /etc/bashrc ] && . /etc/bashrc
 source $HOME/.profile
+
 
 # History
 HISTSIZE=10000
@@ -28,3 +31,6 @@ eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 
 # Set initial PS1 so VS Code shell integration doesn't capture the default prompt
 PS1='$(_omp_get_primary)'
+
+
+[[ ! ${BLE_VERSION-} ]] || ble-attach

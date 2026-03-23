@@ -62,7 +62,10 @@
           "foreground": "#98c379",
           "style": "plain",
           "template": "{{ .HEAD }} ",
-          "type": "git"
+          "type": "git",
+          "options": {
+            "branch_icon": "\ue725 "
+          }
         },
         {
           "background": "transparent",
@@ -80,19 +83,12 @@
         {
           "background": "#3e4452",
           "foreground": "#e5c07b",
-          "leading_diamond": "\ue0b2",
           "style": "diamond",
-          "template": " {{ .UserName }}@{{ .HostName }} <#61afef>\ue0b3</> ",
-          "type": "session"
-        },
-        {
-          "background": "#3e4452",
-          "foreground": "#e5c07b",
+          "leading_diamond": "\ue0b2",
           "options": {
             "time_format": "15:04:05"
           },
-          "style": "plain",
-          "template": " {{ .CurrentDate | date .Format }} \uf017 ",
+          "template": " {{ .CurrentDate | date .Format }} ",
           "type": "time"
         }
       ],

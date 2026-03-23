@@ -25,7 +25,14 @@ $ sh -c 'curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 ```
 
+### bash
+
+- [ble.sh](https://github.com/akinomyoga/ble.sh?)
+- [OMP](https://ohmyposh.dev/docs/) -- zsh too 
+
+
 ### zsh
+> Nowadays, I use bash.
 
 Plugins are submodules; if you didn't pull with `--recurse-submodules` then you'll need to do
 ```shell

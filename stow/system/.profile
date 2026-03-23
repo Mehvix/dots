@@ -87,8 +87,8 @@ case "$(hostname)" in
         export OMP_HOST_ICON=$'\uf0d3a'
         ;;
     etx-maxv)
-        export OMP_HOST_COLOR="#d19a66"
-        export OMP_HOST_ICON=$'\uf2db'
+        export OMP_HOST_COLOR="#6f6bf8"
+        export OMP_HOST_ICON=$'\ue2a6'
 esac
 
 
@@ -111,6 +111,7 @@ if [[ $- == *i* ]]; then
     export CLICOLOR=1
     export LSCOLORS=ExFxBxDxCxegedabagacad
     # export TERM=xterm-256color # overkill
+    # [[ -z "$TMUX" && -z "$STY" ]] && export TERM=xterm-256color
 
     d=$HOME/.dircolors
     test -r "$d" && eval "$(dircolors "$d")"
