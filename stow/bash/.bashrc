@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# global
+# env
 [ -f /etc/bashrc ] && . /etc/bashrc
-
-source ~/.aliases
-source ~/.profile
-[ -f ~/.secrets ] && source ~/.secrets
+source $HOME/.profile
 
 # History
 HISTSIZE=10000
@@ -26,7 +23,7 @@ eval "$(uvx --generate-shell-completion bash)"
 
 # Prompt
 # eval "$(starship init bash)"
-eval "$(oh-my-posh init bash --config ~/.config/omp/theme.json)"
+eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 
 
 # Set initial PS1 so VS Code shell integration doesn't capture the default prompt

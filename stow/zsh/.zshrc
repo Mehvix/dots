@@ -4,14 +4,11 @@ unsetopt BEEP
 
 b() { bash -c "$*"; } # bash wrapper
 
+source ~/.profile
+
 if [[ -n $ZSH_INIT_COMMAND ]]; then
     eval "$ZSH_INIT_COMMAND"
 fi
-
-# env
-source ~/.profile
-source ~/.aliases
-[ -f ~/.secrets ] && source ~/.secrets
 
 
 # binds

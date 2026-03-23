@@ -32,14 +32,6 @@ export DISPLAY=:0
 export DATE=$(date "+%A, %B %e  %_I:%M%P")
 export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" || echo "less")
 
-# colors
-export CLICOLOR=1
-export LSCOLORS=ExFxBxDxCxegedabagacad
-export TERM=xterm-256color
-
-d=~/.dircolors
-test -r "$d" && eval "$(dircolors "$d")"
-
 # fzf
 export FZF_DEFAULT_OPTS="--color 16 --layout=reverse --height 30% --preview='bat -p --color=always {}'"
 export FZF_CTRL_R_OPTS="--info inline --no-sort --no-preview --exact"
@@ -71,7 +63,7 @@ case "$(hostname)" in
         export PATH="$PATH:$GOPATH/bin"
 
         # npm
-        export PATH=~/.npm-global/bin:$PATH
+        export PATH=$HOME/.npm-global/bin:$PATH
         #export npm_config_prefix="$HOME/.local"
 
         # nvm
@@ -100,15 +92,28 @@ case "$(hostname)" in
 esac
 
 
-# auto-source .env
-if [ -f .env ]; then
-    set -a
-    source .env
-    set +a
+# interactive shell only
+if [[ $- == *i* ]]; then
+    [[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal
+    
+    source $HOME/.aliases
+    [ -f $HOME/.secrets ] && source $HOME/.secrets
+    [ -f $HOME/.profile_amzn ] && source $HOME/.profile_amzn
+        
+    # auto-source .env
+    if [ -f .env ]; then
+        set -a
+        source .env
+        set +a
+    fi
+
+    # colors
+    export CLICOLOR=1
+    export LSCOLORS=ExFxBxDxCxegedabagacad
+    # export TERM=xterm-256color # overkill
+
+    d=$HOME/.dircolors
+    test -r "$d" && eval "$(dircolors "$d")"
+
 fi
 
-
-[[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal
-
-
-[ -f ~/.profile_amzn ] && source ~/.profile_amzn
