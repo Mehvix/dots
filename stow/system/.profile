@@ -34,7 +34,7 @@ export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" |
 
 # fzf
 export FZF_DEFAULT_OPTS="--color 16 --layout=reverse --height 30% --preview='bat -p --color=always {}'"
-export FZF_CTRL_R_OPTS="--info inline --no-sort --no-preview --exact"
+export FZF_CTRL_R_OPTS="--info inline --no-sort --no-preview --exact --nth 2.. --bind 'ctrl-h:backward-kill-word'"
 
 # device-specific
 case "$(hostname)" in
