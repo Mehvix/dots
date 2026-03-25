@@ -286,6 +286,7 @@ bleopt delete_selection_mode=1
 ## exit status will not be shown.  The value can contain ANSI escape sequences.
 
 #bleopt exec_errexit_mark=$'\e[91m[ble: exit %d]\e[m'
+# TODO null? 
 
 
 ## "exec_elapsed_mark" specifies the format of the command execution time
@@ -348,7 +349,7 @@ bleopt exec_elapsed_enabled='usr+sys>=10000'
 ## history is shared with the other Bash ble.sh sessions with the history
 ## sharing turned on.
 
-#bleopt history_share=
+bleopt history_share=
 
 
 ## This option controls the target range in the command history for
@@ -1160,6 +1161,12 @@ function blerc/emacs-load-hook {
   return 0
 }
 blehook/eval-after-load keymap_emacs blerc/emacs-load-hook
+
+# fzf
+ble-import -d integration/fzf-completion
+ble-import -d integration/fzf-key-bindings
+
+ble-import -d integration/bash-completion
 
 ##-----------------------------------------------------------------------------
 ## Settings for Vim mode

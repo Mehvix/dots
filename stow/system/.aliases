@@ -9,10 +9,6 @@ alias rm="rm -rv"
 alias rmdir="rmdir -pv" # Recursive, verbose
 alias df="df -h"        # Human-readable sizes
 alias free="free -m"    # Show sizes in MB
-#alias ps="ps -ef"       # All processess running on system
-#alias sudo=doas
-#alias sudo="sudo "      # Respect aliases -- https://askubuntu.com/q/22037
-#alias grep="grep -R --line-number --extended-regexp --color=always"
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
 touch() {
@@ -25,7 +21,8 @@ alias h=history
 alias v="nvim"
 alias t="touch"
 alias c="clear"
-alias o="open ."
+alias o=xdg-open
+alias p="ps uaxf"
 alias x="chmod +x"
 alias get="curl -O -L"
 alias restart="sudo reboot"
@@ -57,7 +54,7 @@ alias vim=nvim
 alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
-alias py=bpython    # ptpython
+alias py=bpython
 # alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
 alias l="eza --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="eza --list-dirs"

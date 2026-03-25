@@ -3,7 +3,7 @@
 [[ $- == *i* ]] && source -- $HOME/.local/share/blesh/ble.sh --attach=none
 
 # env
-[ -f /etc/bashrc ] && . /etc/bashrc
+# [ -f /etc/bashrc ] && . /etc/bashrc
 source $HOME/.profile
 
 
@@ -19,18 +19,25 @@ shopt -s nocaseglob     # Case-insensitive globbing
 shopt -s cdspell        # Autocorrect typos in cd
 shopt -s checkwinsize   # Update LINES/COLUMNS after each command
 
-# Completions
-eval "$(fzf --bash)"
-eval "$(uv generate-shell-completion bash)"
-eval "$(uvx --generate-shell-completion bash)"
-
-# Prompt
-# eval "$(starship init bash)"
 eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
+# PS1='$(_omp_get_primary)'
 
-
-# Set initial PS1 so VS Code shell integration doesn't capture the default prompt
-PS1='$(_omp_get_primary)'
-
-
+# Attach ble.sh- everything prior is buffered
 [[ ! ${BLE_VERSION-} ]] || ble-attach
+
+_deferred_evals=(
+  # Completions
+  'uv generate-shell-completion bash'
+  'uvx --generate-shell-completion bash'
+)
+for _cmd in "${_deferred_evals[@]}"; do
+  if [[ ${BLE_VERSION-} ]]; then
+    ble/util/idle.push "eval \"\$($_cmd)\""
+  else
+    eval "$($_cmd)"
+  fi
+done
+unset _deferred_evals _cmd
+
+# fzf: fallback to eval when not using ble.sh
+[[ ${BLE_VERSION-} ]] || eval "$(fzf --bash)"
