@@ -1,5 +1,7 @@
 
-## Track `.file` in `dir` (typically `~`):
+## Example
+
+### Track `.file` in `dir` (typically `~`):
 
 ```shell
 $ mkdir program
@@ -8,20 +10,27 @@ $ stow --adopt -nvt dir program  # verify command is safe and symlinks .file
 $ stow --adopt -vt dir program
 ```
 
-## Untrack zsh files:
+### Untrack zsh files:
 
 ```shell
 $ stow -Dvt ~ zsh
 ```
 
+---
 
+### tmux
+
+TPM:
+```shell
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+```
 
 ### nvim
 
 Installing [vim-plug](https://github.com/junegunn/vim-plug)
 
 ```shell
-$ sh -c 'curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+sh -c 'curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
   https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
 ```
 
@@ -36,6 +45,6 @@ $ sh -c 'curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 
 Plugins are submodules; if you didn't pull with `--recurse-submodules` then you'll need to do
 ```shell
-$ git submodule update --init --recursive
+git submodule update --init --recursive
 ```
 

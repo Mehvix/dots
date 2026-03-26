@@ -79,8 +79,8 @@
 ## The following setting turns on the delayed load of history when an non-empty
 ## value is set.
 
-bleopt history_lazyload=1
-
+# bleopt history_lazyload=1
+bleopt history_lazyload=
 
 ## The following setting turns on the delete selection mode when an non-empty
 ## value is set. When the mode is turned on the selection is removed when a

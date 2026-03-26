@@ -94,7 +94,7 @@ esac
 
 # interactive shell only
 if [[ $- == *i* ]]; then
-    [[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal
+    [[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal (XOFF)
     
     source $HOME/.aliases
     [ -f $HOME/.secrets ] && source $HOME/.secrets

@@ -84,13 +84,7 @@ alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'
 
-# find with posix regex as default
-# findr ./ -regex "./([^.]*)+"
-function findr() {
-   dir=$1;
-   shift;
-   find "$dir" -regextype posix-extended "$@"
-}
+bkup() { [ ! -e "$1.bkup" ] && mv "$1" "$1.bkup" || echo "$1.bkup already exists"; }
 
 timesh() {
   shell=${1-$SHELL}
