@@ -1098,7 +1098,7 @@ bleopt complete_auto_complete=
 # # For emacs editing mode
 # ble-bind -m emacs -f 'C-m' 'accept-line'
 # ble-bind -m emacs -f 'RET' 'accept-line'
-ble-bind -m emacs -f 'C-s' 'accept-line'
+ble-bind -m emacs -f 'C-y' 'accept-line'
 
 # # For vim editing mode
 # ble-bind -m vi_imap -f 'C-m' 'accept-line'

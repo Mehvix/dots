@@ -19,8 +19,13 @@ shopt -s nocaseglob     # Case-insensitive globbing
 shopt -s cdspell        # Autocorrect typos in cd
 shopt -s checkwinsize   # Update LINES/COLUMNS after each command
 
+__bp_last_argument_prev_command="${__bp_last_argument_prev_command:-}"
 eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
+
+if [ -n "$TMUX" ]; then   # fix OMP right-prompt off-by-one in tmux
+    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')"
+fi
 
 # Attach ble.sh- everything prior is buffered
 [[ ! ${BLE_VERSION-} ]] || ble-attach
