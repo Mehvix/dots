@@ -16,7 +16,8 @@ Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
 Plug 'lukas-reineke/indent-blankline.nvim'
 Plug 'echasnovski/mini.indentscope'
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate \| TSInstall! lua python javascript typescript c cpp bash diff git_config git_rebase haskell ini latex perl nix' }
+Plug 'stevearc/conform.nvim'
 Plug 'fladson/vim-kitty'
 "Plug 'lervag/vimtex'
 Plug 'kylelaker/riscv.vim'
@@ -27,19 +28,26 @@ if !has('gui_running')
     set t_Co=256
 endif
 
+" formatting with conform
+lua << EOF
+require("conform").setup({
+  formatters_by_ft = {
+    nix = { "alejandra" },
+  },
+  format_on_save = {
+    timeout_ms = 500,
+    lsp_format = "fallback",
+  },
+})
+EOF
+
 " tree-sitter + indent-blankline
 lua << EOF
-local ts = require('nvim-treesitter')
-ts.install({
-  'lua', 'python', 'javascript', 'typescript', 'c', 'cpp',
-  'bash', 'diff', 'git_config', 'git_rebase', 'haskell',
-  'ini', 'latex', 'perl', 'nix'
-}):wait(60000)
-
 vim.api.nvim_create_autocmd('FileType', {
   pattern = '*',
   callback = function(args)
-    if vim.bo[args.buf].filetype == 'nix' then return end
+    local ft = vim.bo[args.buf].filetype
+    if ft == 'nix' or ft == '' then return end
     pcall(vim.treesitter.start, args.buf)
   end,
 })
@@ -48,22 +56,24 @@ vim.api.nvim_create_autocmd('FileType', {
 --vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 --vim.wo[0][0].foldmethod = 'expr'
 
+-- indent line for all
 require("ibl").setup({
-  scope = { enabled = true }
+  scope = { enabled = false }
 })
+
+-- vary indent for current level
 require('mini.indentscope').setup({
-  --symbol = "│",
-  options = { 
+  options = {
     try_as_border = true,
     indent_at_cursor = false,
   },
 })
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function()
+    vim.api.nvim_set_hl(0, "MiniIndentscopeSymbol", { fg = "#616161", nocombine = true })
+  end,
+})
 EOF
-
-" theme
-colorscheme onedark
-set background=dark
-let g:onedark_terminal_italics=1
 
 " onedark.vim
 if (has("autocmd") && !has("gui_running"))
@@ -73,10 +83,14 @@ if (has("autocmd") && !has("gui_running"))
         autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) " `bg` will not be styled since there is no `bg` setting
     augroup END
 endif
+let g:onedark_terminal_italics=1
 let g:onedark_color_overrides = {
 \ "comment_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
 \ "gutter_fg_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
 \}
+
+colorscheme onedark
+set background=dark
 
 " lightline
 set noshowmode      " rm mode, redundant w lightline
