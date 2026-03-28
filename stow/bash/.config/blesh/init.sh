@@ -185,7 +185,7 @@ bleopt delete_selection_mode=1
 ## did not change since the last command line.
 
 #bleopt prompt_ps1_final=
-#bleopt prompt_ps1_transient=trim
+bleopt prompt_ps1_transient=trim
 
 
 ## The following settings controls the right prompt. "prompt_rps1" specifies
@@ -286,7 +286,7 @@ bleopt delete_selection_mode=1
 ## exit status will not be shown.  The value can contain ANSI escape sequences.
 
 #bleopt exec_errexit_mark=$'\e[91m[ble: exit %d]\e[m'
-# TODO null? 
+# TODO null?
 
 
 ## "exec_elapsed_mark" specifies the format of the command execution time

@@ -88,7 +88,7 @@ bkup() { [ ! -e "$1.bkup" ] && mv "$1" "$1.bkup" || echo "$1.bkup already exists
 
 timesh() {
   shell=${1-$SHELL}
-  for i in $(seq 1 10); do /usr/bin/time "$shell" -i -c exit; done
+  for i in $(seq 1 10); do command time "$shell" -i -c exit; done
 }
 
 function mkcd() {

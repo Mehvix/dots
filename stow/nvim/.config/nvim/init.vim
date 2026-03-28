@@ -14,6 +14,9 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-sleuth'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
+Plug 'lukas-reineke/indent-blankline.nvim'
+Plug 'echasnovski/mini.indentscope'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 Plug 'fladson/vim-kitty'
 "Plug 'lervag/vimtex'
 Plug 'kylelaker/riscv.vim'
@@ -23,6 +26,39 @@ call plug#end() " init plugin system
 if !has('gui_running')
     set t_Co=256
 endif
+
+" tree-sitter + indent-blankline
+lua << EOF
+local ts = require('nvim-treesitter')
+ts.install({
+  'lua', 'python', 'javascript', 'typescript', 'c', 'cpp',
+  'bash', 'diff', 'git_config', 'git_rebase', 'haskell',
+  'ini', 'latex', 'perl', 'nix'
+}):wait(60000)
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = '*',
+  callback = function(args)
+    if vim.bo[args.buf].filetype == 'nix' then return end
+    pcall(vim.treesitter.start, args.buf)
+  end,
+})
+
+---- folds
+--vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+--vim.wo[0][0].foldmethod = 'expr'
+
+require("ibl").setup({
+  scope = { enabled = true }
+})
+require('mini.indentscope').setup({
+  --symbol = "│",
+  options = { 
+    try_as_border = true,
+    indent_at_cursor = false,
+  },
+})
+EOF
 
 " theme
 colorscheme onedark
@@ -61,31 +97,14 @@ let g:gitgutter_sign_modified_removed = '<'
 nmap <C-/> gcc
 vmap <C-/> gc
 
-
-" https://github.com/neovim/neovim/discussions/28010#discussioncomment-13098110
-" clipboard off
-set clipboard=
-
-" yank to + so OSC52 can send it
-augroup ClipAuto
-  autocmd!
-  autocmd TextYankPost * silent! call setreg('+', getreg('"'), v:event.regtype)
-augroup END
-
-" osc52 write only (paste disabled)
 lua << EOF
 local osc52 = require('vim.ui.clipboard.osc52')
 vim.g.clipboard = {
   name = 'osc52-write',
-  copy = {
-    ['+'] = osc52.copy('+'),
-    ['*'] = osc52.copy('*'),
-  },
-  paste = {
-    ['+'] = function() return { {}, 'v' } end,
-    ['*'] = function() return { {}, 'v' } end,
-  },
+  copy  = { ['+'] = osc52.copy('+'),  ['*'] = osc52.copy('*')  },
+  paste = { ['+'] = osc52.paste('+'), ['*'] = osc52.paste('*') },
 }
+vim.opt.clipboard = 'unnamedplus'
 EOF
 
 " vscode incompat w latest v12 CSI u keeb protocol (?)

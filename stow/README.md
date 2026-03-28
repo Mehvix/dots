@@ -4,16 +4,22 @@
 ### Track `.file` in `dir` (typically `~`):
 
 ```shell
-$ mkdir program
-$ touch program/.file
-$ stow --adopt -nvt dir program  # verify command is safe and symlinks .file
-$ stow --adopt -vt dir program
+mkdir program
+touch program/.file
+stow --adopt -nvt dir program  # verify command is safe and symlinks .file
+stow --adopt -vt dir program
+```
+
+### stow all
+
+```shell
+stow -t ~ */
 ```
 
 ### Untrack zsh files:
 
 ```shell
-$ stow -Dvt ~ zsh
+stow -Dvt ~ zsh
 ```
 
 ---
@@ -37,7 +43,7 @@ sh -c 'curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 ### bash
 
 - [ble.sh](https://github.com/akinomyoga/ble.sh?)
-- [OMP](https://ohmyposh.dev/docs/) -- zsh too 
+- [OMP](https://ohmyposh.dev/docs/) -- zsh too
 
 
 ### zsh
