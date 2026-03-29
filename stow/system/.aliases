@@ -86,9 +86,15 @@ alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio
 
 bkup() { [ ! -e "$1.bkup" ] && mv "$1" "$1.bkup" || echo "$1.bkup already exists"; }
 
-timesh() {
-  shell=${1-$SHELL}
-  for i in $(seq 1 10); do command time "$shell" -i -c exit; done
+timesh ()
+{
+    shell=${1-$SHELL};
+    for i in $(seq 1 10);
+    do
+        {
+            env time -f "%e" "$shell" -i -c exit 2>&1 > /dev/null
+        } 2>&1 | grep -v bleopt | grep -v exit;
+    done
 }
 
 function mkcd() {
