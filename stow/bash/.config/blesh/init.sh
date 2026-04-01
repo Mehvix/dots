@@ -1056,6 +1056,8 @@ bleopt complete_auto_complete=
 ##-----------------------------------------------------------------------------
 ## Keybindings
 
+# ctrl+alt+backspace
+ble-bind -f 'M-C-h' 'kill-backward-uword'
 
 ## The default mapping of <SP> in ble.sh is magic-space which performs history
 ## and sabbrev expansion before inserting a space.  If you want to insert just

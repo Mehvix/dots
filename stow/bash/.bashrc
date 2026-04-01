@@ -10,9 +10,9 @@ source $HOME/.profile
 # History
 HISTSIZE=10000
 HISTFILESIZE=10000
-HISTCONTROL=ignoreboth:erasedups  # ignore dupes + leading spaces
-shopt -s histappend               # append to history, don't overwrite
-PROMPT_COMMAND="history -a"       # write history immediately
+HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
+shopt -s histappend           # append to history, don't overwrite
+PROMPT_COMMAND="history -a"   # write history immediately
 
 # Shell Options
 shopt -s nocaseglob     # Case-insensitive globbing
@@ -20,17 +20,19 @@ shopt -s cdspell        # Autocorrect typos in cd
 shopt -s checkwinsize   # Update LINES/COLUMNS after each command
 
 _omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/omp_init.bash"
-_omp_hash=$(md5sum "$HOME/.config/omp/theme.json" "$(which oh-my-posh)" 2>/dev/null | md5sum | cut -d' ' -f1)
-if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.hash" || "$_omp_hash" != "$(cat ${_omp_cache}.hash)" ]]; then
-  oh-my-posh init bash --config "$HOME/.config/omp/theme.json" --print |
+_omp_theme="$HOME/.config/omp/theme.json"
+_omp_key="$(stat -c %Y "$_omp_theme" "$(command -v oh-my-posh)" 2>/dev/null)"
+if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_omp_cache}.key)" ]]; then
+  oh-my-posh init bash --config "$_omp_theme" --print |
     awk '/_omp_secondary_prompt=\$\(/{skip=1} skip && /^\)/{skip=0; next} !skip' |
     grep -v '"$_omp_executable" notice' |
     sed 's|print primary \\|print primary \\\n                --config '"$HOME/.config/omp/theme.json"' \\|' \
     > "$_omp_cache"
-  echo "$_omp_hash" > "${_omp_cache}.hash"
+  echo "$_omp_key" > "${_omp_cache}.key"
 fi
 source "$_omp_cache"
-unset _omp_cache _omp_hash
+unset _omp_cache _omp_key _omp_theme
+# eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
 
 if [ -n "$TMUX" ]; then   # fix OMP right-prompt off-by-one in tmux

@@ -33,11 +33,25 @@ export DATE=$(date "+%A, %B %e  %_I:%M%P")
 export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" || echo "less")
 
 # fzf
-export FZF_DEFAULT_OPTS="--color 16 --layout=reverse --height 30% --preview='bat -p --color=always {}'"
-export FZF_CTRL_R_OPTS="--info inline --no-sort --no-preview --exact --nth 2.. --bind 'ctrl-h:backward-kill-word'"
+export FZF_DEFAULT_OPTS="
+--color 16          # use term theme
+--layout=reverse    # top-down results
+--height 30%
+--preview='bat -p --color=always {}'    # file preview with bat
+"
+export FZF_CTRL_R_OPTS="
+--info inline       # show hits same line, not newline
+--no-sort           # chronological order
+--no-preview
+--wrap              # wordwrap long cmds- can toggle w [ctrl|alt]+/
+--exact             # exact substring match
+--nth 2..           # dont match w history
+--bind 'ctrl-h:backward-kill-word'      # ctrl+backspace deletes word
+"
 
 # device-specific
-case "$(hostname)" in
+_hostname=${HOSTNAME:-$(hostname)}
+case "$_hostname" in
     max)
         export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 
@@ -87,6 +101,7 @@ case "$(hostname)" in
         export OMP_HOST_ICON=$'\uf0d3a'
         ;;
     etx-maxv)
+        export DISPLAY=$(hostname -I):1 
         export OMP_HOST_COLOR="#6f6bf8"
         export OMP_HOST_ICON=$'\ue2a6'
 esac
@@ -95,11 +110,11 @@ esac
 # interactive shell only
 if [[ $- == *i* ]]; then
     [[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal (XOFF)
-    
+
     source $HOME/.aliases
     [ -f $HOME/.secrets ] && source $HOME/.secrets
     [ -f $HOME/.profile_amzn ] && source $HOME/.profile_amzn
-        
+
     # auto-source .env
     if [ -f .env ]; then
         set -a
