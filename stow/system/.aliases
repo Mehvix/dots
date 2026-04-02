@@ -84,7 +84,13 @@ alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'
 
-bkup() { [ ! -e "$1.bkup" ] && mv "$1" "$1.bkup" || echo "$1.bkup already exists"; }
+bkup() {
+    local d=false
+    [[ "$1" == "-d" ]] && d=true && shift
+    local t="${1%/}"
+    local s=$($d && date +".%m-%d_%H-%S").bkup
+    [ ! -e "$t$s" ] && mv -iv "$t" "$t$s" || echo "$t$s already exists"
+}
 
 timesh ()
 {

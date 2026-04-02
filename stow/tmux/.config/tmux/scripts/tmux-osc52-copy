@@ -1,2 +1,2 @@
 #!/bin/bash
-printf '\033]52;c;%s\a' "$(tmux show-buffer | base64 -w0)" > "$(tmux display -p '#{pane_tty}')"
+printf '\033]52;c;%s\a' "$(base64 -w0)" > "$(tmux display -p '#{pane_tty}')"

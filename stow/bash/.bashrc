@@ -12,12 +12,17 @@ HISTSIZE=10000
 HISTFILESIZE=10000
 HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
 shopt -s histappend           # append to history, don't overwrite
-PROMPT_COMMAND="history -a"   # write history immediately
+shopt -s cmdhist              # multi-line as one entry
+[[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
 
 # Shell Options
-shopt -s nocaseglob     # Case-insensitive globbing
-shopt -s cdspell        # Autocorrect typos in cd
-shopt -s checkwinsize   # Update LINES/COLUMNS after each command
+shopt -s autocd         # cd not needed
+shopt -s globstar       # ** matches recursively
+# shopt -s dotglob        # include dotfiles in glob
+shopt -s cdspell        # autocorrect typos in cd
+shopt -s nocaseglob     # case-insensitive globbing
+shopt -s checkwinsize   # update LINES/COLUMNS after each command
+shopt -s no_empty_cmd_completion  # avoid searching PATH
 
 _omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/omp_init.bash"
 _omp_theme="$HOME/.config/omp/theme.json"

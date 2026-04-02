@@ -101,7 +101,7 @@ case "$_hostname" in
         export OMP_HOST_ICON=$'\uf0d3a'
         ;;
     etx-maxv)
-        export DISPLAY=$(hostname -I):1 
+        export DISPLAY=$(hostname -i):1
         export OMP_HOST_COLOR="#6f6bf8"
         export OMP_HOST_ICON=$'\ue2a6'
 esac
