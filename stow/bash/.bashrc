@@ -31,7 +31,7 @@ if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_o
   oh-my-posh init bash --config "$_omp_theme" --print |
     awk '/_omp_secondary_prompt=\$\(/{skip=1} skip && /^\)/{skip=0; next} !skip' |
     grep -v '"$_omp_executable" notice' |
-    sed 's|print primary \\|print primary \\\n                --config '"$HOME/.config/omp/theme.json"' \\|' \
+    sed 's|print \(primary\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|;s|print \(transient\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|' \
     > "$_omp_cache"
   echo "$_omp_key" > "${_omp_cache}.key"
 fi

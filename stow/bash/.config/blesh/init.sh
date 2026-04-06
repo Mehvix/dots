@@ -82,6 +82,8 @@
 # bleopt history_lazyload=1
 bleopt history_lazyload=
 
+blehook ADDHISTORY+='[[ $1 != ❯\ * ]] || { ble/builtin/history -s -- "${1#❯ }"; return 1; }'
+
 ## The following setting turns on the delete selection mode when an non-empty
 ## value is set. When the mode is turned on the selection is removed when a
 ## user inserts a character.

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+alias ❯='' # NOOP prompt 1st char FSO easier copy paste; ble.sh strips it from history
+
 # sensible defaults + interactive improvements
 alias mv="mv -iv"
 alias cp="cp -rivL"      # Ask confirmation, verbose, follow symlinks
