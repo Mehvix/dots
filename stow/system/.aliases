@@ -34,9 +34,6 @@ alias what=type
 alias lock="dm-tool lock"
 alias jn="jupyter-notebook"
 alias shizuku="adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
-bright() {
-    xrandr --output HDMI-A-0 --brightness "$1" && xrandr --output eDP --brightness "$1"
-}
 
 # reload
 alias rb="source ~/.bashrc"
@@ -49,7 +46,6 @@ alias vb="vim ~/.bashrc"
 alias vz="vim ~/.zshrc"
 alias va="vim ~/.aliases"
 alias vp="vim ~/.profile"
-alias attr="vim \${CODE_ROOT}/sites/mehvix.com/static/js/attributes.js"
 
 # alternatives + program shortcuts
 alias vim=nvim
@@ -57,7 +53,7 @@ alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
 alias py=bpython
-# alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
+ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
 alias l="eza --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="eza --list-dirs"
 alias t=tree
@@ -68,13 +64,10 @@ alias mvi="mpv -profile image"
 alias f8="ln -s ~/.config/flake8 ./.flake8" # no global conf my ass
 alias sub="subliminal download -l 'en'"
 alias gls="gitlinks set"
-alias topoff="sudo tlp fullcharge"
-alias charge="sudo tlp setcharge 65 80"
 
 # directories
 alias code="cd \${CODE_ROOT}"
 alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
-alias sch="~/Documents/School/"
 alias dots="cd \${CODE_ROOT}/dotfiles/"
 alias dot=dots
 alias www="/var/www/"
@@ -84,24 +77,56 @@ alias pics="~/Pictures/"
 # new commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
-alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'
 
-bkup() {
+# git
+alias gs="git status"
+alias gb="git branch"
+alias ga="git add"
+alias gaa="git add ."
+alias gcm="git commit -m"
+alias gp="git push"
+alias gl="git pull"
+alias gco="git checkout"
+alias gd="git diff"
+alias gr="git review"
+alias gry="git review -y"
+alias grx="git review -x"
+
+# ssh
+alias ssh="kitty +kitten ssh"
+alias ssht="command ssh"    # ignore existing ssh alias
+
+# yt-dlp
+alias youtube-dl="yt-dlp"
+alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
+alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
+alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/%(title)s.%(ext)s"'
+
+function bkup() {
     local d=false
     [[ "$1" == "-d" ]] && d=true && shift
     local t="${1%/}"
     local s=$($d && date +".%m-%d_%H-%S").bkup
-    [ ! -e "$t$s" ] && mv -iv "$t" "$t$s" || echo "$t$s already exists"
+    # TODO verify- bump depth?
+    if [ ! -e "$t$s" ]; then
+        local old=$(realpath -m "$t")
+        mv -iv "$t" "$t$s"
+        local new=$(realpath -m "$t$s")
+        fd -t l -d 2 . "$(dirname "$old")" | while read -r lnk; do
+            local tgt=$(realpath -m "$(dirname "$lnk")/$(readlink "$lnk")")
+            [[ "$tgt" == "$old"* ]] && ln -sfn "${new}${tgt#"$old"}" "$lnk"
+        done
+    else
+        echo "$t$s already exists"
+    fi
 }
 
-timesh ()
-{
+function timesh () {
     shell=${1-$SHELL};
     for i in $(seq 1 10);
-    do
-        {
-            env time -f "%e" "$shell" -i -c exit 2>&1 > /dev/null
-        } 2>&1 | grep -v bleopt | grep -v exit;
+    do {
+        env time -f "%e" "$shell" -i -c exit 2>&1 > /dev/null
+    } 2>&1 | grep -v bleopt | grep -v exit;
     done
 }
 
@@ -119,7 +144,6 @@ function img2w() {
 function ff3() {
     command ffmpeg -i "$1" -acodec libmp3lame "$2"
 }
-
 # todo make this one ff3meta command
 function ff3art() {
     command mkdir withArt
@@ -130,7 +154,6 @@ function ff3art() {
     # shellcheck disable=SC2164
     cd withArt
 }
-
 function ff3album() {
     command mkdir withAlbum
     for i in *.mp3
@@ -140,8 +163,6 @@ function ff3album() {
     # shellcheck disable=SC2164
     cd withAlbum
 }
-
-
 function ff3artist() {
     command mkdir withArtist
     for i in *.mp3
@@ -151,43 +172,9 @@ function ff3artist() {
     # shellcheck disable=SC2164
     cd withArtist
 }
-
 function ff4() {
     command ffmpeg -i "$1" -codec copy -map_metadata 0 -movflags use_metadata_tags "$2"
 }
-
 function ff4c() {
     command ffmpeg -i "$1" -vcodec h264 -acodec mp2 "$1"-compressed.mp4
 }
-
-
-# yt-dlp / youtube-dl
-alias youtube-dl="yt-dlp"
-alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
-alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
-alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/%(title)s.%(ext)s"'
-
-# git
-alias gpom="git push origin master"
-alias gs="git status"
-alias gb="git branch"
-alias ga="git add"
-alias gaa="git add ."
-alias gcm="git commit -m"
-alias gp="git push"
-alias gl="git pull"
-alias gco="git checkout"
-alias gd="git diff"
-
-## gitlet cs61b
-#alias gl="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.Main"
-#alias glb="make -C /home/max/Documents/Code/cs61b-akx/proj3/gitlet/ default && gl"
-#alias gld="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.DumpObj"
-#alias gitlet=gl
-
-# ssh
-alias ssh="kitty +kitten ssh"
-alias ssht="command ssh"    # ignore existing ssh alias
-
-# xcompatability
-#alias sass="sassc"

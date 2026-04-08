@@ -113,12 +113,35 @@ vmap <C-/> gc
 
 lua << EOF
 local osc52 = require('vim.ui.clipboard.osc52')
-vim.g.clipboard = {
-  name = 'osc52-write',
-  copy  = { ['+'] = osc52.copy('+'),  ['*'] = osc52.copy('*')  },
-  paste = { ['+'] = osc52.paste('+'), ['*'] = osc52.paste('*') },
-}
-vim.opt.clipboard = 'unnamedplus'
+local dumb_term = os.getenv('SSH_TTY') and not os.getenv('KITTY_PID') and not os.getenv('TERM_PROGRAM')
+
+if dumb_term then
+  -- OSC 52 copy-only; paste works normally within vim
+  vim.api.nvim_create_autocmd('TextYankPost', {
+    callback = function()
+      if vim.v.event.operator == 'y' then
+        osc52.copy('+')(vim.v.event.regcontents)
+      end
+    end,
+  })
+  -- flush garbled DA response that arrives late over SSH
+  vim.api.nvim_create_autocmd('VimEnter', {
+    callback = function()
+      vim.defer_fn(function()
+        local ok, c = pcall(vim.fn.getchar, 0)
+        while ok and c ~= 0 do ok, c = pcall(vim.fn.getchar, 0) end
+        vim.cmd('stopinsert | echo ""')
+      end, 150)
+    end,
+  })
+else
+  vim.g.clipboard = {
+    name = 'osc52',
+    copy  = { ['+'] = osc52.copy('+'),  ['*'] = osc52.copy('*')  },
+    paste = { ['+'] = osc52.paste('+'), ['*'] = osc52.paste('*') },
+  }
+  vim.opt.clipboard = 'unnamedplus'
+end
 EOF
 
 " vscode incompat w latest v12 CSI u keeb protocol (?)

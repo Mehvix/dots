@@ -53,13 +53,32 @@ export FZF_CTRL_R_OPTS="
 _hostname=${HOSTNAME:-$(hostname)}
 case "$_hostname" in
     max)
-        export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
+        alias topoff="sudo tlp fullcharge"
+        alias charge="sudo tlp setcharge 65 80"
+
+        alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'
+
+        alias sch="~/Documents/School/"
+
+        alias jc='${CODE_ROOT}/JIPCAD/build/Application/Binaries/Nome3'
+        alias attr="vim \${CODE_ROOT}/sites/mehvix.com/static/js/attributes.js"
+
+        ## gitlet cs61b
+        #alias gl="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.Main"
+        #alias glb="make -C /home/max/Documents/Code/cs61b-akx/proj3/gitlet/ default && gl"
+        #alias gld="java -cp /home/max/Documents/Code/cs61b-akx/proj3 gitlet.DumpObj"
+        #alias gitlet=gl
+
+        bright() {
+            xrandr --output HDMI-A-0 --brightness "$1" && xrandr --output eDP --brightness "$1"
+        }
 
         export CODE_ROOT="${HOME}/Documents/Code"   # TODO other hosts
         export PATH="${HOME}/dots/scripts:${PATH}"  # TODO other hosts
 
-        export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
+        export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 
+        export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
         export QT_QPA_PLATFORMTHEME="qt5ct"
         export QT_AUTO_SCREEN_SCALE_FACTOR=0
         export QT_QPA_PLATFORMTHEME="qt5ct"
