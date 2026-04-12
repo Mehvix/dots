@@ -97,19 +97,11 @@ HISTORY_SUBSTRING_SEARCH_ENSURE_UNIQUE=1
 setopt HIST_IGNORE_ALL_DUPS # do not put duplicated command into history list
 setopt HIST_SAVE_NO_DUPS    # do not save duplicated command
 setopt HIST_REDUCE_BLANKS   # remove unnecessary blanks
-setopt HIST_FIND_NO_DUPS    # step over dups
-setopt INC_APPEND_HISTORY   # append history immediatly, rather than on exit
-export HISTFILE=~/.zsh_history
-export HISTSIZE=10000   #  number of commands that are loaded into memory from $HISTFILE
+setopt HIST_FIND_NO_DUPS    # step over dupes
+setopt INC_APPEND_HISTORY   # append history immediately, rather than on exit
+unsetopt SHARE_HISTORY              # fsok fzf maintaining history of current shell
+unsetopt EXTENDED_HISTORY           # fsok compatibility with bash
+unsetopt INC_APPEND_HISTORY_TIME    # ||
+export HISTSIZE=10000   # number of commands that are loaded into memory from $HISTFILE
 export SAVEHIST=10000   # number of commands that are stored from $HISTFILE
-
-setopt HIST_IGNORE_ALL_DUPS     # Don't save duplicates
-setopt HIST_SAVE_NO_DUPS        # Don't save duplicates
-setopt HIST_REDUCE_BLANKS       # Remove unnecessary blanks
-setopt HIST_FIND_NO_DUPS        # Don't display duplicates when searching
-setopt INC_APPEND_HISTORY       # Append immediately, not on exit
-setopt INC_APPEND_HISTORY_TIME  # Append with timestamp
-#setopt SHARE_HISTORY            # Share history between sessions
-unsetopt SHARE_HISTORY
-
-HIST_STAMPS="yy/mm/dd"
+export HISTFILE=~/.shared_history

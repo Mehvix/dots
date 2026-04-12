@@ -14,6 +14,7 @@ HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that c
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
+export HISTFILE=~/.shared_history
 
 # Shell Options
 shopt -s autocd         # cd not needed

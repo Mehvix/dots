@@ -110,10 +110,17 @@ case "$_hostname" in
 
         export OMP_HOST_COLOR="#98c379"
         export OMP_HOST_ICON=$'\uef09'
+
+        alias code="cd \${CODE_ROOT}"
+        # alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
+        # alias sch="~/Documents/School/"
+        alias dots="cd \${CODE_ROOT}/dotfiles/"
+        alias www="/var/www/"
+        alias comp="~/Pictures/photos-pc/Computer\ Misc/"
         ;;
     houdini)
         export OMP_HOST_COLOR="#c678dd"
-        export OMP_HOST_ICON=$'\uef01'
+        export OMP_HOST_ICON=$'󱛠'
         ;;
     wayside)
         export OMP_HOST_COLOR="#56b6c2"
