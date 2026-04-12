@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[[ $- == *i* ]] && source -- $HOME/.local/share/blesh/ble.sh --attach=none
+[[ $- == *i* ]] && [[ -f $HOME/.local/share/blesh/ble.sh ]] && source -- $HOME/.local/share/blesh/ble.sh --attach=none
 
 # env
 # [ -f /etc/bashrc ] && . /etc/bashrc

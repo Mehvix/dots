@@ -7,3 +7,4 @@ stow/nvim/.vim/plugged/
 stow/nvim/.vim/backup/
 stow/tmux/.config/tmux/plugins/
 stow/zsh/.zsh/cache
+stow/yt-dlp/.config/yt-dlp/done.txt

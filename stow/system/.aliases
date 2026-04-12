@@ -135,6 +135,14 @@ function mkcd() {
     command mkdir -p "$1" && cd "$1"
 }
 
+function nixos-switch() {
+  cd /etc/nixos
+  sudo nixos-rebuild switch && \
+    git add -A && \
+    git commit -m "nixos: $(date '+%Y-%m-%d %H:%M')" && \
+    git push
+}
+
 # image convert
 function img2w() {
     command convert "$1" -background white -flatten "$2"

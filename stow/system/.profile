@@ -28,7 +28,7 @@ export LC_COLLATE="en_US.UTF-8"
 export LC_CTYPE=C
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
-export DISPLAY=:0
+# export DISPLAY=:0
 export DATE=$(date "+%A, %B %e  %_I:%M%P")
 export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" || echo "less")
 
@@ -117,7 +117,7 @@ case "$_hostname" in
         ;;
     wayside)
         export OMP_HOST_COLOR="#56b6c2"
-        export OMP_HOST_ICON=$'\uf0d3a'
+        export OMP_HOST_ICON=$'󰴺'
         ;;
     etx-maxv)
         export DISPLAY=$(hostname -i):1
