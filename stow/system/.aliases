@@ -64,6 +64,13 @@ alias mvi="mpv -profile image"
 alias f8="ln -s ~/.config/flake8 ./.flake8" # no global conf my ass
 alias sub="subliminal download -l 'en'"
 alias gls="gitlinks set"
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
 
 # directories
 alias code="cd \${CODE_ROOT}"

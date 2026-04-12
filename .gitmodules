@@ -13,3 +13,6 @@
 [submodule "stow/zsh/.zsh/plugins/zsh-history-substring-search"]
 	path = stow/zsh/.zsh/plugins/zsh-history-substring-search
 	url = https://github.com/zsh-users/zsh-history-substring-search.git
+[submodule "stow/yazi/.config/flavors/onedark.yazi"]
+	path = stow/yazi/.config/flavors/onedark.yazi
+	url = https://github.com/BennyOe/onedark.yazi.git
