@@ -63,6 +63,8 @@ set viminfo^=!
 
 " syntax HL
 syntax on           " syntax highlighting
+syntax match NonASCII "[^\x00-\x7F]" display
+highlight NonASCII ctermbg=red guibg=red
 filetype plugin indent on
 au BufRead,BufNewFile .aliases          set syn=bash
 au BufRead,BufNewFile  */yapf/*         set syn=bash

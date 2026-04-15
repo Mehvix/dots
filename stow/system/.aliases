@@ -21,7 +21,6 @@ touch() {
 alias mk=mkdir
 alias h=history
 alias v="nvim"
-alias t="touch"
 alias c="clear"
 alias o=xdg-open
 alias p="ps uaxf"
@@ -56,7 +55,7 @@ alias py=bpython
 ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
 alias l="eza --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="eza --list-dirs"
-alias t=tree
+alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs .. 
 alias t3="eza --tree --level=3 -l"
 alias t2="eza --tree --level=2 -l"
 alias vs="\\code ."

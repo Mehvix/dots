@@ -8,9 +8,9 @@ source $HOME/.profile
 
 
 # History
-HISTSIZE=10000
-HISTFILESIZE=10000
-HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
+export HISTSIZE=10000
+export HISTFILESIZE=10000
+export HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
@@ -49,15 +49,15 @@ fi
 [[ ! ${BLE_VERSION-} ]] || ble-attach
 
 _deferred_evals=(
-  # Completions
-  'uv generate-shell-completion bash'
-  'uvx --generate-shell-completion bash'
+  "command -v uv  &>/dev/null && eval '$(uv generate-shell-completion bash)'"
+  "command -v uvx &>/dev/null && eval '$(uvx --generate-shell-completion bash)'"
+  "[[ -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source '${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash'"
 )
 for _cmd in "${_deferred_evals[@]}"; do
   if [[ ${BLE_VERSION-} ]]; then
-    ble/util/idle.push "eval \"\$($_cmd)\""
+    ble/util/idle.push "$_cmd"
   else
-    eval "$($_cmd)"
+    eval "$_cmd"
   fi
 done
 unset _deferred_evals _cmd
