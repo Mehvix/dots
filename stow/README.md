@@ -13,6 +13,7 @@ stow --adopt -vt dir program
 ### stow all
 
 ```shell
+# ~/dots/stow
 stow -t ~ */
 ```
 

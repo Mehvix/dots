@@ -1,21 +1,7 @@
-#!/bin/bash
-
 # General
 set bell-style none
 set show-all-if-ambiguous on
 set completion-ignore-case on
-
-"\e[1;5D": backward-word      # Ctrl+Left
-"\e[1;5C": forward-word       # Ctrl+Right
-
-"\e[3;5~": kill-word          # Ctrl+Delete (forward)
-"\C-h": backward-kill-word    # Ctrl+Backspace (backward)
-
-'\C-n':'cd ..\n'              # C+n goes back a dir
-
-# History search with up/down arrows (ala zsh-history-substring-search)
-"\e[A": history-search-backward
-"\e[B": history-search-forward
 
 # Color files by types
 # Note that this may cause completion text blink in some terminals (e.g. xterm).
@@ -28,3 +14,21 @@ set mark-symlinked-directories On
 set colored-completion-prefix On
 # Color the common prefix in menu-complete
 set menu-complete-display-prefix On
+
+# Binds
+# Ctrl+Left
+"\e[1;5D": backward-word
+# Ctrl+Right
+"\e[1;5C": forward-word
+
+# Ctrl+Delete (forward)
+"\e[3;5~": kill-word
+# Ctrl+Backspace (backward)
+"\C-h": backward-kill-word
+
+# C+n goes back a dir
+'\C-n':'cd ..\n'
+
+# History search with up/down arrows (ala zsh-history-substring-search)
+"\e[A": history-search-backward
+"\e[B": history-search-forward
