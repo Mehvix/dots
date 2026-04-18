@@ -24,10 +24,12 @@ set menu-complete-display-prefix On
 # Ctrl+Delete (forward)
 "\e[3;5~": kill-word
 # Ctrl+Backspace (backward)
+"\C-w": backward-kill-word
 "\C-h": backward-kill-word
+"\e[127;5u": backward-kill-word
 
 # C+n goes back a dir
-'\C-n':'cd ..\n'
+"\C-n": "cd ..\n"
 
 # History search with up/down arrows (ala zsh-history-substring-search)
 "\e[A": history-search-backward
