@@ -43,6 +43,17 @@ unset _omp_cache _omp_key _omp_theme
 
 if [ -n "$TMUX" ]; then   # fix OMP right-prompt off-by-one in tmux
     eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')"
+    tmux set -p @last_cmd "" 2>/dev/null
+    __tmux_last_histnum=
+    __tmux_preexec() {
+      [ -n "$COMP_LINE" ] && return
+      local num; num=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*\([0-9]*\)[ ]*.*/\1/')
+      [ "$num" = "$__tmux_last_histnum" ] && return
+      __tmux_last_histnum=$num
+      local cmd; cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+      tmux set -p @last_cmd "$cmd" 2>/dev/null
+    }
+    trap '__tmux_preexec' DEBUG
 fi
 
 # Attach ble.sh- everything prior is buffered

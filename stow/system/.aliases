@@ -55,7 +55,7 @@ alias py=bpython
 ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
 alias l="eza --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="eza --list-dirs"
-alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs .. 
+alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
 alias t3="eza --tree --level=3 -l"
 alias t2="eza --tree --level=2 -l"
 alias vs="\\code ."
@@ -69,6 +69,15 @@ function y() {
 	IFS= read -r -d '' cwd < "$tmp"
 	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
+}
+tls() {
+  tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
+    | sort -t'|' -k1 -rn \
+    | while IFS='|' read act name cre att; do
+        printf "%-20s  created: %s  last active: %s  %s\n" \
+          "$name" "$(date -d @$cre '+%b %d %H:%M')" "$(date -d @$act '+%b %d %H:%M')" \
+          "$([ "$att" = 1 ] && echo '(attached)')"
+      done
 }
 
 # directories
@@ -94,7 +103,7 @@ alias gp="git push"
 alias gl="git pull"
 alias gco="git checkout"
 alias gd="git diff"
-alias gr="git review"
+alias gr="git review -R"
 alias gry="git review -y"
 alias grx="git review -x"
 
