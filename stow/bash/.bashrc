@@ -38,6 +38,8 @@ if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_o
 fi
 source "$_omp_cache"
 unset _omp_cache _omp_key _omp_theme
+_dirlabel_update() { export DIR_LABEL="$(dirlabel show 2>/dev/null)"; }
+PROMPT_COMMAND+=(_dirlabel_update)
 # eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
 

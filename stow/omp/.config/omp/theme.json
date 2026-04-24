@@ -44,7 +44,7 @@
             "style": "full"
           },
           "style": "plain",
-          "template": " {{ .Path }} ",
+          "template": " {{ $p := .Path }}{{ range $s := splitList \":\" .Env.OMP_PATH_STRIP }}{{ if $s }}{{ $p = trimPrefix $s $p }}{{ end }}{{ end }}{{ $p }} ",
           "type": "path"
         },
         {
@@ -90,6 +90,13 @@
           },
           "template": " {{ .CurrentDate | date .Format }} ",
           "type": "time"
+        },
+        {
+          "background": "#3e4452",
+          "foreground": "#c678dd",
+          "style": "plain",
+          "template": "{{ if .Env.DIR_LABEL }}\ue0b3 {{ .Env.DIR_LABEL }} {{ end }}",
+          "type": "text"
         }
       ],
       "type": "prompt"

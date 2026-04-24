@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Manage per-directory labels (inherited by descendants) for the OMP prompt.
+# Storage: $XDG_CONFIG_HOME/dirlabels, one "PATH<TAB>LABEL" per line.
+set -euo pipefail
+
+file="${XDG_CONFIG_HOME:-$HOME/.config}/dirlabels"
+mkdir -p "$(dirname "$file")"
+: > /dev/null; [[ -f "$file" ]] || : > "$file"
+
+cmd="${1:-show}"; shift || true
+
+_strip() {  # drop any existing entry for $1 from $file
+  local d="$1" tmp; tmp=$(mktemp)
+  awk -F'\t' -v d="$d" '$1 != d' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
+case "$cmd" in
+  set)
+    label="${1:?usage: dirlabel set <label>}"
+    dir="$(pwd -P)"
+    _strip "$dir"
+    printf '%s\t%s\n' "$dir" "$label" >> "$file"
+    ;;
+  clear)
+    _strip "$(pwd -P)"
+    ;;
+  show)
+    cur="$(pwd -P)"; best=""; best_len=0
+    while IFS=$'\t' read -r dir label; do
+      [[ -z "$dir" ]] && continue
+      if [[ "$cur" == "$dir" || "$cur" == "$dir"/* ]] && (( ${#dir} > best_len )); then
+        best="$label"; best_len=${#dir}
+      fi
+    done < "$file"
+    [[ -n "$best" ]] && printf '%s' "$best"
+    ;;
+  *)
+    echo "usage: dirlabel {set <label>|clear|show}" >&2; exit 2 ;;
+esac
