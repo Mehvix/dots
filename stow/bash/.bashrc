@@ -41,8 +41,8 @@ unset _omp_cache _omp_key _omp_theme
 # eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
 
-if [ -n "$TMUX" ]; then   # fix OMP right-prompt off-by-one in tmux
-    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')"
+if [ -n "$TMUX" ]; then
+    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')" # fix OMP right-prompt off-by-one
     tmux set -p @last_cmd "" 2>/dev/null
     __tmux_last_histnum=
     __tmux_preexec() {
@@ -62,6 +62,7 @@ fi
 _deferred_evals=(
   "command -v uv  &>/dev/null && eval '$(uv generate-shell-completion bash)'"
   "command -v uvx &>/dev/null && eval '$(uvx --generate-shell-completion bash)'"
+  "command -v activate-global-python-argcomplete &>/dev/null && eval \"\$(activate-global-python-argcomplete --dest=-)\""
   "[[ -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source '${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash'"
 )
 for _cmd in "${_deferred_evals[@]}"; do

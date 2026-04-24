@@ -4,6 +4,10 @@
 CACHED="$HOME/.config/tmux/scripts/cached"
 TTL=15
 
+# Link out-of-tree plugins into tmux2k's plugin dir (survives TPM updates).
+TMUX2K_PLUGINS="$HOME/.config/tmux/plugins/tmux2k/plugins"
+[ -d "$TMUX2K_PLUGINS" ] && ln -sfn "$HOME/.config/tmux/scripts/disk.sh" "$TMUX2K_PLUGINS/disk.sh"
+
 for side in status-right status-left; do
     val=$(tmux show -gv "$side" 2>/dev/null) || continue
     # Wrap #(/path/to/tmux2k/plugins/foo.sh) → #(cached foo 15 /path/to/tmux2k/plugins/foo.sh)

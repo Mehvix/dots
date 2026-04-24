@@ -1,5 +1,7 @@
 #!/bin/bash
 
+_ac() { alias "$1=$2"; eval "$(register-python-argcomplete "$1" --external-argcomplete-script "$2")"; } # e.g. `_ac foo /path/to/foo_script_here_w_argcomplete.py`, shebang say `#!/usr/bin/env -S uv run`
+
 append_path () {
     case ":$PATH:" in
         *:"$1":*)
