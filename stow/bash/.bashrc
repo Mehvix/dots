@@ -38,8 +38,8 @@ if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_o
 fi
 source "$_omp_cache"
 unset _omp_cache _omp_key _omp_theme
-_dirlabel_update() { export DIR_LABEL="$(dirlabel show 2>/dev/null)"; }
-PROMPT_COMMAND+=(_dirlabel_update)
+_dirlabel_update() { eval "$(dirlabel 2>/dev/null)"; }
+[[ " ${PROMPT_COMMAND[*]} " == *" _dirlabel_update "* ]] || PROMPT_COMMAND=(_dirlabel_update "${PROMPT_COMMAND[@]}")
 # eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
 
@@ -55,7 +55,11 @@ if [ -n "$TMUX" ]; then
       local cmd; cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
       tmux set -p @last_cmd "$cmd" 2>/dev/null
     }
-    trap '__tmux_preexec' DEBUG
+    if [[ ${BLE_VERSION-} ]]; then
+      blehook PREEXEC+='__tmux_preexec'
+    else
+      trap '__tmux_preexec' DEBUG
+    fi
 fi
 
 # Attach ble.sh- everything prior is buffered

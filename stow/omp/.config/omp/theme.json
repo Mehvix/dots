@@ -94,6 +94,9 @@
         {
           "background": "#3e4452",
           "foreground": "#c678dd",
+          "foreground_templates": [
+            "{{ if .Env.DIR_LABEL_COLOR }}{{ .Env.DIR_LABEL_COLOR }}{{ end }}"
+          ],
           "style": "plain",
           "template": "{{ if .Env.DIR_LABEL }}\ue0b3 {{ .Env.DIR_LABEL }} {{ end }}",
           "type": "text"

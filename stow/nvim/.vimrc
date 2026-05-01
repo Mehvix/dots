@@ -30,6 +30,45 @@ set whichwrap+=<,>,h,l,[,]
 " enter command mode easier
 nnoremap ; :
 
+" repeat last f/t/F/T -- <Space> forward (OG ;), , backward; both wrap lines
+function! s:RepeatCharSearch(reverse) abort
+    let cs = getcharsearch()
+    if empty(cs.char)
+        return
+    endif
+    let forward = a:reverse ? !cs.forward : cs.forward
+    let flags = forward ? 'W' : 'bW'
+    let pat = '\V' . escape(cs.char, '\')
+    let cnt = v:count1
+    " Save pos so we can restore if search fails after nudging
+    let save_pos = getpos('.')
+    " Nudge past current position so t/T repeats don't re-match adjacent char
+    if forward && col('.') < col('$') - 1
+        normal! l
+    elseif !forward && col('.') > 1
+        normal! h
+    endif
+    while cnt > 0
+        if !search(pat, flags)
+            call setpos('.', save_pos)
+            return
+        endif
+        let cnt -= 1
+    endwhile
+    " t stops before char, T stops after; step back one from landing
+    if cs.until && forward && col('.') > 1
+        normal! h
+    elseif cs.until && !forward
+        normal! l
+    endif
+endfunction
+nnoremap <silent> <Space> :<C-u>call <SID>RepeatCharSearch(0)<CR>
+nnoremap <silent> ,       :<C-u>call <SID>RepeatCharSearch(1)<CR>
+xnoremap <silent> <Space> :<C-u>call <SID>RepeatCharSearch(0)<CR>
+xnoremap <silent> ,       :<C-u>call <SID>RepeatCharSearch(1)<CR>
+onoremap <silent> <Space> :<C-u>call <SID>RepeatCharSearch(0)<CR>
+onoremap <silent> ,       :<C-u>call <SID>RepeatCharSearch(1)<CR>
+
 " move line with alt
 nnoremap <A-Up>   :<C-u>silent! move-2<CR>==
 nnoremap <A-Down> :<C-u>silent! move+<CR>==

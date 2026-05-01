@@ -1,18 +1,42 @@
 #!/usr/bin/env bash
 # Manage per-directory labels (inherited by descendants) for the OMP prompt.
-# Storage: $XDG_CONFIG_HOME/dirlabels, one "PATH<TAB>LABEL" per line.
+# Storage: $XDG_CONFIG_HOME/dirlabels, one "PATH<TAB>LABEL<TAB>COLOR_INDEX" per line.
 set -euo pipefail
 
 file="${XDG_CONFIG_HOME:-$HOME/.config}/dirlabels"
 mkdir -p "$(dirname "$file")"
 : > /dev/null; [[ -f "$file" ]] || : > "$file"
 
-cmd="${1:-show}"; shift || true
+arg="${1:-env}"
+case "$arg" in env|set|clear|list|help|-h|--help) cmd="$arg"; shift || true ;; *) cmd=set ;; esac
 
-_strip() {  # drop any existing entry for $1 from $file
+_colors=(
+  fcda43
+  7ed644
+  83c9a2
+  7be5e5
+  61afef
+  c678dd
+  c25656
+)
+
+_ansi() { # hex -> colored text
+  local hex="$1" txt="$2"
+  printf '\033[38;2;%d;%d;%dm%s\033[0m' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}" "$txt"
+}
+
+_strip() {
   local d="$1" tmp; tmp=$(mktemp)
   awk -F'\t' -v d="$d" '$1 != d' "$file" > "$tmp"
   mv "$tmp" "$file"
+}
+
+_next_color() { # pick next index in cycle, avoiding the most recent
+  local max=-1 ci
+  while IFS=$'\t' read -r _ _ ci; do
+    [[ -n "$ci" ]] && (( ci > max )) && max=$ci
+  done < "$file"
+  echo $(( (max + 1) % ${#_colors[@]} ))
 }
 
 case "$cmd" in
@@ -20,21 +44,44 @@ case "$cmd" in
     label="${1:?usage: dirlabel set <label>}"
     dir="$(pwd -P)"
     _strip "$dir"
-    printf '%s\t%s\n' "$dir" "$label" >> "$file"
+    ci=$(_next_color)
+    printf '%s\t%s\t%s\n' "$dir" "$label" "$ci" >> "$file"
     ;;
   clear)
-    _strip "$(pwd -P)"
+    _strip "$(cd "${1:-.}" && pwd -P)"
     ;;
-  show)
-    cur="$(pwd -P)"; best=""; best_len=0
-    while IFS=$'\t' read -r dir label; do
+  env)
+    # eval "$(dirlabel env)" — or just "eval $(dirlabel)"
+    cur="$(pwd -P)"; best=""; best_len=0; best_ci=0
+    while IFS=$'\t' read -r dir label ci; do
       [[ -z "$dir" ]] && continue
       if [[ "$cur" == "$dir" || "$cur" == "$dir"/* ]] && (( ${#dir} > best_len )); then
-        best="$label"; best_len=${#dir}
+        best="$label"; best_len=${#dir}; best_ci="${ci:-0}"
       fi
     done < "$file"
-    [[ -n "$best" ]] && printf '%s' "$best"
+    printf 'export DIR_LABEL=%q DIR_LABEL_COLOR=#%s\n' "$best" "${_colors[$best_ci]}"
+    ;;
+  list)
+    while IFS=$'\t' read -r dir label ci; do
+      [[ -z "$dir" ]] && continue
+      _ansi "${_colors[${ci:-0}]}" "$(printf '%-12s' "$label")"
+      printf '  %s\n' "$dir"
+    done < "$file"
+    ;;
+  help|-h|--help)
+    cat <<'EOF'
+dirlabel — per-directory labels for the OMP prompt
+
+  dirlabel <label>        set label for current directory
+  dirlabel set <label>    same as above
+  dirlabel clear [path]   remove label (default: cwd)
+  dirlabel list           show all entries with colors
+  dirlabel env            export DIR_LABEL & DIR_LABEL_COLOR (default)
+  dirlabel help           this message
+
+Prompt integration:  eval "$(dirlabel)"
+EOF
     ;;
   *)
-    echo "usage: dirlabel {set <label>|clear|show}" >&2; exit 2 ;;
+    echo "usage: dirlabel {<label>|set|clear|list|env|help}" >&2; exit 2 ;;
 esac
