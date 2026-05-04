@@ -8,13 +8,15 @@ source $HOME/.profile
 
 
 # History
-export HISTSIZE=10000
-export HISTFILESIZE=10000
+export HISTSIZE=100000
+export HISTFILESIZE=100000
 export HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
 export HISTFILE=~/.shared_history
+# dedupe on exit- take last occurrence
+trap 'tac "$HISTFILE" | awk "!seen[\$0]++" | tac > "$HISTFILE.tmp" && command mv -f "$HISTFILE.tmp" "$HISTFILE"' EXIT
 
 # Shell Options
 shopt -s autocd         # cd not needed
@@ -24,6 +26,16 @@ shopt -s cdspell        # autocorrect typos in cd
 shopt -s nocaseglob     # case-insensitive globbing
 shopt -s checkwinsize   # update LINES/COLUMNS after each command
 shopt -s no_empty_cmd_completion  # avoid searching PATH
+
+# complete dirs for destination arg (source=files, dest=dirs)
+_dest_dir_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}" nargs=0 flag=-f
+    for ((i=1; i<COMP_CWORD; i++)); do [[ "${COMP_WORDS[i]}" != -* ]] && ((nargs++)); done
+    ((nargs)) && flag=-d
+    COMPREPLY=($(compgen $flag -- "$cur"))
+}
+complete -o filenames -F _dest_dir_complete mv cp rsync
+complete -d du rmdir pushd
 
 _omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/omp_init.bash"
 _omp_theme="$HOME/.config/omp/theme.json"

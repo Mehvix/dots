@@ -71,7 +71,7 @@ function y() {
 	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
 }
-tls() {
+function tls() {
   tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
     | sort -t'|' -k1 -rn \
     | while IFS='|' read act name cre att; do
@@ -79,6 +79,20 @@ tls() {
           "$name" "$(date -d @$cre '+%b %d %H:%M')" "$(date -d @$act '+%b %d %H:%M')" \
           "$([ "$att" = 1 ] && echo '(attached)')"
       done
+}
+function extract() {
+    case "$1" in
+        *.tar.gz|*.tgz)  tar xzf "$1";;
+        *.tar.bz2|*.tbz) tar xjf "$1";;
+        *.tar.xz|*.txz)  tar xJf "$1";;
+        *.tar)            tar xf "$1";;
+        *.zip)            unzip "$1";;
+        *.gz)             gunzip "$1";;
+        *.bz2)            bunzip2 "$1";;
+        *.xz)             unxz "$1";;
+        *.7z)             7z x "$1";;
+        *)                echo "unknown: $1";;
+    esac
 }
 
 # directories
