@@ -34,8 +34,8 @@ _dest_dir_complete() {
     ((nargs)) && flag=-d
     COMPREPLY=($(compgen $flag -- "$cur"))
 }
-complete -o filenames -F _dest_dir_complete mv cp rsync
-complete -d du rmdir pushd
+complete -o filenames -F _dest_dir_complete mv cp rsync  # first arg=files, subsequent=dirs
+complete -d -o dirnames cd du rmdir pushd  # dirs only; -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 
 _omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/omp_init.bash"
 _omp_theme="$HOME/.config/omp/theme.json"

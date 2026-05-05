@@ -8,15 +8,16 @@ mkdir -p "$(dirname "$file")"
 : > /dev/null; [[ -f "$file" ]] || : > "$file"
 
 arg="${1:-env}"
-case "$arg" in env|set|clear|list|help|-h|--help) cmd="$arg"; shift || true ;; *) cmd=set ;; esac
+case "$arg" in env|set|clear|list|help|-h|--help) cmd="$arg"; shift || true ;; *) echo "unknown command: $arg" >&2; exit 2 ;; esac
 
 _colors=(
   fcda43
   7ed644
-  83c9a2
+  159c76
   7be5e5
   61afef
   c678dd
+  bc3387
   c25656
 )
 
@@ -31,18 +32,38 @@ _strip() {
   mv "$tmp" "$file"
 }
 
-_next_color() { # pick next index in cycle, avoiding the most recent
-  local max=-1 ci
+_next_color() { # pick first unused color index, fallback to least recent
+  local -A used
   while IFS=$'\t' read -r _ _ ci; do
-    [[ -n "$ci" ]] && (( ci > max )) && max=$ci
+    [[ -n "$ci" ]] && used[$ci]=1
   done < "$file"
-  echo $(( (max + 1) % ${#_colors[@]} ))
+  for (( i=0; i<${#_colors[@]}; i++ )); do
+    [[ -z "${used[$i]:-}" ]] && echo "$i" && return
+  done
+  echo 0
 }
 
 case "$cmd" in
   set)
     label="${1:?usage: dirlabel set <label>}"
     dir="$(pwd -P)"
+    # check if cwd inherits from a parent (no exact match)
+    parent_dir="" parent_label=""
+    while IFS=$'\t' read -r d l ci; do
+      [[ -z "$d" || "$d" == "$dir" ]] && continue
+      if [[ "$dir" == "$d"/* ]] && (( ${#d} > ${#parent_dir} )); then
+        parent_dir="$d" parent_label="$l" parent_ci="$ci"
+      fi
+    done < "$file"
+    if [[ -n "$parent_dir" ]] && ! grep -q "^${dir}"$'\t' "$file"; then
+      printf 'Inherited label "%s" from %s\nChange parent label? [y/N] ' "$parent_label" "$parent_dir" >&2
+      read -r ans </dev/tty
+      if [[ "$ans" == [yY]* ]]; then
+        _strip "$parent_dir"
+        printf '%s\t%s\t%s\n' "$parent_dir" "$label" "$parent_ci" >> "$file"
+        exit 0
+      fi
+    fi
     _strip "$dir"
     ci=$(_next_color)
     printf '%s\t%s\t%s\n' "$dir" "$label" "$ci" >> "$file"
@@ -72,8 +93,7 @@ case "$cmd" in
     cat <<'EOF'
 dirlabel — per-directory labels for the OMP prompt
 
-  dirlabel <label>        set label for current directory
-  dirlabel set <label>    same as above
+  dirlabel set <label>    set label for current directory
   dirlabel clear [path]   remove label (default: cwd)
   dirlabel list           show all entries with colors
   dirlabel env            export DIR_LABEL & DIR_LABEL_COLOR (default)
@@ -83,5 +103,5 @@ Prompt integration:  eval "$(dirlabel)"
 EOF
     ;;
   *)
-    echo "usage: dirlabel {<label>|set|clear|list|env|help}" >&2; exit 2 ;;
+    echo "usage: dirlabel {set|clear|list|env|help}" >&2; exit 2 ;;
 esac
