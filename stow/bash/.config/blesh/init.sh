@@ -79,8 +79,8 @@
 ## The following setting turns on the delayed load of history when an non-empty
 ## value is set.
 
-# bleopt history_lazyload=1
-bleopt history_lazyload=
+bleopt history_lazyload=1
+# bleopt history_lazyload=
 
 blehook ADDHISTORY+='[[ $1 != ❯\ * ]] || { ble/builtin/history -s -- "${1#❯ }"; return 1; }'
 
@@ -307,7 +307,7 @@ bleopt prompt_ps1_transient=trim
 ## "(usr+sys)*100/real".  The other values are all in unit of milliseconds.
 
 bleopt exec_elapsed_mark=$'\e[94m[ble: elapsed %s (CPU %s%%)]\e[m'
-bleopt exec_elapsed_enabled='usr+sys>=10000'
+bleopt exec_elapsed_enabled='usr+sys>=1000'
 
 
 ## "exec_exit_mark" specifies the marker printed when the bash session ends.

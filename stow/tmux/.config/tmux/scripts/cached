@@ -1,0 +1,20 @@
+#!/bin/bash
+# Usage: cached <name> <ttl_secs> <command...>
+name=$1; shift; ttl=$1; shift
+cache="/tmp/tmux-cached-$name"
+lock="/tmp/tmux-cached-$name.lock"
+now=$(date +%s)
+
+if [[ -f "$cache" ]] && (( now - $(stat -c %Y "$cache") < ttl )); then
+    cat "$cache"
+elif mkdir "$lock" 2>/dev/null; then
+    # Won the lock — regenerate
+    tmp="$cache.tmp.$$"
+    "$@" > "$tmp" 2>/dev/null
+    mv -f "$tmp" "$cache"
+    rmdir "$lock"
+    cat "$cache"
+else
+    # Another instance is regenerating — serve stale
+    [[ -f "$cache" ]] && cat "$cache"
+fi

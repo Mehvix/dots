@@ -108,8 +108,10 @@ let g:gitgutter_sign_removed_first_line = '^'
 let g:gitgutter_sign_modified_removed = '<'
 
 " comment toggle with ctrl + /
-nmap <C-/> gcc
-vmap <C-/> gc
+nmap <C-/> :Commentary<CR>
+vmap <C-/> :Commentary<CR>
+nmap <C-_> :Commentary<CR>
+vmap <C-_> :Commentary<CR>
 
 lua << EOF
 local osc52 = require('vim.ui.clipboard.osc52')

@@ -8,13 +8,15 @@ source $HOME/.profile
 
 
 # History
-HISTSIZE=10000
-HISTFILESIZE=10000
-HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
+export HISTSIZE=100000
+export HISTFILESIZE=100000
+export HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
 export HISTFILE=~/.shared_history
+# dedupe on exit- take last occurrence
+trap 'tac "$HISTFILE" | awk "!seen[\$0]++" | tac > "$HISTFILE.tmp" && command mv -f "$HISTFILE.tmp" "$HISTFILE"' EXIT
 
 # Shell Options
 shopt -s autocd         # cd not needed
@@ -24,6 +26,16 @@ shopt -s cdspell        # autocorrect typos in cd
 shopt -s nocaseglob     # case-insensitive globbing
 shopt -s checkwinsize   # update LINES/COLUMNS after each command
 shopt -s no_empty_cmd_completion  # avoid searching PATH
+
+# complete dirs for destination arg (source=files, dest=dirs)
+_dest_dir_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}" nargs=0 flag=-f
+    for ((i=1; i<COMP_CWORD; i++)); do [[ "${COMP_WORDS[i]}" != -* ]] && ((nargs++)); done
+    ((nargs)) && flag=-d
+    COMPREPLY=($(compgen $flag -- "$cur"))
+}
+complete -o filenames -F _dest_dir_complete mv cp rsync  # first arg=files, subsequent=dirs
+complete -d -o dirnames cd du rmdir pushd  # dirs only; -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 
 _omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/omp_init.bash"
 _omp_theme="$HOME/.config/omp/theme.json"
@@ -38,26 +50,44 @@ if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_o
 fi
 source "$_omp_cache"
 unset _omp_cache _omp_key _omp_theme
+_dirlabel_update() { eval "$(dirlabel 2>/dev/null)"; }
+[[ " ${PROMPT_COMMAND[*]} " == *" _dirlabel_update "* ]] || PROMPT_COMMAND=(_dirlabel_update "${PROMPT_COMMAND[@]}")
 # eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
 
-if [ -n "$TMUX" ]; then   # fix OMP right-prompt off-by-one in tmux
-    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')"
+if [ -n "$TMUX" ]; then
+    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')" # fix OMP right-prompt off-by-one
+    tmux set -p @last_cmd "" 2>/dev/null
+    __tmux_last_histnum=
+    __tmux_preexec() {
+      [ -n "$COMP_LINE" ] && return
+      local num; num=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*\([0-9]*\)[ ]*.*/\1/')
+      [ "$num" = "$__tmux_last_histnum" ] && return
+      __tmux_last_histnum=$num
+      local cmd; cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+      tmux set -p @last_cmd "$cmd" 2>/dev/null
+    }
+    if [[ ${BLE_VERSION-} ]]; then
+      blehook PREEXEC+='__tmux_preexec'
+    else
+      trap '__tmux_preexec' DEBUG
+    fi
 fi
 
 # Attach ble.sh- everything prior is buffered
 [[ ! ${BLE_VERSION-} ]] || ble-attach
 
 _deferred_evals=(
-  # Completions
-  'uv generate-shell-completion bash'
-  'uvx --generate-shell-completion bash'
+  "command -v uv  &>/dev/null && eval '$(uv generate-shell-completion bash)'"
+  "command -v uvx &>/dev/null && eval '$(uvx --generate-shell-completion bash)'"
+  "command -v activate-global-python-argcomplete &>/dev/null && eval \"\$(activate-global-python-argcomplete --dest=-)\""
+  "[[ -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source '${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash'"
 )
 for _cmd in "${_deferred_evals[@]}"; do
   if [[ ${BLE_VERSION-} ]]; then
-    ble/util/idle.push "eval \"\$($_cmd)\""
+    ble/util/idle.push "$_cmd"
   else
-    eval "$($_cmd)"
+    eval "$_cmd"
   fi
 done
 unset _deferred_evals _cmd

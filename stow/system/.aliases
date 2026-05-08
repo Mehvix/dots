@@ -21,7 +21,6 @@ touch() {
 alias mk=mkdir
 alias h=history
 alias v="nvim"
-alias t="touch"
 alias c="clear"
 alias o=xdg-open
 alias p="ps uaxf"
@@ -53,10 +52,11 @@ alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
 alias py=bpython
+alias dl=dirlabel
 ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
 alias l="eza --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="eza --list-dirs"
-alias t=tree
+alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
 alias t3="eza --tree --level=3 -l"
 alias t2="eza --tree --level=2 -l"
 alias vs="\\code ."
@@ -70,6 +70,29 @@ function y() {
 	IFS= read -r -d '' cwd < "$tmp"
 	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
 	rm -f -- "$tmp"
+}
+function tls() {
+  tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
+    | sort -t'|' -k1 -rn \
+    | while IFS='|' read act name cre att; do
+        printf "%-20s  created: %s  last active: %s  %s\n" \
+          "$name" "$(date -d @$cre '+%b %d %H:%M')" "$(date -d @$act '+%b %d %H:%M')" \
+          "$([ "$att" = 1 ] && echo '(attached)')"
+      done
+}
+function extract() {
+    case "$1" in
+        *.tar.gz|*.tgz)  tar xzf "$1";;
+        *.tar.bz2|*.tbz) tar xjf "$1";;
+        *.tar.xz|*.txz)  tar xJf "$1";;
+        *.tar)            tar xf "$1";;
+        *.zip)            unzip "$1";;
+        *.gz)             gunzip "$1";;
+        *.bz2)            bunzip2 "$1";;
+        *.xz)             unxz "$1";;
+        *.7z)             7z x "$1";;
+        *)                echo "unknown: $1";;
+    esac
 }
 
 # directories
@@ -91,11 +114,13 @@ alias gb="git branch"
 alias ga="git add"
 alias gaa="git add ."
 alias gcm="git commit -m"
+alias gco="git checkout"
 alias gp="git push"
 alias gl="git pull"
-alias gco="git checkout"
+alias gll="git log"
+alias glo="git log --oneline"
 alias gd="git diff"
-alias gr="git review"
+alias gr="git review -R"
 alias gry="git review -y"
 alias grx="git review -x"
 
