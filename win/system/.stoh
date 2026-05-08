@@ -1,0 +1,2 @@
+source = ../../stow/system
+target = %USERPROFILE%

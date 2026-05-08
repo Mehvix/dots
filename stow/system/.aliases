@@ -99,9 +99,7 @@ alias gr="git review"
 alias gry="git review -y"
 alias grx="git review -x"
 
-# ssh
-alias ssh="kitty +kitten ssh"
-alias ssht="command ssh"    # ignore existing ssh alias
+command -v kitty >/dev/null 2>&1 && alias ssh="kitty +kitten ssh"
 
 # yt-dlp
 alias youtube-dl="yt-dlp"

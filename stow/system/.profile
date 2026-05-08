@@ -9,6 +9,15 @@ append_path () {
     esac
 }
 
+prepend_path () {
+    case ":$PATH:" in
+        *:"$1":*)
+            ;;
+        *)
+            PATH="$1${PATH:+:$PATH}"
+    esac
+}
+
 # append_path "$HOME/bin"
 append_path "$HOME/.local/bin"
 append_path "/usr/local/bin"
@@ -48,6 +57,14 @@ export FZF_CTRL_R_OPTS="
 --nth 2..           # dont match w history
 --bind 'ctrl-h:backward-kill-word'      # ctrl+backspace deletes word
 "
+
+# windows-unique
+if [[ "$OSTYPE" == msys || "$OSTYPE" == cygwin ]]; then
+    # native OpenSSH (LibreSSL) over git-bash OpenSSL (which breaks ECDSA)
+    prepend_path "/c/Windows/System32/OpenSSH"
+
+    append_path "/c/msys64/usr/bin"
+fi
 
 # device-specific
 _hostname=${HOSTNAME:-$(hostname)}
