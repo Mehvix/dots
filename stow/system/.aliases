@@ -47,6 +47,7 @@ alias va="vim ~/.aliases"
 alias vp="vim ~/.profile"
 
 # alternatives + program shortcuts
+[ -n "$KITTY_PID" ] && alias ssh="kitty +kitten ssh"
 alias vim=nvim
 alias json=fx
 alias cat=bat
@@ -124,7 +125,6 @@ alias gr="git review -R"
 alias gry="git review -y"
 alias grx="git review -x"
 
-command -v kitty >/dev/null 2>&1 && alias ssh="kitty +kitten ssh"
 
 # yt-dlp
 alias youtube-dl="yt-dlp"
@@ -165,12 +165,11 @@ function mkcd() {
     command mkdir -p "$1" && cd "$1"
 }
 
-function nixos-switch() {
-  cd /etc/nixos
-  sudo nixos-rebuild switch && \
-    git add -A && \
-    git commit -m "nixos: $(date '+%Y-%m-%d %H:%M')" && \
-    git push
+function nixos-switch () {
+    git -C /etc/nixos add -A
+    sudo nixos-rebuild switch --flake /etc/nixos && \
+    git -C /etc/nixos commit -m "nixos: $(date '+%Y-%m-%d %H:%M')" && \
+    git -C /etc/nixos push
 }
 
 # image convert

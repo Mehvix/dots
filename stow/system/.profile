@@ -155,6 +155,8 @@ esac
 if [[ $- == *i* ]]; then
     [[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal (XOFF)
 
+    # [ -z "$SSH_AUTH_SOCK" ] && eval "$(ssh-agent -s)"
+
     source $HOME/.aliases
     [ -f $HOME/.secrets ] && source $HOME/.secrets
     [ -f $HOME/.profile_amzn ] && source $HOME/.profile_amzn
@@ -176,4 +178,3 @@ if [[ $- == *i* ]]; then
     test -r "$d" && eval "$(dircolors "$d")"
 
 fi
-

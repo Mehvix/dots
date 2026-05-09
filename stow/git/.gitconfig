@@ -29,6 +29,8 @@
 
 [alias]
     tree = log --graph --decorate --pretty=oneline --abbrev-commit
+    slog = log --oneline --decorate --graph
+    st = status --short --branch
 
 [credential]
     #helper = store

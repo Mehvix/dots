@@ -30,6 +30,9 @@ set whichwrap+=<,>,h,l,[,]
 " enter command mode easier
 nnoremap ; :
 
+" Y should work like D or C- yank whole line 
+nnoremap Y y$
+
 " repeat last f/t/F/T -- <Space> forward (OG ;), , backward; both wrap lines
 function! s:RepeatCharSearch(reverse) abort
     let cs = getcharsearch()

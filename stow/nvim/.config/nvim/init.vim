@@ -6,21 +6,43 @@ let &packpath = &runtimepath
 " - Avoid using standard Vim directory names like 'plugin'
 call plug#begin('~/.vim/plugged')
 
-Plug 'airblade/vim-gitgutter'
+Plug 'fladson/vim-kitty',   { 'for': 'kitty' }
+Plug 'lervag/vimtex',       { 'for': 'tex' }
+Plug 'kylelaker/riscv.vim', { 'for': 'asm' }
+
 Plug 'itchyny/lightline.vim'
 Plug 'joshdick/onedark.vim'
 Plug 'edkolev/tmuxline.vim'
+Plug 'airblade/vim-gitgutter'
+Plug 'lambdalisue/nerdfont.vim'
+Plug 'nvim-tree/nvim-web-devicons'
+
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-sleuth'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
+" Plug 'chaoren/vim-wordmotion'
 Plug 'lukas-reineke/indent-blankline.nvim'
 Plug 'echasnovski/mini.indentscope'
 Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate \| TSInstall! lua python javascript typescript c cpp bash diff git_config git_rebase haskell ini latex perl nix' }
 Plug 'stevearc/conform.nvim'
-Plug 'fladson/vim-kitty'
-"Plug 'lervag/vimtex'
-Plug 'kylelaker/riscv.vim'
+" Plug 'godlygeek/tabular'
+
+if has('nvim')
+  function! UpdateRemotePlugins(...)
+    " Needed to refresh runtime files
+    let &rtp=&rtp
+    UpdateRemotePlugins
+  endfunction
+
+  Plug 'gelguy/wilder.nvim', { 'do': function('UpdateRemotePlugins') }
+else
+  Plug 'gelguy/wilder.nvim'
+
+  " To use Python remote plugin features in Vim, can be skipped
+  Plug 'roxma/nvim-yarp'
+  Plug 'roxma/vim-hug-neovim-rpc'
+endif
 
 call plug#end() " init plugin system
 
@@ -85,8 +107,8 @@ if (has("autocmd") && !has("gui_running"))
 endif
 let g:onedark_terminal_italics=1
 let g:onedark_color_overrides = {
-\ "comment_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
-\ "gutter_fg_grey": {"gui": "#767676", "cterm": "243", "cterm16": "2" },
+\ "comment_grey": {"gui": "#8a8a8a", "cterm": "245", "cterm16": "2" },
+\ "gutter_fg_grey": {"gui": "#8a8a8a", "cterm": "245", "cterm16": "2" },
 \}
 
 colorscheme onedark
@@ -100,7 +122,7 @@ let g:lightline = {
 \ 'subseparator': { 'left': "\ue0b1", 'right': "\ue0b3" },
 \ }
 
-" fontawesome icons as signs
+" gitgutter
 let g:gitgutter_sign_added = '+'
 let g:gitgutter_sign_modified = '>'
 let g:gitgutter_sign_removed = '-'
@@ -113,6 +135,44 @@ vmap <C-/> :Commentary<CR>
 nmap <C-_> :Commentary<CR>
 vmap <C-_> :Commentary<CR>
 
+" wilder
+lua << EOF
+local wilder = require('wilder')
+wilder.setup({modes = {':', '/', '?'}})
+wilder.set_option('pipeline', {
+  wilder.branch(
+    wilder.python_file_finder_pipeline({
+      file_command = {'fd', '-tf'},
+      dir_command = {'fd', '-td'},
+      -- use {'cpsm_filter'} for performance, requires cpsm vim plugin
+      -- found at https://github.com/nixprime/cpsm
+      filters = {'fuzzy_filter', 'difflib_sorter'},
+    }),
+    wilder.cmdline_pipeline(),
+    wilder.python_search_pipeline()
+  ),
+})
+wilder.set_option('renderer', wilder.wildmenu_renderer(
+  -- use wilder.wildmenu_lightline_theme() if using Lightline
+  wilder.wildmenu_airline_theme({
+    -- highlights can be overriden, see :h wilder#wildmenu_renderer()
+    highlights = {default = 'StatusLine'},
+    highlighter = wilder.basic_highlighter(),
+    separator = ' · ',
+  })
+))
+wilder.set_option('renderer', wilder.popupmenu_renderer({
+  -- highlighter applies highlighting to the candidates
+  highlighter = wilder.basic_highlighter(),
+}))
+wilder.set_option('renderer', wilder.popupmenu_renderer({
+  highlighter = wilder.basic_highlighter(),
+  left = {' ', wilder.popupmenu_devicons()},
+  right = {' ', wilder.popupmenu_scrollbar()},
+}))
+EOF
+
+" clipboard
 lua << EOF
 local osc52 = require('vim.ui.clipboard.osc52')
 local dumb_term = os.getenv('SSH_TTY') and not os.getenv('KITTY_PID') and not os.getenv('TERM_PROGRAM')
@@ -145,7 +205,6 @@ else
   vim.opt.clipboard = 'unnamedplus'
 end
 EOF
-
 " vscode incompat w latest v12 CSI u keeb protocol (?)
 lua << EOF
 if vim.env.TERM_PROGRAM == 'vscode' then
@@ -157,4 +216,7 @@ if vim.env.TERM_PROGRAM == 'vscode' then
 end
 EOF
 
-source ~/.vimrc " vim settings
+
+
+source ~/.vimrc
+
