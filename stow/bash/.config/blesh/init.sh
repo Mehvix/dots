@@ -1169,6 +1169,7 @@ blehook/eval-after-load keymap_emacs blerc/emacs-load-hook
 # fzf
 ble-import -d integration/fzf-completion
 ble-import integration/fzf-key-bindings
+ble-bind -m emacs -f C-s ''  # unbind
 
 ble-import -d integration/bash-completion
 

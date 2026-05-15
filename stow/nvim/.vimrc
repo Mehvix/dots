@@ -34,7 +34,7 @@ nnoremap ; :
 nnoremap Y y$
 
 " repeat last f/t/F/T -- <Space> forward (OG ;), , backward; both wrap lines
-function! s:RepeatCharSearch(reverse) abort
+function! RepeatCharSearch(reverse) abort
     let cs = getcharsearch()
     if empty(cs.char)
         return
@@ -65,12 +65,6 @@ function! s:RepeatCharSearch(reverse) abort
         normal! l
     endif
 endfunction
-nnoremap <silent> <Space> :<C-u>call <SID>RepeatCharSearch(0)<CR>
-nnoremap <silent> ,       :<C-u>call <SID>RepeatCharSearch(1)<CR>
-xnoremap <silent> <Space> :<C-u>call <SID>RepeatCharSearch(0)<CR>
-xnoremap <silent> ,       :<C-u>call <SID>RepeatCharSearch(1)<CR>
-onoremap <silent> <Space> :<C-u>call <SID>RepeatCharSearch(0)<CR>
-onoremap <silent> ,       :<C-u>call <SID>RepeatCharSearch(1)<CR>
 
 " move line with alt
 nnoremap <A-Up>   :<C-u>silent! move-2<CR>==

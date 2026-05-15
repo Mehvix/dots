@@ -1,5 +1,11 @@
 set runtimepath^=~/.vim
 let &packpath = &runtimepath
+let g:loaded_netrw = 1
+let g:loaded_netrwPlugin = 1
+let s:python3 = expand('~/.venv/bin/python')
+if filereadable(s:python3)
+  let g:python3_host_prog = s:python3
+endif
 
 " Specify a directory for plugins
 " - For Neovim: stdpath('data') . '/plugged'
@@ -16,6 +22,8 @@ Plug 'edkolev/tmuxline.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'nvim-tree/nvim-web-devicons'
+Plug 'nvim-tree/nvim-tree.lua'
+Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-sleuth'
@@ -34,11 +42,9 @@ if has('nvim')
     let &rtp=&rtp
     UpdateRemotePlugins
   endfunction
-
   Plug 'gelguy/wilder.nvim', { 'do': function('UpdateRemotePlugins') }
 else
   Plug 'gelguy/wilder.nvim'
-
   " To use Python remote plugin features in Vim, can be skipped
   Plug 'roxma/nvim-yarp'
   Plug 'roxma/vim-hug-neovim-rpc'
@@ -46,12 +52,72 @@ endif
 
 call plug#end() " init plugin system
 
-if !has('gui_running')
-    set t_Co=256
-endif
-
-" formatting with conform
 lua << EOF
+vim.opt.termguicolors = true
+
+-- colorscheme (onedark)
+vim.g.onedark_terminal_italics = 1
+vim.g.onedark_color_overrides = {
+  comment_grey   = { gui = '#8a8a8a', cterm = '245', cterm16 = '2' },
+  gutter_fg_grey = { gui = '#8a8a8a', cterm = '245', cterm16 = '2' },
+}
+vim.api.nvim_create_autocmd('ColorScheme', {
+  pattern = 'onedark',
+  callback = function()
+    vim.fn['onedark#set_highlight']('Normal', { fg = { gui = '#ABB2BF', cterm = '145', cterm16 = '7' } })
+  end,
+})
+vim.cmd('colorscheme onedark')
+vim.o.background = 'dark'
+
+-- lightline
+vim.o.showmode = false
+vim.g.lightline = {
+  colorscheme = 'onedark',
+  separator    = { left = '\u{e0b0}', right = '\u{e0b2}' },
+  subseparator = { left = '\u{e0b1}', right = '\u{e0b3}' },
+}
+
+-- gitgutter
+vim.g.gitgutter_sign_added = '+'
+vim.g.gitgutter_sign_modified = '>'
+vim.g.gitgutter_sign_removed = '-'
+vim.g.gitgutter_sign_removed_first_line = '^'
+vim.g.gitgutter_sign_modified_removed = '<'
+
+-- binds
+local map = vim.keymap.set
+for _, m in ipairs({
+  -- commentary
+  { 'n', '<C-/>',      '<cmd>Commentary<cr>' },
+  { 'v', '<C-/>',      ':Commentary<cr>' },
+  { 'n', '<C-_>',      '<cmd>Commentary<cr>' },
+  { 'v', '<C-_>',      ':Commentary<cr>' },
+  -- file tree
+  { 'n', '<C-b>',      '<cmd>NvimTreeFindFileToggle<cr>' },
+  -- terminal
+  { 'n', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
+  { 'n', '<C-S-\\>',    '<cmd>ToggleTerm direction="float"<cr>' },
+  { 't', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
+  { 't', '<C-S-\\>',    '<cmd>ToggleTerm<cr>' },
+  -- buffers
+  { 'n', '<C-h>',      '<cmd>bp<cr>' },
+  { 'n', '<C-l>',      '<cmd>bn<cr>' },
+  -- git hunks
+  { 'n', '<A-k>',      '<cmd>GitGutterPrevHunk<cr>' },
+  { 'n', '<A-j>',      '<cmd>GitGutterNextHunk<cr>' },
+  -- char search repeat (defined in .vimrc)
+  { 'n', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'n', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'x', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'x', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'o', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'o', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+}) do
+  map(m[1], m[2], m[3], { silent = true })
+end
+
+-- formatting with conform
 require("conform").setup({
   formatters_by_ft = {
     nix = { "alejandra" },
@@ -61,10 +127,8 @@ require("conform").setup({
     lsp_format = "fallback",
   },
 })
-EOF
 
-" tree-sitter + indent-blankline
-lua << EOF
+-- tree-sitter + indent-blankline
 vim.api.nvim_create_autocmd('FileType', {
   pattern = '*',
   callback = function(args)
@@ -95,48 +159,8 @@ vim.api.nvim_create_autocmd("ColorScheme", {
     vim.api.nvim_set_hl(0, "MiniIndentscopeSymbol", { fg = "#616161", nocombine = true })
   end,
 })
-EOF
 
-" onedark.vim
-if (has("autocmd") && !has("gui_running"))
-    augroup colorset
-        autocmd!
-        let s:white = { "gui": "#ABB2BF", "cterm": "145", "cterm16" : "7" }
-        autocmd ColorScheme * call onedark#set_highlight("Normal", { "fg": s:white }) " `bg` will not be styled since there is no `bg` setting
-    augroup END
-endif
-let g:onedark_terminal_italics=1
-let g:onedark_color_overrides = {
-\ "comment_grey": {"gui": "#8a8a8a", "cterm": "245", "cterm16": "2" },
-\ "gutter_fg_grey": {"gui": "#8a8a8a", "cterm": "245", "cterm16": "2" },
-\}
-
-colorscheme onedark
-set background=dark
-
-" lightline
-set noshowmode      " rm mode, redundant w lightline
-let g:lightline = {
-\ 'colorscheme': 'onedark',
-\ 'separator': { 'left': "\ue0b0", 'right': "\ue0b2" },
-\ 'subseparator': { 'left': "\ue0b1", 'right': "\ue0b3" },
-\ }
-
-" gitgutter
-let g:gitgutter_sign_added = '+'
-let g:gitgutter_sign_modified = '>'
-let g:gitgutter_sign_removed = '-'
-let g:gitgutter_sign_removed_first_line = '^'
-let g:gitgutter_sign_modified_removed = '<'
-
-" comment toggle with ctrl + /
-nmap <C-/> :Commentary<CR>
-vmap <C-/> :Commentary<CR>
-nmap <C-_> :Commentary<CR>
-vmap <C-_> :Commentary<CR>
-
-" wilder
-lua << EOF
+-- wilder
 local wilder = require('wilder')
 wilder.setup({modes = {':', '/', '?'}})
 wilder.set_option('pipeline', {
@@ -170,33 +194,41 @@ wilder.set_option('renderer', wilder.popupmenu_renderer({
   left = {' ', wilder.popupmenu_devicons()},
   right = {' ', wilder.popupmenu_scrollbar()},
 }))
-EOF
 
-" clipboard
-lua << EOF
-local osc52 = require('vim.ui.clipboard.osc52')
-local dumb_term = os.getenv('SSH_TTY') and not os.getenv('KITTY_PID') and not os.getenv('TERM_PROGRAM')
 
-if dumb_term then
-  -- OSC 52 copy-only; paste works normally within vim
+-- toggleterm
+require("toggleterm").setup{
+  shade_terminals = false
+}
+
+-- nvim-tree
+require("nvim-tree").setup{
+  sort = {
+    sorter = "case_sensitive",
+  },
+  view = {
+    width = 30,
+  },
+  renderer = {
+    group_empty = true,
+  },
+  filters = {
+    dotfiles = true,
+  },
+}
+
+-- clipboard
+local over_ssh = os.getenv('SSH_TTY') ~= nil
+if over_ssh then
   vim.api.nvim_create_autocmd('TextYankPost', {
     callback = function()
       if vim.v.event.operator == 'y' then
-        osc52.copy('+')(vim.v.event.regcontents)
+        require('vim.ui.clipboard.osc52').copy('+')(vim.v.event.regcontents)
       end
     end,
   })
-  -- flush garbled DA response that arrives late over SSH
-  vim.api.nvim_create_autocmd('VimEnter', {
-    callback = function()
-      vim.defer_fn(function()
-        local ok, c = pcall(vim.fn.getchar, 0)
-        while ok and c ~= 0 do ok, c = pcall(vim.fn.getchar, 0) end
-        vim.cmd('stopinsert | echo ""')
-      end, 150)
-    end,
-  })
 else
+  local osc52 = require('vim.ui.clipboard.osc52')
   vim.g.clipboard = {
     name = 'osc52',
     copy  = { ['+'] = osc52.copy('+'),  ['*'] = osc52.copy('*')  },
@@ -204,9 +236,8 @@ else
   }
   vim.opt.clipboard = 'unnamedplus'
 end
-EOF
-" vscode incompat w latest v12 CSI u keeb protocol (?)
-lua << EOF
+
+-- vscode incompat w latest v12 CSI u keeb protocol
 if vim.env.TERM_PROGRAM == 'vscode' then
   vim.schedule(function()
     io.stdout:write('\x1b[>0u')    -- disable CSI u (kitty keyboard protocol)
@@ -219,4 +250,3 @@ EOF
 
 
 source ~/.vimrc
-

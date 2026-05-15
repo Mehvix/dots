@@ -14,9 +14,7 @@ export HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
-export HISTFILE=~/.shared_history
-# dedupe on exit- take last occurrence
-trap 'tac "$HISTFILE" | awk "!seen[\$0]++" | tac > "$HISTFILE.tmp" && command mv -f "$HISTFILE.tmp" "$HISTFILE"' EXIT
+HISTFILE=~/.shared_history
 
 # Shell Options
 shopt -s autocd         # cd not needed
@@ -44,7 +42,8 @@ if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_o
   oh-my-posh init bash --config "$_omp_theme" --print |
     awk '/_omp_secondary_prompt=\$\(/{skip=1} skip && /^\)/{skip=0; next} !skip' |
     grep -v '"$_omp_executable" notice' |
-    sed 's|print \(primary\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|;s|print \(transient\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|' \
+    sed 's|print \(primary\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|;s|print \(transient\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|' |
+    sed 's|--escape=false$|--escape=false \| cat|' \
     > "$_omp_cache"
   echo "$_omp_key" > "${_omp_cache}.key"
 fi

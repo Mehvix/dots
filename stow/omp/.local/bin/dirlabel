@@ -69,7 +69,24 @@ case "$cmd" in
     printf '%s\t%s\t%s\n' "$dir" "$label" "$ci" >> "$file"
     ;;
   clear)
-    _strip "$(cd "${1:-.}" && pwd -P)"
+    dir="$(cd "${1:-.}" && pwd -P)"
+    if ! grep -q "^${dir}"$'\t' "$file"; then
+      # no exact entry — check for inherited parent
+      parent_dir="" parent_label=""
+      while IFS=$'\t' read -r d l ci; do
+        [[ -z "$d" ]] && continue
+        if [[ "$dir" == "$d"/* ]] && (( ${#d} > ${#parent_dir} )); then
+          parent_dir="$d" parent_label="$l"
+        fi
+      done < "$file"
+      if [[ -n "$parent_dir" ]]; then
+        printf 'Inherited label "%s" from %s\nClear parent label? [y/N] ' "$parent_label" "$parent_dir" >&2
+        read -r ans </dev/tty
+        [[ "$ans" == [yY]* ]] && _strip "$parent_dir"
+        exit 0
+      fi
+    fi
+    _strip "$dir"
     ;;
   env)
     # eval "$(dirlabel env)" — or just "eval $(dirlabel)"
