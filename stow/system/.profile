@@ -135,6 +135,8 @@ case "$_hostname" in
         alias dots="cd \${CODE_ROOT}/dotfiles/"
         alias www="/var/www/"
         alias comp="~/Pictures/photos-pc/Computer\ Misc/"
+
+        alias lock="dm-tool lock"
         ;;
     houdini)
         export OMP_HOST_COLOR="#c678dd"

@@ -1,76 +1,56 @@
 #!/bin/bash
 
-alias ❯='' # NOOP prompt 1st char FSO easier copy paste; ble.sh strips it from history
+alias ❯='' # NOOP prompt 1st char FSO quick and lazy copy paste; ble.sh strips char from history btw
+
+alias restart="sudo reboot"
+alias bye="sudo shutdown -r now"
+alias zzz="sudo systemctl suspend -i"
 
 # sensible defaults + interactive improvements
-alias mv="mv -iv"
-alias cp="cp -rivL"      # Ask confirmation, verbose, follow symlinks
-alias cpf="yes | cp -rL" # No confirmation
-alias mkdir="mkdir -vp"
-alias rm="rm -rv"
-alias rmdir="rmdir -pv" # Recursive, verbose
-alias df="df -h"        # Human-readable sizes
-alias free="free -m"    # Show sizes in MB
-alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
-alias exiftool="exiftool -n"    # numerical value output
+alias mv="mv -iv"           # interactive (confirm overwrite), verbose
+alias rm="rm -rv"           # recursive, verbose
+alias cp="cp -rivL"         # recursive, interactive (confirm overwrite), verbose, follow symlinks
+alias cpf="yes | cp -rL"    # recursive, follow symlinks, no confirmation
+alias mkdir="mkdir -vp"     # verbose, create parents as needed
+alias rmdir="rmdir -pv"     # remove empty parent dirs, verbose
+alias df="df -h"            # human-readable sizes
+alias du="du -h"            # human-readable sizes
+alias free="free -m"        # sizes in MB
 touch() {
     mkdir -p "$(dirname "$1")" && command touch "$1"
 }
 
 # shortcuts
-alias mk=mkdir
 alias h=history
-alias v="nvim"
-alias c="clear"
+alias c=clear
 alias o=xdg-open
-alias p="ps uaxf"
-alias x="chmod +x"
-alias get="curl -O -L"
-alias restart="sudo reboot"
-alias bye="sudo shutdown -r now"
 alias q=exit
 alias what=type
-alias lock="dm-tool lock"
-alias jn="jupyter-notebook"
-alias shizuku="adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
+alias mk=mkdir
+alias p="ps uaxf"
+alias x="chmod +x"
 
-# reload
-alias rb="source ~/.bashrc"
-alias rz="source ~/.zshrc"
-alias ra="source ~/.aliases"
-alias rp="source ~/.profile"
-
-# edit files
-alias vb="vim ~/.bashrc"
-alias vz="vim ~/.zshrc"
-alias va="vim ~/.aliases"
-alias vp="vim ~/.profile"
-
-# alternatives + program shortcuts
-[ -n "$KITTY_PID" ] && alias ssh="kitty +kitten ssh"
-alias vim=nvim
-alias json=fx
-alias cat=bat
-alias ccat="bat --wrap=never"
+# non-core shortcuts
 alias py=bpython
 alias dl=dirlabel
-ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
-alias l="eza --all --long --header --classify --icons --git --group-directories-first"
-alias dirs="eza --list-dirs"
-alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
-alias t3="eza --tree --level=3 -l"
-alias t2="eza --tree --level=2 -l"
+alias jn="jupyter-notebook"
 alias vs="\\code ."
 alias mvi="mpv -profile image"
-alias f8="ln -s ~/.config/flake8 ./.flake8" # no global conf my ass
 alias sub="subliminal download -l 'en'"
 alias gls="gitlinks set"
-function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	command yazi "$@" --cwd-file="$tmp"
-	IFS= read -r -d '' cwd < "$tmp"
-	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
-	rm -f -- "$tmp"
+alias shizuku="adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
+alias k=kiro-cli
+alias kr="kiro-cli chat -r"
+alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
+alias exiftool="exiftool -n"    # numerical value output
+
+# new commands
+alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
+alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
+alias get="curl -O -L"
+function mkcd() {
+    # shellcheck disable=SC2164
+    command mkdir -p "$1" && cd "$1"
 }
 function tls() {
   tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
@@ -95,19 +75,76 @@ function extract() {
         *)                echo "unknown: $1";;
     esac
 }
+function bkup() {
+    local d=false
+    [[ "$1" == "-d" ]] && d=true && shift
+    local t="${1%/}"
+    local s=$($d && date +".%m-%d_%H-%S").bkup
+    # TODO verify- bump depth?
+    if [ ! -e "$t$s" ]; then
+        local old=$(realpath -m "$t")
+        mv -iv "$t" "$t$s"
+        local new=$(realpath -m "$t$s")
+        fd -t l -d 2 . "$(dirname "$old")" | while read -r lnk; do
+            local tgt=$(realpath -m "$(dirname "$lnk")/$(readlink "$lnk")")
+            [[ "$tgt" == "$old"* ]] && ln -sfn "${new}${tgt#"$old"}" "$lnk"
+        done
+    else
+        echo "$t$s already exists"
+    fi
+}
+function nixos-switch () {
+    git -C /etc/nixos add -A
+    sudo nixos-rebuild switch --flake /etc/nixos && \
+    git -C /etc/nixos commit -m "nixos: $(date '+%Y-%m-%d %H:%M')" && \
+    git -C /etc/nixos push
+}
+
+# replacement/alternatives
+[ -n "$KITTY_PID" ] && alias ssh="kitty +kitten ssh"
+alias v=nvim
+alias vim=nvim
+alias json=fx
+alias cat=bat
+alias ccat="bat --wrap=never"
+ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
+alias l="eza --all --long --header --classify --icons --git --group-directories-first"
+alias dirs="eza --list-dirs"
+alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
+alias t3="eza --tree --level=3 -l"
+alias t2="eza --tree --level=2 -l"
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	rm -f -- "$tmp"
+}
+
+# ricing
+alias rb="source ~/.bashrc"
+alias rz="source ~/.zshrc"
+alias ra="source ~/.aliases"
+alias rp="source ~/.profile"
+alias vb="vim ~/.bashrc"
+alias vz="vim ~/.zshrc"
+alias va="vim ~/.aliases"
+alias vp="vim ~/.profile"
+function timesh () {
+    shell=${1-$SHELL};
+    for i in $(seq 1 10);
+    do {
+        env time -f "%e" "$shell" -i -c exit 2>&1 > /dev/null
+    } 2>&1 | grep -v bleopt | grep -v exit;
+    done
+}
 
 # directories
 alias code="cd \${CODE_ROOT}"
 alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
-alias dots="cd \${CODE_ROOT}/dotfiles/"
-alias dot=dots
 alias www="/var/www/"
 alias comp="~/Pictures/photos-pc/Computer\ Misc/"
 alias pics="~/Pictures/"
-
-# new commands
-alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
-alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
 
 # git
 alias gs="git status"
@@ -128,52 +165,12 @@ alias gr="git review -R"
 alias gry="git review -y"
 alias grx="git review -x"
 
-
 # yt-dlp
 alias youtube-dl="yt-dlp"
 alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/%(title)s.%(ext)s"'
 
-function bkup() {
-    local d=false
-    [[ "$1" == "-d" ]] && d=true && shift
-    local t="${1%/}"
-    local s=$($d && date +".%m-%d_%H-%S").bkup
-    # TODO verify- bump depth?
-    if [ ! -e "$t$s" ]; then
-        local old=$(realpath -m "$t")
-        mv -iv "$t" "$t$s"
-        local new=$(realpath -m "$t$s")
-        fd -t l -d 2 . "$(dirname "$old")" | while read -r lnk; do
-            local tgt=$(realpath -m "$(dirname "$lnk")/$(readlink "$lnk")")
-            [[ "$tgt" == "$old"* ]] && ln -sfn "${new}${tgt#"$old"}" "$lnk"
-        done
-    else
-        echo "$t$s already exists"
-    fi
-}
-
-function timesh () {
-    shell=${1-$SHELL};
-    for i in $(seq 1 10);
-    do {
-        env time -f "%e" "$shell" -i -c exit 2>&1 > /dev/null
-    } 2>&1 | grep -v bleopt | grep -v exit;
-    done
-}
-
-function mkcd() {
-    # shellcheck disable=SC2164
-    command mkdir -p "$1" && cd "$1"
-}
-
-function nixos-switch () {
-    git -C /etc/nixos add -A
-    sudo nixos-rebuild switch --flake /etc/nixos && \
-    git -C /etc/nixos commit -m "nixos: $(date '+%Y-%m-%d %H:%M')" && \
-    git -C /etc/nixos push
-}
 
 # image convert
 function img2w() {

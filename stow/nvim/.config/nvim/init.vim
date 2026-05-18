@@ -22,6 +22,10 @@ Plug 'edkolev/tmuxline.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'lambdalisue/nerdfont.vim'
 Plug 'nvim-tree/nvim-web-devicons'
+
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope.nvim'
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install' }
 Plug 'nvim-tree/nvim-tree.lua'
 Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 
@@ -84,38 +88,6 @@ vim.g.gitgutter_sign_modified = '>'
 vim.g.gitgutter_sign_removed = '-'
 vim.g.gitgutter_sign_removed_first_line = '^'
 vim.g.gitgutter_sign_modified_removed = '<'
-
--- binds
-local map = vim.keymap.set
-for _, m in ipairs({
-  -- commentary
-  { 'n', '<C-/>',      '<cmd>Commentary<cr>' },
-  { 'v', '<C-/>',      ':Commentary<cr>' },
-  { 'n', '<C-_>',      '<cmd>Commentary<cr>' },
-  { 'v', '<C-_>',      ':Commentary<cr>' },
-  -- file tree
-  { 'n', '<C-b>',      '<cmd>NvimTreeFindFileToggle<cr>' },
-  -- terminal
-  { 'n', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
-  { 'n', '<C-S-\\>',    '<cmd>ToggleTerm direction="float"<cr>' },
-  { 't', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
-  { 't', '<C-S-\\>',    '<cmd>ToggleTerm<cr>' },
-  -- buffers
-  { 'n', '<C-h>',      '<cmd>bp<cr>' },
-  { 'n', '<C-l>',      '<cmd>bn<cr>' },
-  -- git hunks
-  { 'n', '<A-k>',      '<cmd>GitGutterPrevHunk<cr>' },
-  { 'n', '<A-j>',      '<cmd>GitGutterNextHunk<cr>' },
-  -- char search repeat (defined in .vimrc)
-  { 'n', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
-  { 'n', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
-  { 'x', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
-  { 'x', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
-  { 'o', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
-  { 'o', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
-}) do
-  map(m[1], m[2], m[3], { silent = true })
-end
 
 -- formatting with conform
 require("conform").setup({
@@ -195,7 +167,6 @@ wilder.set_option('renderer', wilder.popupmenu_renderer({
   right = {' ', wilder.popupmenu_scrollbar()},
 }))
 
-
 -- toggleterm
 require("toggleterm").setup{
   shade_terminals = false
@@ -216,6 +187,18 @@ require("nvim-tree").setup{
     dotfiles = true,
   },
 }
+
+require('telescope').setup {
+  extensions = {
+    fzf = {
+      fuzzy = true,
+      override_generic_sorter = true,
+      override_file_sorter = true,
+      case_mode = "smart_case",
+    }
+  }
+}
+require('telescope').load_extension('fzf')
 
 -- clipboard
 local over_ssh = os.getenv('SSH_TTY') ~= nil
@@ -245,8 +228,47 @@ if vim.env.TERM_PROGRAM == 'vscode' then
     io.stdout:flush()
   end)
 end
-EOF
 
+-- binds
+local map = vim.keymap.set
+for _, m in ipairs({
+  -- commentary
+  { 'n', '<C-/>',      '<cmd>Commentary<cr>' },
+  { 'v', '<C-/>',      ':Commentary<cr>' },
+  { 'n', '<C-_>',      '<cmd>Commentary<cr>' },                         -- ctrl+/ fallback for some terminals
+  { 'v', '<C-_>',      ':Commentary<cr>' },
+  -- file tree
+  { 'n', '<C-b>',      '<cmd>NvimTreeFindFileToggle<cr>' },
+  -- terminal
+  { 'n', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
+  { 'n', '<C-S-\\>',    '<cmd>ToggleTerm direction="float"<cr>' },      -- ctrl+shift+\
+  { 't', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
+  { 't', '<C-S-\\>',    '<cmd>ToggleTerm<cr>' },
+  -- buffers
+  { 'n', '<C-h>',      '<cmd>bp<cr>' },
+  { 'n', '<C-l>',      '<cmd>bn<cr>' },
+  -- git hunks
+  { 'n', '<A-k>',      '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k
+  { 'n', '<A-j>',      '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j
+  -- char search repeat (defined in .vimrc)
+  { 'n', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'n', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'x', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'x', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'o', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'o', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+  -- telescope
+  { 'n', '<C-p>',      '<cmd>Telescope find_files<cr>' },
+  { 'n', '<C-f>',      '<cmd>Telescope live_grep<cr>' },
+  { 'n', '<C-e>',      '<cmd>Telescope oldfiles<cr>' },
+  { 'n', '<C-S-f>',    '<cmd>Telescope grep_string<cr>' },              -- ctrl+shift+f
+  { 'n', '<A-b>',      '<cmd>Telescope buffers<cr>' },                  -- alt+b
+  { 'n', '<A-h>',      '<cmd>Telescope help_tags<cr>' },                -- alt+h
+  { 'n', '<A-g>',      '<cmd>Telescope git_status<cr>' },               -- alt+g
+}) do
+  map(m[1], m[2], m[3], { silent = true })
+end
+EOF
 
 
 source ~/.vimrc
