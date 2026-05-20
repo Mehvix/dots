@@ -71,8 +71,8 @@ vim.api.nvim_create_autocmd('ColorScheme', {
     vim.fn['onedark#set_highlight']('Normal', { fg = { gui = '#ABB2BF', cterm = '145', cterm16 = '7' } })
   end,
 })
-vim.cmd('colorscheme onedark')
 vim.o.background = 'dark'
+vim.cmd('colorscheme onedark')
 
 -- lightline
 vim.o.showmode = false
@@ -138,8 +138,8 @@ wilder.setup({modes = {':', '/', '?'}})
 wilder.set_option('pipeline', {
   wilder.branch(
     wilder.python_file_finder_pipeline({
-      file_command = {'fd', '-tf'},
-      dir_command = {'fd', '-td'},
+      file_command = {'fd', '-tf', '-H', '-E', '.git'},
+      dir_command = {'fd', '-td', '-H', '-E', '.git'},
       -- use {'cpsm_filter'} for performance, requires cpsm vim plugin
       -- found at https://github.com/nixprime/cpsm
       filters = {'fuzzy_filter', 'difflib_sorter'},
@@ -184,7 +184,9 @@ require("nvim-tree").setup{
     group_empty = true,
   },
   filters = {
-    dotfiles = true,
+    dotfiles = false,
+    git_ignored = false,
+    custom = { '^.git$' },
   },
 }
 
@@ -242,8 +244,10 @@ for _, m in ipairs({
   -- terminal
   { 'n', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
   { 'n', '<C-S-\\>',    '<cmd>ToggleTerm direction="float"<cr>' },      -- ctrl+shift+\
+  { 'n', '<C-j>',       '<cmd>ToggleTerm<cr>' },
   { 't', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
   { 't', '<C-S-\\>',    '<cmd>ToggleTerm<cr>' },
+  { 't', '<C-j>',       '<cmd>ToggleTerm<cr>' },
   -- buffers
   { 'n', '<C-h>',      '<cmd>bp<cr>' },
   { 'n', '<C-l>',      '<cmd>bn<cr>' },
