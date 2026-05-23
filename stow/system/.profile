@@ -24,6 +24,9 @@ prepend_path () {
 append_path "$HOME/.local/bin"
 append_path "/usr/local/bin"
 
+# keyboard layout
+setxkbmap -layout us -variant colemak_dh -option caps:backspace -option grp:shift_caps_toggle &
+
 # XDG compliance
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"

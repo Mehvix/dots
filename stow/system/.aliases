@@ -130,6 +130,7 @@ alias vb="vim ~/.bashrc"
 alias vz="vim ~/.zshrc"
 alias va="vim ~/.aliases"
 alias vp="vim ~/.profile"
+alias colors="for i in {0..15}; do printf \"\e[38;5;\${i}mColor \$i\e[0m\n\"; done"
 function timesh () {
     shell=${1-$SHELL};
     for i in $(seq 1 10);
