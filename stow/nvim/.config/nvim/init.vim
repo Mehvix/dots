@@ -7,10 +7,14 @@ if filereadable(s:python3)
   let g:python3_host_prog = s:python3
 endif
 
-" Specify a directory for plugins
-" - For Neovim: stdpath('data') . '/plugged'
-" - Avoid using standard Vim directory names like 'plugin'
-call plug#begin('~/.vim/plugged')
+let s:host = substitute(hostname(), '\..*', '', '')
+if s:host ==# 'etx-maxv'
+  let s:plug_dir = '/var/tmp/' . $USER . '/nvim/plugged'
+  if !isdirectory(s:plug_dir) | call mkdir(s:plug_dir, 'p') | endif
+else
+  let s:plug_dir = '~/.vim/plugged'
+endif
+call plug#begin(s:plug_dir)
 
 Plug 'fladson/vim-kitty',   { 'for': 'kitty' }
 Plug 'lervag/vimtex',       { 'for': 'tex' }

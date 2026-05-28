@@ -1,9 +1,10 @@
 #!/bin/bash
 
-[[ $- == *i* ]] && [[ -f $HOME/.local/share/blesh/ble.sh ]] && source -- $HOME/.local/share/blesh/ble.sh --attach=none
+# bail for non-interactive shells
+[[ $- == *i* ]] || return 0
 
-# env
-# [ -f /etc/bashrc ] && . /etc/bashrc
+_blesh="${BLESH_DIR:-$HOME/.local/share/blesh}/ble.sh"; [[ -f $_blesh ]] && source -- "$_blesh" --attach=none; unset _blesh;
+
 source $HOME/.profile
 
 
@@ -35,23 +36,24 @@ _dest_dir_complete() {
 complete -o filenames -F _dest_dir_complete mv cp rsync  # first arg=files, subsequent=dirs
 complete -d -o dirnames cd du rmdir pushd  # dirs only; -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 
-_omp_cache="${XDG_CACHE_HOME:-$HOME/.cache}/omp_init.bash"
-_omp_theme="$HOME/.config/omp/theme.json"
-_omp_key="$(stat -c %Y "$_omp_theme" "$(command -v oh-my-posh)" 2>/dev/null)"
-if [[ ! -f "$_omp_cache" || ! -f "${_omp_cache}.key" || "$_omp_key" != "$(< ${_omp_cache}.key)" ]]; then
-  oh-my-posh init bash --config "$_omp_theme" --print |
-    awk '/_omp_secondary_prompt=\$\(/{skip=1} skip && /^\)/{skip=0; next} !skip' |
-    grep -v '"$_omp_executable" notice' |
-    sed 's|print \(primary\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|;s|print \(transient\) \\|print \1 \\\n                --config '"$HOME/.config/omp/theme.json"' \\|' |
-    sed 's|--escape=false$|--escape=false \| cat|' \
-    > "$_omp_cache"
-  echo "$_omp_key" > "${_omp_cache}.key"
-fi
-source "$_omp_cache"
-unset _omp_cache _omp_key _omp_theme
+_file_only_complete() {
+    local cur="${COMP_WORDS[COMP_CWORD]}" f
+    COMPREPLY=()
+    for f in $(compgen -f -- "$cur"); do
+        [[ -d ${f/#\~/$HOME} ]] || COMPREPLY+=("$f")
+    done
+}
+complete -o filenames -F _file_only_complete \
+  vim nvim v \
+  less more cat bat head tail wc stat \
+  diff cmp patch \
+  gcc cc python python3 lua \
+  source .
+
+
+eval "$(oh-my-posh init bash --config "${OMP_THEME:-$HOME/.config/omp/theme.json}" --print)"
 _dirlabel_update() { eval "$(dirlabel 2>/dev/null)"; }
 [[ " ${PROMPT_COMMAND[*]} " == *" _dirlabel_update "* ]] || PROMPT_COMMAND=(_dirlabel_update "${PROMPT_COMMAND[@]}")
-# eval "$(oh-my-posh init bash --config $HOME/.config/omp/theme.json)"
 # PS1='$(_omp_get_primary)'
 
 if [ -n "$TMUX" ]; then
@@ -77,18 +79,21 @@ fi
 [[ ! ${BLE_VERSION-} ]] || ble-attach
 
 _deferred_evals=(
-  "command -v uv  &>/dev/null && eval '$(uv generate-shell-completion bash)'"
-  "command -v uvx &>/dev/null && eval '$(uvx --generate-shell-completion bash)'"
-  "command -v activate-global-python-argcomplete &>/dev/null && eval \"\$(activate-global-python-argcomplete --dest=-)\""
-  "[[ -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source '${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash'"
+  'command -v uv  &>/dev/null && eval "$(uv generate-shell-completion bash)"'
+  'command -v uvx &>/dev/null && eval "$(uvx --generate-shell-completion bash)"'
+  'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
+  '[[ -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
+  # 'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
 )
-for _cmd in "${_deferred_evals[@]}"; do
-  if [[ ${BLE_VERSION-} ]]; then
-    ble/util/idle.push "$_cmd"
-  else
-    eval "$_cmd"
-  fi
-done
+if [[ $- != *c* ]]; then
+  for _cmd in "${_deferred_evals[@]}"; do
+    if [[ ${BLE_VERSION-} ]]; then
+      ble/util/idle.push "$_cmd"
+    else
+      eval "$_cmd"
+    fi
+  done
+fi
 unset _deferred_evals _cmd
 
 # fzf: fallback to eval when not using ble.sh

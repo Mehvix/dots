@@ -32,7 +32,8 @@ alias x="chmod +x"
 
 # non-core shortcuts
 alias py=bpython
-alias dl=dirlabel
+alias dl=dirlabel # see omp cfg
+alias ta="tmux new -A -s"
 alias jn="jupyter-notebook"
 alias vs="\\code ."
 alias mvi="mpv -profile image"
@@ -111,8 +112,8 @@ ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
 alias l="eza --all --long --header --classify --icons --git --group-directories-first"
 alias dirs="eza --list-dirs"
 alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
-alias t3="eza --tree --level=3 -l"
 alias t2="eza --tree --level=2 -l"
+alias t3="eza --tree --level=3 -l"
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
 	command yazi "$@" --cwd-file="$tmp"
@@ -149,6 +150,7 @@ alias pics="~/Pictures/"
 
 # git
 alias gs="git status"
+alias gss="git show"
 alias gb="git branch"
 alias ga="git add"
 alias gaa="git add ."
