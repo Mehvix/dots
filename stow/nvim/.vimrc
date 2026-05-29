@@ -191,7 +191,7 @@ if has("autocmd")
   au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
 if $SUDO_USER != ""
-  let &shadafile = "/home/" . $SUDO_USER . "/.local/share/nvim/shada/main.shada"
+  let &shadafile = "/home/" . $SUDO_USER . "/.local/state/nvim/shada/main.shada"
 endif
 
 

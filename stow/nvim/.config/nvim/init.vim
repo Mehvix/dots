@@ -32,6 +32,7 @@ Plug 'nvim-telescope/telescope.nvim'
 Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install' }
 Plug 'nvim-tree/nvim-tree.lua'
 Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
+Plug 'eero-lehtinen/oklch-color-picker.nvim'
 
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-sleuth'
@@ -114,6 +115,22 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
+-- colorpicker
+require("oklch-color-picker").setup({
+  highlight = {
+    virtual_text = "󰝤 ",
+    style = "foreground+virtual_left",
+    bold = false,
+    italic = false,
+  }
+})
+vim.keymap.set("n", "<leader>cp", function()
+  require("oklch-color-picker").pick_under_cursor()
+end, { desc = "Color pick under cursor" })
+vim.keymap.set("n", "<2-LeftMouse>", function()
+  require("oklch-color-picker").pick_under_cursor()
+end, { desc = "Color pick on double click" })
+
 ---- folds
 --vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 --vim.wo[0][0].foldmethod = 'expr'
@@ -195,6 +212,11 @@ require("nvim-tree").setup{
 }
 
 require('telescope').setup {
+  pickers = {
+    oldfiles = {
+      cwd_only = false,
+    }
+  },
   extensions = {
     fzf = {
       fuzzy = true,
@@ -276,6 +298,50 @@ for _, m in ipairs({
 }) do
   map(m[1], m[2], m[3], { silent = true })
 end
+
+-- Automatically expand `.` to the directory of the current file in the command-line
+-- when typing `:e .` followed by `/` or `<Space>`.
+local function expand_dot_to_current_dir(fallback_char)
+  if vim.fn.getcmdtype() ~= ':' then
+    return fallback_char
+  end
+  local cmd = vim.fn.getcmdline()
+  local pos = vim.fn.getcmdpos()
+  local char_before = cmd:sub(pos - 1, pos - 1)
+  if char_before == '.' then
+    local first_word = cmd:match("^%s*(%a+)")
+    local file_cmds = {
+      e = true, edit = true, w = true, write = true, saveas = true,
+      vs = true, vsplit = true, vsp = true, sp = true, split = true,
+      tabe = true, tabedit = true, find = true
+    }
+    if first_word and file_cmds[first_word] then
+      local pattern = "^%s*" .. first_word .. "!?%s+%.$"
+      if cmd:sub(1, pos - 1):match(pattern) then
+        return "\b" .. vim.fn.expand('%:p:h') .. "/"
+      end
+    end
+  end
+  return fallback_char
+end
+
+vim.keymap.set('c', '/', function() return expand_dot_to_current_dir('/') end, { expr = true })
+vim.keymap.set('c', '<Space>', function() return expand_dot_to_current_dir(' ') end, { expr = true })
+
+-- Clean up oldfiles before saving ShaDa to prevent pollution from temporary
+-- buffers (like wilder.nvim float windows) and deleted files.
+vim.api.nvim_create_autocmd("VimLeavePre", {
+  callback = function()
+    vim.v.oldfiles = vim.tbl_filter(function(file)
+      -- Exclude wilder float buffers, temporary directories, and unreadable/deleted files
+      if file:match("%[Wilder") then return false end
+      if file:match("^/tmp/") then return false end
+      if file:match("^/var/tmp/") then return false end
+      if vim.fn.filereadable(file) == 0 then return false end
+      return true
+    end, vim.v.oldfiles)
+  end,
+})
 EOF
 
 
