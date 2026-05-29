@@ -169,24 +169,27 @@ wilder.set_option('pipeline', {
     wilder.python_search_pipeline()
   ),
 })
-wilder.set_option('renderer', wilder.wildmenu_renderer(
-  -- use wilder.wildmenu_lightline_theme() if using Lightline
-  wilder.wildmenu_airline_theme({
-    -- highlights can be overriden, see :h wilder#wildmenu_renderer()
-    highlights = {default = 'StatusLine'},
+local accent = {{a = 1}, {foreground = '180', bold = true}, {foreground = '#E5C07B', bold = true}}
+-- menu bg: black #282C34/235, cursor_grey #2C323C/236, visual_grey #3E4452/237
+local fg, bg, sel_bg = '#ABB2BF', '#282C34', '#3E4452'
+local normal   = {{a = 1}, {foreground = '145', background = '235'}, {foreground = fg, background = bg}}
+local selected = {{a = 1}, {foreground = '145', background = '237'}, {foreground = fg, background = sel_bg, bold = true}}
+wilder.set_option('renderer', wilder.popupmenu_renderer(
+  wilder.popupmenu_border_theme({
+    pumblend = 40,
     highlighter = wilder.basic_highlighter(),
-    separator = ' · ',
+    left  = {' ', wilder.popupmenu_devicons()},
+    right = {' ', wilder.popupmenu_scrollbar()},
+    highlights = {
+      border          = 'FloatBorder',
+      default         = wilder.make_hl('WilderNormal',         'Pmenu',    normal),
+      selected        = wilder.make_hl('WilderSelected',       'PmenuSel', selected),
+      accent          = wilder.make_hl('WilderAccent',         'Pmenu',    accent),
+      selected_accent = wilder.make_hl('WilderSelectedAccent', 'PmenuSel', accent),
+    },
+    border = 'double',
   })
 ))
-wilder.set_option('renderer', wilder.popupmenu_renderer({
-  -- highlighter applies highlighting to the candidates
-  highlighter = wilder.basic_highlighter(),
-}))
-wilder.set_option('renderer', wilder.popupmenu_renderer({
-  highlighter = wilder.basic_highlighter(),
-  left = {' ', wilder.popupmenu_devicons()},
-  right = {' ', wilder.popupmenu_scrollbar()},
-}))
 
 -- toggleterm
 require("toggleterm").setup{
@@ -212,10 +215,17 @@ require("nvim-tree").setup{
 }
 
 require('telescope').setup {
+  defaults = {
+    borderchars = { '─', '│', '─', '│', '┌', '┐', '┘', '└' },
+  },
   pickers = {
     oldfiles = {
       cwd_only = false,
-    }
+    },
+    find_files = {
+      find_command = { 'fd', '-tf', '--hidden', '--ignore-file',
+        vim.fn.stdpath('config') .. '/fd-ignore' },
+    },
   },
   extensions = {
     fzf = {
@@ -227,6 +237,14 @@ require('telescope').setup {
   }
 }
 require('telescope').load_extension('fzf')
+
+-- brighten dim telescope counter (x/y/z) and fuzzy-match chars
+local function telescope_hl()
+  vim.api.nvim_set_hl(0, 'TelescopePromptCounter', { fg = '#ABB2BF' })       -- was NonText (dim)
+  vim.api.nvim_set_hl(0, 'TelescopeMatching',      { fg = '#56B6C2', bold = true })
+end
+vim.api.nvim_create_autocmd('ColorScheme', { callback = telescope_hl })
+telescope_hl()
 
 -- clipboard
 local over_ssh = os.getenv('SSH_TTY') ~= nil
@@ -261,12 +279,12 @@ end
 local map = vim.keymap.set
 for _, m in ipairs({
   -- commentary
-  { 'n', '<C-/>',      '<cmd>Commentary<cr>' },
-  { 'v', '<C-/>',      ':Commentary<cr>' },
-  { 'n', '<C-_>',      '<cmd>Commentary<cr>' },                         -- ctrl+/ fallback for some terminals
-  { 'v', '<C-_>',      ':Commentary<cr>' },
+  { 'n', '<C-/>',       '<cmd>Commentary<cr>' },
+  { 'v', '<C-/>',       ':Commentary<cr>' },
+  { 'n', '<C-_>',       '<cmd>Commentary<cr>' },                         -- ctrl+/ fallback for some terminals
+  { 'v', '<C-_>',       ':Commentary<cr>' },
   -- file tree
-  { 'n', '<C-b>',      '<cmd>NvimTreeFindFileToggle<cr>' },
+  { 'n', '<C-b>',       '<cmd>NvimTreeFindFileToggle<cr>' },
   -- terminal
   { 'n', '<C-\\>',      '<cmd>ToggleTerm<cr>' },
   { 'n', '<C-S-\\>',    '<cmd>ToggleTerm direction="float"<cr>' },      -- ctrl+shift+\
@@ -275,26 +293,26 @@ for _, m in ipairs({
   { 't', '<C-S-\\>',    '<cmd>ToggleTerm<cr>' },
   { 't', '<C-j>',       '<cmd>ToggleTerm<cr>' },
   -- buffers
-  { 'n', '<C-h>',      '<cmd>bp<cr>' },
-  { 'n', '<C-l>',      '<cmd>bn<cr>' },
+  { 'n', '<C-h>',       '<cmd>bp<cr>' },
+  { 'n', '<C-l>',       '<cmd>bn<cr>' },
   -- git hunks
-  { 'n', '<A-k>',      '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k
-  { 'n', '<A-j>',      '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j
+  { 'n', '<A-k>',       '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k
+  { 'n', '<A-j>',       '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j
   -- char search repeat (defined in .vimrc)
-  { 'n', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
-  { 'n', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
-  { 'x', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
-  { 'x', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
-  { 'o', '<Space>',    '<cmd>call RepeatCharSearch(0)<cr>' },
-  { 'o', ',',          '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'n', '<Space>',     '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'n', ',',           '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'x', '<Space>',     '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'x', ',',           '<cmd>call RepeatCharSearch(1)<cr>' },
+  { 'o', '<Space>',     '<cmd>call RepeatCharSearch(0)<cr>' },
+  { 'o', ',',           '<cmd>call RepeatCharSearch(1)<cr>' },
   -- telescope
-  { 'n', '<C-p>',      '<cmd>Telescope find_files<cr>' },
-  { 'n', '<C-f>',      '<cmd>Telescope live_grep<cr>' },
-  { 'n', '<C-e>',      '<cmd>Telescope oldfiles<cr>' },
-  { 'n', '<C-S-f>',    '<cmd>Telescope grep_string<cr>' },              -- ctrl+shift+f
-  { 'n', '<A-b>',      '<cmd>Telescope buffers<cr>' },                  -- alt+b
-  { 'n', '<A-h>',      '<cmd>Telescope help_tags<cr>' },                -- alt+h
-  { 'n', '<A-g>',      '<cmd>Telescope git_status<cr>' },               -- alt+g
+  { 'n', '<C-p>',       '<cmd>Telescope find_files<cr>' },
+  { 'n', '<C-f>',       '<cmd>Telescope live_grep<cr>' },
+  { 'n', '<C-e>',       '<cmd>Telescope oldfiles<cr>' },
+  { 'n', '<C-S-f>',     '<cmd>Telescope grep_string<cr>' },              -- ctrl+shift+f
+  { 'n', '<A-b>',       '<cmd>Telescope buffers<cr>' },                  -- alt+b
+  { 'n', '<A-h>',       '<cmd>Telescope help_tags<cr>' },                -- alt+h
+  { 'n', '<A-g>',       '<cmd>Telescope git_status<cr>' },               -- alt+g
 }) do
   map(m[1], m[2], m[3], { silent = true })
 end

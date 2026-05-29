@@ -120,6 +120,7 @@ set re=1
 set showcmd         " show (partial) command in status line
 ""set showmode        " show the current mode
 set laststatus=2    " always show status line
+if has('nvim') | set laststatus=3 | endif  " global statusline (no per-float statuslines)
 set statusline=%.40F%=%m\ %Y\ Line:\ %3l/%L[%3p%%]
 set cmdheight=1
 set shortmess=aI     " don't show the startup message and hide 'Hit ENTER to continue'

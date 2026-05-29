@@ -53,6 +53,9 @@ function mkcd() {
     # shellcheck disable=SC2164
     command mkdir -p "$1" && cd "$1"
 }
+function mkcdtmp() {
+    cd "$(mktemp -d /tmp/tmp.XXXXXXXXXX)" || return
+}
 function tls() {
   tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
     | sort -t'|' -k1 -rn \
@@ -160,6 +163,10 @@ alias gcan="git commit --amend --no-edit"
 alias gbc="GIT_EDITOR=true git rebase --continue"
 alias gco="git checkout"
 alias gp="git push"
+alias gyc="git cherry-pick --continue --no-edit"
+alias gys="git cherry-pick --skip"
+alias gya="git cherry-pick --abort"
+alias gf="git fetch"
 alias gl="git pull"
 alias gll="git log"
 alias glo="git log --oneline"

@@ -1,0 +1,9 @@
+.*
+!.config/
+!.vim/
+!.vimrc
+!.bashrc
+!.zshrc
+!.profile
+!.aliases
+!.gitconfig

@@ -29,7 +29,7 @@ stow -Dvt ~ zsh
 
 TPM:
 ```shell
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+git clone https://github.com/tmux-plugins/tpm "$TMUX_PLUGIN_MANAGER_PATH/tpm"
 ```
 Inside tmux: `prefix` + `I`
 

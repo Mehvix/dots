@@ -5,8 +5,6 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CACHE_HOME="$HOME/.cache"
 
-setxkbmap -layout us -variant colemak_dh -option caps:backspace -option grp:shift_caps_toggle &
-
 append_path () {
     case ":$PATH:" in
         *:"$1":*)
@@ -28,6 +26,9 @@ prepend_path () {
 # append_path "$HOME/bin"
 append_path "$HOME/.local/bin"
 append_path "/usr/local/bin"
+
+append_path "$HOME/.cargo/env"
+
 
 # cache output to avoid fork
 _ac() {
@@ -83,6 +84,10 @@ case "$_hostname" in
         alias charge="sudo tlp setcharge 65 80"
 
         alias fix-sound='pulseaudio --check && (pulseaudio -k || sudo killall pulseaudio)'
+
+        # keyboard: colemak-dh + capslock as backspace, shift+caps toggles layouts
+        setxkbmap -layout us -variant colemak_dh \
+            -option caps:backspace -option grp:shift_caps_toggle &
 
         alias sch="~/Documents/School/"
 

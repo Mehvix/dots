@@ -36,20 +36,6 @@ _dest_dir_complete() {
 complete -o filenames -F _dest_dir_complete mv cp rsync  # first arg=files, subsequent=dirs
 complete -d -o dirnames cd du rmdir pushd  # dirs only; -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 
-_file_only_complete() {
-    local cur="${COMP_WORDS[COMP_CWORD]}" f
-    COMPREPLY=()
-    for f in $(compgen -f -- "$cur"); do
-        [[ -d ${f/#\~/$HOME} ]] || COMPREPLY+=("$f")
-    done
-}
-complete -o filenames -F _file_only_complete \
-  vim nvim v \
-  less more cat bat head tail wc stat \
-  diff cmp patch \
-  gcc cc python python3 lua \
-  source .
-
 
 eval "$(oh-my-posh init bash --config "${OMP_THEME:-$HOME/.config/omp/theme.json}" --print)"
 _dirlabel_update() { eval "$(dirlabel 2>/dev/null)"; }
