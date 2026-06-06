@@ -6,6 +6,8 @@ alias restart="sudo reboot"
 alias bye="sudo shutdown -r now"
 alias zzz="sudo systemctl suspend -i"
 
+alias xcopy='xsel --clipboard --input <'
+
 # sensible defaults + interactive improvements
 alias mv="mv -iv"           # interactive (confirm overwrite), verbose
 alias rm="rm -rv"           # recursive, verbose

@@ -2,6 +2,6 @@
 set -euo pipefail
 
 cp ~/.zsh_history ~/.zsh_history.bak
-cat ~/.bash_history <(sed 's/^: [0-9]*:[0-9]*;//' ~/.zsh_history) \
+cat ~/.bash_history <(sed 's/^: [0-9]*:[0-9]*;//' ~/.zsh_history) ~/.shared_history \
   | awk '!seen[$0]++' \
-  > ~/.shared_history
+  > ~/.shared_history.tmp && mv ~/.shared_history.tmp ~/.shared_history

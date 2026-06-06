@@ -29,7 +29,7 @@ Plug 'nvim-tree/nvim-web-devicons'
 
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim'
-Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release --target install' }
+Plug 'nvim-telescope/telescope-fzf-native.nvim', { 'do': 'cmake -S. -Bbuild -DCMAKE_BUILD_TYPE=Release && cmake --build build --config Release' }
 Plug 'nvim-tree/nvim-tree.lua'
 Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 Plug 'eero-lehtinen/oklch-color-picker.nvim'

@@ -12,10 +12,6 @@ endif
 " this must be first, because it changes other options as a side effect.
 set nocompatible
 
-" set shell to zsh, login
-set shell=zsh
-set shellcmdflag=-lc
-
 " wrap by breaking at spaces, rather than splitting words
 set wrap linebreak nolist
 

@@ -28,12 +28,18 @@ shopt -s no_empty_cmd_completion  # avoid searching PATH
 
 # complete dirs for destination arg (source=files, dest=dirs)
 _dest_dir_complete() {
-    local cur="${COMP_WORDS[COMP_CWORD]}" nargs=0 flag=-f
-    for ((i=1; i<COMP_CWORD; i++)); do [[ "${COMP_WORDS[i]}" != -* ]] && ((nargs++)); done
-    ((nargs)) && flag=-d
-    COMPREPLY=($(compgen $flag -- "$cur"))
+    local cur="${COMP_WORDS[COMP_CWORD]}" nargs=0
+    for ((i=1; i<COMP_CWORD; i++)); do
+        [[ "${COMP_WORDS[i]}" == -* ]] && continue
+        ((nargs++))
+    done
+    if ((nargs)); then
+        mapfile -t COMPREPLY < <(compgen -d -- "$cur")
+    else
+        mapfile -t COMPREPLY < <(compgen -f -- "$cur")
+    fi
 }
-complete -o filenames -F _dest_dir_complete mv cp rsync  # first arg=files, subsequent=dirs
+complete -o filenames -F _dest_dir_complete mv cp # first arg=files, subsequent=dirs
 complete -d -o dirnames cd du rmdir pushd  # dirs only; -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 
 
