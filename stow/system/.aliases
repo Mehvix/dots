@@ -28,6 +28,7 @@ alias c=clear
 alias o=xdg-open
 alias q=exit
 alias what=type
+alias where=which
 alias mk=mkdir
 alias p="ps uaxf"
 alias x="chmod +x"
@@ -114,7 +115,7 @@ alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
 ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
-alias l="eza --all --long --header --classify --icons --git --group-directories-first"
+alias l="eza --all --long --header --classify --icons --group-directories-first" # --git
 alias dirs="eza --list-dirs"
 alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
 alias t2="eza --tree --level=2 -l"
@@ -173,8 +174,8 @@ alias gl="git pull"
 alias gll="git log"
 alias glo="git log --oneline"
 alias gd="git diff"
-alias gr="git review -R"
-alias gry="git review -y"
+alias gr="grup -R"
+alias gry="grup -y"
 alias grx="git review -x"
 
 # yt-dlp

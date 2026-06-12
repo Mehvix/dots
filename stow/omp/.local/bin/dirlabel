@@ -11,18 +11,19 @@ arg="${1:-env}"
 case "$arg" in env|set|clear|list|help|-h|--help) cmd="$arg"; shift || true ;; *) echo "unknown command: $arg" >&2; exit 2 ;; esac
 
 _colors=(
-  fcda43
-  7ed644
-  159c76
-  7be5e5
-  61afef
-  c678dd
-  bc3387
-  c25656
+  '#fcda43'
+  '#a3ff3c'
+  '#24f768'
+  '#159c76'
+  '#7be5e5'
+  '#61afef'
+  '#c678dd'
+  '#bc3387'
+  '#c25656'
 )
 
-_ansi() { # hex -> colored text
-  local hex="$1" txt="$2"
+_ansi() { # #rrggbb -> colored text
+  local hex="${1#\#}" txt="$2"
   printf '\033[38;2;%d;%d;%dm%s\033[0m' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}" "$txt"
 }
 
@@ -97,7 +98,7 @@ case "$cmd" in
         best="$label"; best_len=${#dir}; best_ci="${ci:-0}"
       fi
     done < "$file"
-    printf 'export DIR_LABEL=%q DIR_LABEL_COLOR=#%s\n' "$best" "${_colors[$best_ci]}"
+    printf 'export DIR_LABEL=%q DIR_LABEL_COLOR=%s\n' "$best" "${_colors[$best_ci]}"
     ;;
   list)
     while IFS=$'\t' read -r dir label ci; do

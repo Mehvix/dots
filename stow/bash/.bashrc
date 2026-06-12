@@ -39,8 +39,16 @@ _dest_dir_complete() {
         mapfile -t COMPREPLY < <(compgen -f -- "$cur")
     fi
 }
-complete -o filenames -F _dest_dir_complete mv cp # first arg=files, subsequent=dirs
-complete -d -o dirnames cd du rmdir pushd  # dirs only; -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
+complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent=dirs
+# dirs only, sorted numerically (1,2,10) rather than lexically (1,10,2); -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
+_natural_dir_complete() { mapfile -t COMPREPLY < <(compgen -d -- "${COMP_WORDS[COMP_CWORD]}" | sort -V); }
+complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd
+# fzf's deferred completion (loaded by ble-attach) hijacks cd/du/rmdir/pushd with
+# _fzf_{dir,path}_completion, dropping our sort -V; re-register after it loads.
+if [[ ${BLE_VERSION-} ]]; then
+  ble/util/import/eval-after-load integration/fzf-completion \
+    'complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
+fi
 
 
 eval "$(oh-my-posh init bash --config "${OMP_THEME:-$HOME/.config/omp/theme.json}" --print)"
@@ -74,7 +82,7 @@ _deferred_evals=(
   'command -v uv  &>/dev/null && eval "$(uv generate-shell-completion bash)"'
   'command -v uvx &>/dev/null && eval "$(uvx --generate-shell-completion bash)"'
   'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
-  '[[ -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
+  '[[ -z "${VTE_VERSION:-}" && -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
   # 'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
 )
 if [[ $- != *c* ]]; then
