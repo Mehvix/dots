@@ -45,6 +45,7 @@ alias gls="gitlinks set"
 alias shizuku="adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
 alias k=kiro-cli
 alias kr="kiro-cli chat -r"
+# shellcheck disable=SC2154
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
 

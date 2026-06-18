@@ -4,8 +4,11 @@
 CACHED="$HOME/.config/tmux/scripts/cached"
 TTL=15
 
+TPM_PATH=$(tmux show-environment -g TMUX_PLUGIN_MANAGER_PATH 2>/dev/null | cut -d= -f2-)
+[ -z "$TPM_PATH" ] && TPM_PATH="${TMUX_PLUGIN_MANAGER_PATH:-$HOME/.tmux/plugins}"
+TMUX2K_PLUGINS="$TPM_PATH/tmux2k/plugins"
+
 # Link out-of-tree plugins into tmux2k's plugin dir (survives TPM updates).
-TMUX2K_PLUGINS="$HOME/.config/tmux/plugins/tmux2k/plugins"
 [ -d "$TMUX2K_PLUGINS" ] && ln -sfn "$HOME/.config/tmux/scripts/disk.sh" "$TMUX2K_PLUGINS/disk.sh"
 
 for side in status-right status-left; do

@@ -1,20 +1,29 @@
 #!/bin/bash
 # Usage: cached <name> <ttl_secs> <command...>
-name=$1; shift; ttl=$1; shift
+# Memoizes the output of <command> in /tmp for <ttl_secs>.
+# Cross-instance safe via mkdir-as-mutex
+name=$1; shift
+ttl=$1; shift
 cache="/tmp/tmux-cached-$name"
 lock="/tmp/tmux-cached-$name.lock"
+stale_lock_secs=60
 now=$(date +%s)
+
+# reap stale locks
+if [[ -d "$lock" ]] && (( now - $(stat -c %Y "$lock") > stale_lock_secs )); then
+    rmdir "$lock" 2>/dev/null
+fi
 
 if [[ -f "$cache" ]] && (( now - $(stat -c %Y "$cache") < ttl )); then
     cat "$cache"
 elif mkdir "$lock" 2>/dev/null; then
-    # Won the lock — regenerate
+    # lock obtained, regenerate
     tmp="$cache.tmp.$$"
-    "$@" > "$tmp" 2>/dev/null
-    mv -f "$tmp" "$cache"
-    rmdir "$lock"
-    cat "$cache"
+    trap 'rmdir "$lock" 2>/dev/null; rm -f "$tmp" 2>/dev/null' EXIT
+    "$@" >"$tmp" 2>/dev/null
+    [[ -s "$tmp" ]] && mv -f "$tmp" "$cache"
+    [[ -f "$cache" ]] && cat "$cache"
 else
-    # Another instance is regenerating — serve stale
+    # serve stale
     [[ -f "$cache" ]] && cat "$cache"
 fi

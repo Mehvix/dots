@@ -12,6 +12,7 @@ source $HOME/.profile
 export HISTSIZE=100000
 export HISTFILESIZE=100000
 export HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
+export HISTIGNORE='cd ..'            # don't record the Ctrl+N shortcut
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
@@ -78,12 +79,68 @@ fi
 # Attach ble.sh- everything prior is buffered
 [[ ! ${BLE_VERSION-} ]] || ble-attach
 
+# propagate completion thru aliases, including subcommand-baking ones
+_complete_alias() {
+    local cmd="${COMP_WORDS[0]}"
+    local raw
+    raw=$(alias "$cmd" 2>/dev/null) || return
+    # `alias foo='bar -x sub'` -> raw = `bar -x sub`
+    raw="${raw#*=\'}"
+    raw="${raw%\'}"
+
+    local -a tokens
+    eval "tokens=($raw)" 2>/dev/null || return
+    (( ${#tokens[@]} )) || return
+
+    local target="${tokens[0]}"
+    [[ "$target" == "$cmd" ]] && return    # NOT all the way down
+
+    local -a rest=("${COMP_WORDS[@]:1}")
+    local shift_n=$(( ${#tokens[@]} - 1 ))
+    local new_line="${tokens[*]} ${rest[*]}"
+    local delta=$(( ${#new_line} - ${#COMP_LINE} ))
+    COMP_WORDS=("${tokens[@]}" "${rest[@]}")
+    COMP_CWORD=$(( COMP_CWORD + shift_n ))
+    COMP_LINE="$new_line"
+    COMP_POINT=$(( COMP_POINT + delta ))
+
+    if ! complete -p "$target" &>/dev/null; then
+        declare -F _completion_loader &>/dev/null \
+            && _completion_loader "$target" &>/dev/null
+    fi
+    if declare -F _command_offset &>/dev/null; then
+        _command_offset 0
+    else
+        # completion isn't loaded yet, fallback
+        local spec
+        spec=$(complete -p "$target" 2>/dev/null) || return
+        if [[ "$spec" =~ -F[[:space:]]+([^[:space:]]+) ]]; then
+            "${BASH_REMATCH[1]}" "$target" \
+                "${COMP_WORDS[$COMP_CWORD]}" "${COMP_WORDS[$COMP_CWORD-1]}"
+        fi
+    fi
+}
+
+_register_alias_completions() {
+    local line name target
+    while IFS= read -r line; do
+        line="${line#alias }"
+        name="${line%%=*}"
+        line="${line#*=}"
+        line="${line#\'}"; line="${line%\'}"
+        target="${line%% *}"
+        [[ -z "$target" || "$target" == "$name" ]] && continue
+        complete -F _complete_alias "$name"
+    done < <(alias -p)
+}
+
 _deferred_evals=(
   'command -v uv  &>/dev/null && eval "$(uv generate-shell-completion bash)"'
   'command -v uvx &>/dev/null && eval "$(uvx --generate-shell-completion bash)"'
   'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
   '[[ -z "${VTE_VERSION:-}" && -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
-  # 'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
+  'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
+  '_register_alias_completions'
 )
 if [[ $- != *c* ]]; then
   for _cmd in "${_deferred_evals[@]}"; do
