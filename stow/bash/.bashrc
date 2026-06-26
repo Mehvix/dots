@@ -41,12 +41,32 @@ _dest_dir_complete() {
     fi
 }
 complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent=dirs
-# dirs only, sorted numerically (1,2,10) rather than lexically (1,10,2); -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
-_natural_dir_complete() { mapfile -t COMPREPLY < <(compgen -d -- "${COMP_WORDS[COMP_CWORD]}" | sort -V); }
+# dirs only, sorted naturally (1,2,10) rather than lexically (1,10,2)
+# pad to 20 digits and sort to avoid '@tmp'-suffix dir funnies
+# -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
+# -o nosort tells ble.sh to honor our COMPREPLY order.
+_natural_dir_complete() {
+  mapfile -t COMPREPLY < <(
+    compgen -d -- "${COMP_WORDS[COMP_CWORD]}" |
+    awk '{
+      base = $0; sub(/.*\//, "", base)
+      key = base; out = ""
+      while (match(key, /[0-9]+/)) {
+        out = out substr(key, 1, RSTART-1) sprintf("%020d", substr(key, RSTART, RLENGTH)+0)
+        key = substr(key, RSTART+RLENGTH)
+      }
+      printf "%s%s\t%s\n", out, key, $0
+    }' | LC_ALL=C sort -t$'\t' -k1,1 | cut -f2-
+  )
+}
 complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd
 # fzf's deferred completion (loaded by ble-attach) hijacks cd/du/rmdir/pushd with
 # _fzf_{dir,path}_completion, dropping our sort -V; re-register after it loads.
 if [[ ${BLE_VERSION-} ]]; then
+  blehook/eval-after-load complete '
+    builtin unset -f ble/cmdinfo/complete:cd 2>/dev/null
+    builtin unset -f ble/cmdinfo/complete:pushd 2>/dev/null
+  '
   ble/util/import/eval-after-load integration/fzf-completion \
     'complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
 fi
@@ -140,6 +160,8 @@ _deferred_evals=(
   'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
   '[[ -z "${VTE_VERSION:-}" && -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
   'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
+  # bash-completion ships `_cd` and `complete -F _cd -o nospace cd pushd` -- clobber em
+  '_cd() { _natural_dir_complete; }; complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
   '_register_alias_completions'
 )
 if [[ $- != *c* ]]; then

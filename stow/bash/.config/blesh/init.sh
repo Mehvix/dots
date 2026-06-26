@@ -950,8 +950,10 @@ bleopt complete_auto_complete=
 ## default.
 
 #bleopt highlight_syntax=
-#bleopt highlight_filename=
-#bleopt highlight_variable=
+if [[ "${HOSTNAME:-$(hostname)}" == etx-maxv ]]; then
+  bleopt highlight_filename=
+  bleopt highlight_variable=
+fi
 
 
 ## The following settings control the timeout and user-input cancellation of
