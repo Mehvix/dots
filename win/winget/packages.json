@@ -1,0 +1,22 @@
+{
+  "ids": [
+    "7zip.7zip",
+    "astral-sh.uv",
+    "Git.Git",
+    "Google.Chrome",
+    "JanDeDobbeleer.OhMyPosh",
+    "junegunn.fzf",
+    "KeePassXCTeam.KeePassXC",
+    "Microsoft.PowerShell",
+    "Microsoft.VisualStudioCode",
+    "Microsoft.WindowsTerminal",
+    "Microsoft.WSL",
+    "Mozilla.Firefox.ESR",
+    "MSYS2.MSYS2",
+    "Notepad++.Notepad++",
+    "PuTTY.PuTTY",
+    "sigoden.WindowSwitcher",
+    "TTYPlus.MTPuTTY",
+    "ZhornSoftware.Caffeine"
+  ]
+}

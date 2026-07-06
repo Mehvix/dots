@@ -1,6 +1,6 @@
 {
   "upgrade": {
-    "notice": true,
+    "notice": false,
     "interval": "168h",
     "auto": false,
     "source": "cdn"

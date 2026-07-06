@@ -1,0 +1,9 @@
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true   # Forward DNS through Windows' resolver- e.x. VPN
+firewall=false  # Don't use Windows' firewall + Hyper-V firewall integration.
+autoProxy=true  # Honor proxy env vars Windows sets (HTTP_PROXY etc.).
+
+[experimental]
+autoMemoryReclaim=gradual   # Free unused VM memory back to Windows over time.
+

@@ -40,12 +40,12 @@ _ac() {
 
 # defaults
 export EDITOR=nvim
-export LANG=en_US.UTF-8
-export LANGUAGE=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
-export LC_TYPE=en_US.UTF-8
-export LC_COLLATE="en_US.UTF-8"
-export LC_CTYPE=C
+# prefer en_US.UTF-8, then C.UTF-8, then plain C
+_loc=$(locale -a 2>/dev/null | grep -ixm1 'en_US\.utf-\?8') \
+     || _loc=$(locale -a 2>/dev/null | grep -ixm1 'C\.utf-\?8') \
+     || _loc=C
+export LANG="$_loc" LANGUAGE="$_loc" LC_ALL="$_loc"
+unset _loc
 export BASH_SILENCE_DEPRECATION_WARNING=1
 export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
 # export DISPLAY=:0
@@ -70,10 +70,18 @@ export FZF_CTRL_R_OPTS="
 
 # windows-unique
 if [[ "$OSTYPE" == msys || "$OSTYPE" == cygwin ]]; then
+    # git-bash sets USERNAME but not USER; ble.sh complains otherwise
+    export USER="${USER:-$USERNAME}"
+
     # native OpenSSH (LibreSSL) over git-bash OpenSSL (which breaks ECDSA)
     prepend_path "/c/Windows/System32/OpenSSH"
-
     append_path "/c/msys64/usr/bin"
+
+fi
+# WSL
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    alias ssh='ssh.exe'
+    alias m='mwinit.exe'
 fi
 
 # device-specific
