@@ -17,6 +17,7 @@ shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
 HISTFILE=~/.shared_history
+[[ -f "$HISTFILE" ]] || : > "$HISTFILE"  # avoid tac error on first-ever exit
 
 # Shell Options
 shopt -s autocd         # cd not needed
@@ -45,7 +46,16 @@ complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent
 # pad to 20 digits and sort to avoid '@tmp'-suffix dir funnies
 # -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 # -o nosort tells ble.sh to honor our COMPREPLY order.
+# COMPREPLY holds full paths so the completion inserts the whole path; the menu is
+# told to show only the basename (else long dir prefixes wrap one-per-line off-screen).
+#   stock readline: `compopt -o filenames` -> displays the last path component.
+#   ble.sh: honors filenames too, BUT `.inputrc`'s menu-complete-display-prefix=on maps
+#     to :menu-show-prefix: in comp_type, which forces the whole candidate to be shown.
+#     Strip that flag locally (dynamic scope reaches ble's frame) so the menu shows
+#     basenames while insertion keeps the full path. No-op / harmless under stock bash.
 _natural_dir_complete() {
+  compopt -o filenames 2>/dev/null
+  [[ ${comp_type-} ]] && comp_type=${comp_type//:menu-show-prefix:/:}
   mapfile -t COMPREPLY < <(
     compgen -d -- "${COMP_WORDS[COMP_CWORD]}" |
     awk '{
@@ -59,7 +69,7 @@ _natural_dir_complete() {
     }' | LC_ALL=C sort -t$'\t' -k1,1 | cut -f2-
   )
 }
-complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd
+complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd
 # fzf's deferred completion (loaded by ble-attach) hijacks cd/du/rmdir/pushd with
 # _fzf_{dir,path}_completion, dropping our sort -V; re-register after it loads.
 if [[ ${BLE_VERSION-} ]]; then
@@ -68,12 +78,19 @@ if [[ ${BLE_VERSION-} ]]; then
     builtin unset -f ble/cmdinfo/complete:pushd 2>/dev/null
   '
   ble/util/import/eval-after-load integration/fzf-completion \
-    'complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
+    'complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd'
 fi
 
 
 eval "$(oh-my-posh init bash --config "${OMP_THEME:-$HOME/.config/omp/theme.json}" --print)"
-_dirlabel_update() { eval "$(dirlabel 2>/dev/null)"; }
+_dirlabel_last_key=""
+_dirlabel_update() {
+    local f="${XDG_CONFIG_HOME:-$HOME/.config}/dirlabels"
+    local key="$PWD:$(stat -c %Y "$f" 2>/dev/null)"    # re-eval on dir change or label edit
+    [[ "$key" == "$_dirlabel_last_key" ]] && return
+    _dirlabel_last_key="$key"
+    eval "$(dirlabel 2>/dev/null)"
+}
 [[ " ${PROMPT_COMMAND[*]} " == *" _dirlabel_update "* ]] || PROMPT_COMMAND=(_dirlabel_update "${PROMPT_COMMAND[@]}")
 # PS1='$(_omp_get_primary)'
 

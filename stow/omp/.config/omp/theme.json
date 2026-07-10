@@ -1,4 +1,5 @@
 {
+  "terminal_background": "#282c34",
   "upgrade": {
     "notice": false,
     "interval": "168h",
