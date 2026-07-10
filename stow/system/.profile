@@ -162,6 +162,7 @@ case "$_hostname" in
     houdini)
         export OMP_HOST_COLOR="#c678dd"
         export OMP_HOST_ICON=$'󱛠'
+        append_path "~/Android/Sdk/platform-tools"
         ;;
     wayside)
         export OMP_HOST_COLOR="#56b6c2"

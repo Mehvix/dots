@@ -137,7 +137,11 @@ end, { desc = "Color pick on double click" })
 
 -- indent line for all
 require("ibl").setup({
-  scope = { enabled = false }
+  scope = { enabled = false },
+  exclude = {
+    filetypes = { 'toggleterm' },
+    buftypes  = { 'terminal' },
+  },
 })
 
 -- vary indent for current level
@@ -146,6 +150,17 @@ require('mini.indentscope').setup({
     try_as_border = true,
     indent_at_cursor = false,
   },
+})
+
+-- disable mini.indentscope guides in terminal buffers (e.g. toggleterm)
+vim.api.nvim_create_autocmd({ 'TermOpen', 'FileType' }, {
+  pattern = { '*' },
+  callback = function(args)
+    if vim.bo[args.buf].buftype == 'terminal'
+        or vim.bo[args.buf].filetype == 'toggleterm' then
+      vim.b[args.buf].miniindentscope_disable = true
+    end
+  end,
 })
 vim.api.nvim_create_autocmd("ColorScheme", {
   callback = function()
@@ -295,6 +310,8 @@ for _, m in ipairs({
   -- buffers
   { 'n', '<C-h>',       '<cmd>bp<cr>' },
   { 'n', '<C-l>',       '<cmd>bn<cr>' },
+  -- clear search highlight
+  { 'n', '<Esc>',       '<cmd>nohlsearch<cr>' },
   -- git hunks
   { 'n', '<A-k>',       '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k
   { 'n', '<A-j>',       '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j

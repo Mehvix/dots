@@ -34,7 +34,8 @@ alias p="ps uaxf"
 alias x="chmod +x"
 
 # non-core shortcuts
-alias py=bpython
+alias python3='uv run python'
+alias py='uv tool run bpython'
 alias dl=dirlabel # see omp cfg
 alias ta="tmux new -A -s"
 alias jn="jupyter-notebook"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# bail for non-interactive shells
 [[ $- == *i* ]] || return 0
+[[ -z "${ANTIGRAVITY_AGENT:-}${CLAUDE_CODE:-}${KIRO_AGENT:-}" ]] || return 0
 
 _blesh="${BLESH_DIR:-$HOME/.local/share/blesh}/ble.sh"; [[ -f $_blesh ]] && source -- "$_blesh" --attach=none; unset _blesh;
 
@@ -164,15 +164,13 @@ _deferred_evals=(
   '_cd() { _natural_dir_complete; }; complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
   '_register_alias_completions'
 )
-if [[ $- != *c* ]]; then
-  for _cmd in "${_deferred_evals[@]}"; do
-    if [[ ${BLE_VERSION-} ]]; then
-      ble/util/idle.push "$_cmd"
-    else
-      eval "$_cmd"
-    fi
-  done
-fi
+for _cmd in "${_deferred_evals[@]}"; do
+  if [[ ${BLE_VERSION-} ]]; then
+    ble/util/idle.push "$_cmd"
+  else
+    eval "$_cmd"
+  fi
+done
 unset _deferred_evals _cmd
 
 # fzf: fallback to eval when not using ble.sh
