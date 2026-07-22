@@ -62,7 +62,7 @@
           "background": "#3e4452",
           "foreground": "#98c379",
           "style": "plain",
-          "template": "{{ .HEAD }} ",
+          "template": "{{ if .Dir }}{{ .HEAD }} {{ end }}",
           "type": "git",
           "options": {
             "branch_icon": "\ue725 "
