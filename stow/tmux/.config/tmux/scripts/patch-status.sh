@@ -9,7 +9,10 @@ TPM_PATH=$(tmux show-environment -g TMUX_PLUGIN_MANAGER_PATH 2>/dev/null | cut -
 TMUX2K_PLUGINS="$TPM_PATH/tmux2k/plugins"
 
 # Link out-of-tree plugins into tmux2k's plugin dir (survives TPM updates).
-[ -d "$TMUX2K_PLUGINS" ] && ln -sfn "$HOME/.config/tmux/scripts/disk.sh" "$TMUX2K_PLUGINS/disk.sh"
+if [ -d "$TMUX2K_PLUGINS" ]; then
+    ln -sfn "$HOME/.config/tmux/scripts/disk.sh" "$TMUX2K_PLUGINS/disk.sh"
+    ln -sfn "$HOME/.config/tmux/scripts/save.sh" "$TMUX2K_PLUGINS/save.sh"
+fi
 
 for side in status-right status-left; do
     val=$(tmux show -gv "$side" 2>/dev/null) || continue
@@ -17,3 +20,11 @@ for side in status-right status-left; do
     patched=$(echo "$val" | sed -E "s|#\(([^)]*tmux2k/plugins/([a-z]+)\.sh)\)|#($CACHED \2 $TTL \1)|g")
     [ "$val" != "$patched" ] && tmux set -g "$side" "$patched"
 done
+
+save_hook="#($TPM_PATH/tmux-continuum/scripts/continuum_save.sh)"
+sr=$(tmux show -gv status-right 2>/dev/null)
+case "$sr" in
+    *continuum_save.sh*) ;;                          # already present
+    *) [ -x "$TPM_PATH/tmux-continuum/scripts/continuum_save.sh" ] && \
+           tmux set -g status-right "${save_hook}${sr}" ;;
+esac

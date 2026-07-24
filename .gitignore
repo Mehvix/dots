@@ -1,5 +1,8 @@
 *.bak
 *.uuid
+*.log
+
+blob.txt
 
 stow/nvim/.vim/undo/
 stow/nvim/.vim/swap/

@@ -1,125 +1,121 @@
 #!/usr/bin/env bash
 # dotsync — copy-paste bi-directional git sync for air-gapped / text-only channels.
 #
-# Moves commits (with full history) between two clones that share an ancestor,
-# using nothing but a base64 text blob you copy-paste. Designed for a work VPC
-# that can't reach GitHub.
+# Moves commits (with history) between two clones using nothing but a base64
+# text blob you copy-paste. Designed for a work VPC that can't reach GitHub.
 #
-#   dotsync init [REF]        # one-time: mark the shared ancestor (default HEAD)
-#   dotsync export            # commit pending work, print a paste-blob of new commits
+#   dotsync export           # print a paste-blob of your committed history
+#                            # (uncommitted/untracked files are never included)
 #   dotsync import [FILE]     # apply a paste-blob (from FILE, or stdin if omitted)
 #   dotsync status            # show what would be sent
 #
-# FIRST-TIME SETUP: both clones already share history from GitHub. On each
-# machine, while sitting on that shared commit, run `dotsync init`. This plants
-# the marker so every later export sends only new commits — small enough to
-# copy-paste. Without init, the first export dumps FULL history (won't fit).
+# STATELESS BY DESIGN. Every bundle is anchored at a commit BOTH clones already
+# share — by default `origin/master`, the last thing you fetched from GitHub.
+# Both machines have that commit identically, frozen offline, so the bundle's
+# prerequisite always resolves. There is nothing to initialise and nothing that
+# can drift: a botched paste costs you a re-paste, never a desync.
 #
-# How it converges: a marker ref (refs/sync/base) records the last synced tip.
-#   - export bundles base..HEAD, then sets base = HEAD  (we've published HEAD)
-#   - import merges the peer's tip, then sets base = peer's tip
-# Sync both directions once and both clones land on a shared tip with no drift.
+# Override the anchor if your shared point is elsewhere:
+#   DOTSYNC_ANCHOR=<sha>  dotsync export
+# It must name a commit present on the OTHER clone too.
 set -euo pipefail
 
-MARKER=refs/sync/base
+ANCHOR_REF="${DOTSYNC_ANCHOR:-origin/master}"
 BEGIN='-----BEGIN DOTSYNC BUNDLE-----'
 END='-----END DOTSYNC BUNDLE-----'
 
 die() { echo "dotsync: $*" >&2; exit 1; }
 git rev-parse --git-dir >/dev/null 2>&1 || die "not inside a git repo"
 
-base_ref() { git rev-parse -q --verify "$MARKER" 2>/dev/null || true; }
-# True when the working tree has changes — including untracked files, which
-# `git diff --quiet` silently ignores.
-is_dirty() { [ -n "$(git status --porcelain)" ]; }
-
-cmd_init() {
-  local ref="${1:-HEAD}" sha
-  sha=$(git rev-parse -q --verify "$ref^{commit}" 2>/dev/null) || die "no such commit: $ref"
-  git update-ref "$MARKER" "$sha"
-  echo "dotsync: marker planted at ${sha:0:9} ($(git --no-pager log -1 --format=%s "$sha"))"
-  echo "dotsync: run the SAME 'dotsync init $ref' on the other machine so both agree."
+# The shared prerequisite: the common ancestor of our HEAD and the anchor.
+# Using merge-base (not the anchor raw) keeps the bundle valid even if HEAD has
+# not yet been rebased onto the anchor.
+anchor() {
+  local a
+  a=$(git rev-parse -q --verify "${ANCHOR_REF}^{commit}" 2>/dev/null) \
+    || die "anchor '$ANCHOR_REF' not found — fetch it, or set DOTSYNC_ANCHOR to a commit both clones share"
+  git merge-base HEAD "$a" 2>/dev/null || echo "$a"
 }
 
+# Dirty incl. untracked files (git diff --quiet misses those).
+is_dirty() { [ -n "$(git status --porcelain)" ]; }
+
 cmd_status() {
-  local base; base=$(base_ref)
-  if [ -z "$base" ]; then
-    echo "no sync marker yet — export will send FULL history ($(git rev-list --count HEAD) commits)"
-  else
-    local n; n=$(git rev-list --count "$base..HEAD")
-    echo "marker at ${base:0:9}; $n commit(s) to send:"
-    [ "$n" -gt 0 ] && git --no-pager log --oneline "$base..HEAD"
-  fi
-  if is_dirty; then
-    echo "(working tree is dirty — export will auto-commit it first)"
-  fi
+  local base n; base=$(anchor)
+  n=$(git rev-list --count "$base..HEAD")
+  echo "anchor: $ANCHOR_REF @ ${base:0:9}; $n commit(s) to send:"
+  [ "$n" -gt 0 ] && git --no-pager log --oneline "$base..HEAD"
+  is_dirty && echo "(working tree is dirty — those changes are NOT sent; commit them to include)"
+  return 0
 }
 
 cmd_export() {
-  # Capture any pending work so nothing is left behind.
+  # Sync only what you've committed. We never stage or commit on your behalf —
+  # uncommitted work (and untracked scratch files) stays out of the bundle.
   if is_dirty; then
-    git add -A
-    git commit -q -m "wip(dotsync): auto-commit before export"
-    echo "dotsync: auto-committed pending changes" >&2
+    echo "dotsync: uncommitted changes below are NOT included — commit what you want to send, then re-run." >&2
+    git -c color.status=always status --short >&2
+    echo >&2
   fi
 
-  local base tmp; base=$(base_ref)
+  local base tmp; base=$(anchor)
+  [ "$(git rev-list --count "$base..HEAD")" -eq 0 ] \
+    && die "nothing to send — HEAD equals the shared anchor"
+
   tmp=$(mktemp)
-  if [ -z "$base" ]; then
-    git bundle create "$tmp" HEAD >/dev/null 2>&1
-  else
-    if [ "$(git rev-list --count "$base..HEAD")" -eq 0 ]; then
-      rm -f "$tmp"; die "nothing new to send (peer is already up to date)"
-    fi
-    # HEAD as the sent ref; --not base makes it a thin, tiny bundle.
-    git bundle create "$tmp" HEAD --not "$base" >/dev/null 2>&1
-  fi
+  # Everything on HEAD not already reachable from the shared anchor. Small.
+  git bundle create "$tmp" HEAD --not "$base" >/dev/null 2>&1 \
+    || { rm -f "$tmp"; die "failed to build bundle"; }
 
+  # Wrap at 76 cols: a single huge line overflows the terminal's canonical-mode
+  # input buffer (~4KB) on paste and gets silently truncated. Short lines paste
+  # safely; import strips the newlines back out before decoding.
   echo "$BEGIN"
-  gzip -9 <"$tmp" | base64 -w0
-  echo
+  gzip -9 <"$tmp" | base64 -w76
   echo "$END"
   rm -f "$tmp"
-
-  # We've now published HEAD.
-  git update-ref "$MARKER" HEAD
-  echo "dotsync: marker advanced to $(git rev-parse --short HEAD)" >&2
+  echo "dotsync: sent $(git rev-list --count "$base..HEAD") commit(s) since ${base:0:9}" >&2
 }
 
 cmd_import() {
-  local src="${1:-}" raw tmp tip
+  local src="${1:-}" raw tmp tip cur
   if [ -n "$src" ]; then raw=$(cat "$src"); else
     echo "dotsync: paste the blob, then Ctrl-D:" >&2
     raw=$(cat)
   fi
   tmp=$(mktemp)
-  # Strip everything outside the markers, then decode.
+  # Keep only valid base64 chars — strips CRs from Windows paste, spaces, and
+  # any stray junk that would make `base64 -d` choke with "invalid input".
   printf '%s\n' "$raw" \
     | sed -n "/$BEGIN/,/$END/p" | grep -v -- '-----' \
+    | tr -cd 'A-Za-z0-9+/=' \
     | base64 -d | gzip -d >"$tmp" 2>/dev/null \
     || { rm -f "$tmp"; die "could not decode blob (truncated or mangled paste?)"; }
 
   git bundle verify "$tmp" >/dev/null 2>&1 \
-    || { rm -f "$tmp"; die "bundle failed verification — is this clone missing the shared base? paste a full-history export instead"; }
+    || { rm -f "$tmp"; die "bundle prerequisite missing — the other clone anchored on a commit this one lacks. Ensure both share '$ANCHOR_REF', or export with DOTSYNC_ANCHOR set to a common commit"; }
 
   tip=$(git bundle unbundle "$tmp" 2>/dev/null | awk '{print $1; exit}')
   rm -f "$tmp"
   [ -n "$tip" ] || die "no commits found in bundle"
 
+  cur=$(git rev-parse HEAD)
+  if [ "$tip" = "$cur" ]; then
+    echo "dotsync: already up to date (${tip:0:9})" >&2; return 0
+  fi
+
   echo "dotsync: incoming tip ${tip:0:9}; merging into $(git branch --show-current)…" >&2
   if git merge --no-edit "$tip"; then
-    git update-ref "$MARKER" "$tip"
-    echo "dotsync: merged and marker set to ${tip:0:9}" >&2
+    echo "dotsync: merged — HEAD now $(git rev-parse --short HEAD)" >&2
   else
-    echo "dotsync: merge conflict — resolve, commit, then: git update-ref $MARKER $tip" >&2
+    echo "dotsync: merge conflict — resolve and 'git commit' to finish" >&2
     exit 1
   fi
 }
 
 case "${1:-}" in
-  init)    shift; cmd_init "$@" ;;
   export)  shift; cmd_export "$@" ;;
   import)  shift; cmd_import "$@" ;;
   status)  shift; cmd_status "$@" ;;
-  *) die "usage: dotsync {init [REF]|export|import [FILE]|status}" ;;
+  *) die "usage: dotsync {export|import [FILE]|status}" ;;
 esac
