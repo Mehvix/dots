@@ -181,10 +181,22 @@ class Prompter:
             return True
         if self.no_all:
             return False
+        # A dry run is a non-interactive preview: report the conflict and treat it
+        # as "would overwrite" without blocking on input (which would EOF anyway).
+        if self.dry:
+            print(f"\nconflict: {dst}")
+            print(f"  source: {src}")
+            return True
         while True:
             print(f"\nconflict: {dst}")
             print(f"  source: {src}")
-            ans = input("  overwrite? [y]es / [n]o / [a]ll / [s]kip-all / [d]iff / [q]uit: ").strip().lower()
+            try:
+                ans = input("  overwrite? [y]es / [n]o / [a]ll / [s]kip-all / [d]iff / [q]uit: ").strip().lower()
+            except EOFError:
+                # No interactive stdin (piped/redirected). Refuse to guess; abort safely.
+                die("no interactive input available; re-run with -f to force or -n to preview")
+            except KeyboardInterrupt:
+                sys.exit(130)
             if ans in ("y", "yes"):
                 return True
             if ans in ("n", "no"):

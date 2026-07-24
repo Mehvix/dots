@@ -1,7 +1,64 @@
 {
     "$help": "https://aka.ms/terminal-documentation",
     "$schema": "https://aka.ms/terminal-profiles-schema",
-    "actions": [],
+    "actions": 
+    [
+        {
+            "command": 
+            {
+                "action": "sendInput",
+                "input": "\u001b\r"
+            },
+            "id": "User.sendInput.8F63D3A9"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "auto"
+            },
+            "id": "User.splitPane.91AB55B1"
+        },
+        {
+            "command": 
+            {
+                "action": "closeTab"
+            },
+            "id": "User.closeTab.0"
+        },
+        {
+            "command": 
+            {
+                "action": "adjustFontSize",
+                "delta": -2
+            },
+            "id": "User.adjustFontSize.23EDA85F"
+        },
+        {
+            "command": 
+            {
+                "action": "adjustFontSize",
+                "delta": 2
+            },
+            "id": "User.adjustFontSize.27F8A00E"
+        },
+        {
+            "command": 
+            {
+                "action": "switchToTab",
+                "index": 8
+            },
+            "id": "User.switchToTab.ED268D78"
+        },
+        {
+            "command": 
+            {
+                "action": "switchToTab",
+                "index": 9
+            },
+            "id": "User.switchToTab.3B8F8D78"
+        }
+    ],
     "compatibility.allowHeadless": true,
     "compatibility.enableUnfocusedAcrylic": false,
     "copyFormatting": "none",
@@ -21,6 +78,146 @@
         {
             "id": "Terminal.DuplicatePaneAuto",
             "keys": "alt+shift+d"
+        },
+        {
+            "id": "User.sendInput.8F63D3A9",
+            "keys": "shift+enter"
+        },
+        {
+            "id": "Terminal.ScrollUp",
+            "keys": "ctrl+shift+up"
+        },
+        {
+            "id": "Terminal.SwitchToTab6",
+            "keys": "ctrl+7"
+        },
+        {
+            "id": "Terminal.ScrollDown",
+            "keys": "ctrl+shift+down"
+        },
+        {
+            "id": "Terminal.MoveTabBackward",
+            "keys": "ctrl+shift+pgup"
+        },
+        {
+            "id": "Terminal.MoveTabForward",
+            "keys": "ctrl+shift+pgdn"
+        },
+        {
+            "id": "User.adjustFontSize.23EDA85F",
+            "keys": "ctrl+shift+minus"
+        },
+        {
+            "id": "Terminal.OpenNewWindow",
+            "keys": "ctrl+shift+n"
+        },
+        {
+            "id": "Terminal.PrevTab",
+            "keys": "ctrl+pgup"
+        },
+        {
+            "id": "Terminal.NextTab",
+            "keys": "ctrl+pgdn"
+        },
+        {
+            "id": "Terminal.SwitchToTab0",
+            "keys": "ctrl+1"
+        },
+        {
+            "id": "Terminal.MoveFocusNextInOrder",
+            "keys": "ctrl+shift+]"
+        },
+        {
+            "id": "Terminal.SwitchToTab1",
+            "keys": "ctrl+2"
+        },
+        {
+            "id": "Terminal.SwitchToTab2",
+            "keys": "ctrl+3"
+        },
+        {
+            "id": "Terminal.SwitchToTab3",
+            "keys": "ctrl+4"
+        },
+        {
+            "id": "Terminal.SwitchToTab4",
+            "keys": "ctrl+5"
+        },
+        {
+            "id": "User.adjustFontSize.27F8A00E",
+            "keys": "ctrl+shift+plus"
+        },
+        {
+            "id": "Terminal.SwitchToTab5",
+            "keys": "ctrl+6"
+        },
+        {
+            "id": "Terminal.ResetFontSize",
+            "keys": "ctrl+shift+backspace"
+        },
+        {
+            "id": "Terminal.NextTab",
+            "keys": "ctrl+shift+right"
+        },
+        {
+            "id": "Terminal.SwitchToTab7",
+            "keys": "ctrl+8"
+        },
+        {
+            "id": "User.switchToTab.ED268D78",
+            "keys": "ctrl+9"
+        },
+        {
+            "id": "User.switchToTab.3B8F8D78",
+            "keys": "ctrl+0"
+        },
+        {
+            "id": "Terminal.ScrollToTop",
+            "keys": "ctrl+shift+home"
+        },
+        {
+            "id": "Terminal.ScrollToBottom",
+            "keys": "ctrl+shift+end"
+        },
+        {
+            "id": "User.splitPane.91AB55B1",
+            "keys": "ctrl+shift+enter"
+        },
+        {
+            "id": "Terminal.ClosePane",
+            "keys": "ctrl+shift+w"
+        },
+        {
+            "id": "Terminal.MoveFocusPreviousInOrder",
+            "keys": "ctrl+shift+["
+        },
+        {
+            "id": "Terminal.OpenSettingsFile",
+            "keys": "ctrl+shift+f2"
+        },
+        {
+            "id": "Terminal.TogglePaneZoom",
+            "keys": "ctrl+shift+f10"
+        },
+        {
+            "id": "Terminal.OpenNewTab",
+            "keys": "ctrl+shift+t"
+        },
+        {
+            "id": "User.closeTab.0",
+            "keys": "ctrl+shift+q"
+        },
+        {
+            "id": "Terminal.PrevTab",
+            "keys": "ctrl+shift+left"
+        },
+        {
+            "id": "Terminal.ClearBuffer",
+            "keys": "ctrl+shift+delete"
+        },
+        {
+            "id": "Terminal.ToggleFullscreen",
+            "keys": "ctrl+shift+f11"
         }
     ],
     "newTabMenu": 

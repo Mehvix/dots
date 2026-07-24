@@ -4,6 +4,7 @@
     "astral-sh.uv",
     "Git.Git",
     "Google.Chrome",
+    "hluk.CopyQ",
     "JanDeDobbeleer.OhMyPosh",
     "junegunn.fzf",
     "KeePassXCTeam.KeePassXC",
