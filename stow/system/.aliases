@@ -111,6 +111,8 @@ alias kr="kiro-cli chat -r"
 # shellcheck disable=SC2154
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
+alias pi=picard
+alias pt=puddletag
 
 # new commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
