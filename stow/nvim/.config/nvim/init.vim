@@ -2,9 +2,11 @@ set runtimepath^=~/.vim
 let &packpath = &runtimepath
 let g:loaded_netrw = 1
 let g:loaded_netrwPlugin = 1
-let s:python3 = expand('~/.venv/bin/python')
-if filereadable(s:python3)
-  let g:python3_host_prog = s:python3
+if !exists('g:python3_host_prog')
+  let s:python3 = expand('~/.venv/bin/python')
+  if executable(s:python3)
+    let g:python3_host_prog = s:python3
+  endif
 endif
 
 let s:host = substitute(hostname(), '\..*', '', '')

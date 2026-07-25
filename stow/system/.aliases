@@ -9,7 +9,69 @@ alias zzz="sudo systemctl suspend -i"
 alias xcopy='xsel --clipboard --input <'
 
 # sensible defaults + interactive improvements
-alias mv="mv -iv"           # interactive (confirm overwrite), verbose
+mv() {                       # interactive (confirm overwrite), verbose + missing-dest/dotfile/rmdir prompts
+    # ensure destination exists, prompting creation if missing
+    local -a _args=()
+    local _a _target="" _skipnext=0 _endopts=0
+    for _a in "$@"; do
+        if (( _skipnext )); then _target="$_a"; _skipnext=0; continue; fi
+        if (( _endopts )); then _args+=("$_a"); continue; fi
+        case "$_a" in
+            --) _endopts=1 ;;
+            -t|--target-directory) _skipnext=1 ;;
+            --target-directory=*) _target="${_a#*=}" ;;
+            -*) ;;                       # other option: ignore
+            *) _args+=("$_a") ;;
+        esac
+    done
+    local _dest _need
+    if [[ -n "$_target" ]]; then
+        _dest="$_target"; _need=dir      # -t always names a directory
+    elif (( ${#_args[@]} >= 2 )); then
+        _dest="${_args[@]: -1}"
+        # >1 source, or trailing slash => dest must be an existing directory
+        if (( ${#_args[@]} > 2 )) || [[ "$_dest" == */ ]]; then _need=dir; else _need=parent; fi
+    fi
+    if [[ -n "${_need:-}" ]]; then
+        local _mk
+        if [[ "$_need" == dir ]]; then _mk="${_dest%/}"; else _mk="$(dirname -- "$_dest")"; fi
+        if [[ ! -d "$_mk" ]]; then
+            if [[ -e "$_mk" ]]; then
+                echo "mv: '$_mk' exists but is not a directory" >&2
+                return 1
+            fi
+            read -rp "Destination '$_mk' doesn't exist. Create it? [Y/n] " ans
+            [[ -z "$ans" || "$ans" =~ ^[Yy]$ ]] || return 1
+            command mkdir -pv -- "$_mk" || return 1
+        fi
+    fi
+    command mv -iv "$@"
+    local src
+    # detect 'mv dir/* ...' pattern: check if any arg is a glob-expanded path sharing a common dir
+    for src in "$@"; do
+        [[ "$src" == "$@" ]] && continue  # skip if only one arg (the dest)
+        break
+    done
+    local dir
+    dir="$(dirname "$src" 2>/dev/null)"
+    [[ -z "$dir" || "$dir" == "." || ! -d "$dir" ]] && return
+    # check for leftover dotfiles
+    local dots
+    dots=( "$dir"/.!(.|) )
+    if [[ -e "${dots[0]}" ]]; then
+        echo "Dotfiles remain in $dir:"
+        printf '  %s\n' "${dots[@]##*/}"
+        read -rp "Move these too? [y/N] " ans
+        if [[ "$ans" =~ ^[Yy]$ ]]; then
+            command mv -iv "${dots[@]}" "${@: -1}"
+        fi
+    fi
+    # prompt to remove dir if now empty
+    if [[ -d "$dir" ]] && [[ -z "$(ls -A "$dir")" ]]; then
+        read -rp "$dir is empty. Remove it? [y/N] " ans
+        [[ "$ans" =~ ^[Yy]$ ]] && rmdir "$dir"
+    fi
+}
 alias rm="rm -rv"           # recursive, verbose
 alias cp="cp -rivL"         # recursive, interactive (confirm overwrite), verbose, follow symlinks
 alias cpf="yes | cp -rL"    # recursive, follow symlinks, no confirmation
@@ -104,7 +166,9 @@ function bkup() {
 }
 function nixos-switch () {
     git -C /etc/nixos add -A
-    sudo nixos-rebuild switch --flake /etc/nixos && \
+    sudo nixos-rebuild switch \
+        --flake /etc/nixos \
+        --option warn-dirty false && \
     git -C /etc/nixos commit -m "nixos: $(date '+%Y-%m-%d %H:%M')" && \
     git -C /etc/nixos push
 }
@@ -118,6 +182,7 @@ alias cat=bat
 alias ccat="bat --wrap=never"
 ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
 alias l="eza --all --long --header --classify --icons --group-directories-first" # --git
+alias lt="eza --all --long --header --classify --icons --sort=modified"
 alias dirs="eza --list-dirs"
 alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
 alias t2="eza --tree --level=2 -l"
