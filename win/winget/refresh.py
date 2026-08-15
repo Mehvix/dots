@@ -20,6 +20,7 @@ stops resurfacing on every refresh.
     ./refresh.py            # reconcile, prompt on new finds
     ./refresh.py -n         # dry run: report only, write nothing
     ./refresh.py -y         # add every new find, no prompt
+    ./refresh.py --setup-startup  # configure startup shortcuts for marked packages
 """
 
 from __future__ import annotations
@@ -49,6 +50,20 @@ DROP_PREFIXES = (
     "Microsoft.AppInstaller",
     "Microsoft.DesktopAppInstaller",
 )
+
+STARTUP_PACKAGES = {
+    "sigoden.WindowSwitcher",
+    "hluk.CopyQ",
+    "KeePassXCTeam.KeePassXC",
+    "xanderfrangos.twinkletray",
+    "ZhornSoftware.Caffeine",
+}
+
+EXE_NAME_MAP = {
+    "hluk.CopyQ": "copyq.exe",
+    "sigoden.WindowSwitcher": "window_switcher.exe",
+    "xanderfrangos.twinkletray": "twinkle-tray.exe",
+}
 
 
 def die(msg: str) -> None:
@@ -83,7 +98,17 @@ def export_ids() -> list[str]:
 def load_tracked() -> list[str]:
     if not TRACKED.exists():
         return []
-    return json.loads(TRACKED.read_text())["ids"]
+    data = json.loads(TRACKED.read_text())
+    # Support both old flat format and new winget export format
+    if "ids" in data:
+        return data["ids"]
+    # Extract from winget export format
+    ids: list[str] = []
+    for src in data.get("Sources", []):
+        for p in src.get("Packages", []):
+            if pid := p.get("PackageIdentifier"):
+                ids.append(pid)
+    return ids
 
 
 def load_ignore() -> list[str]:
@@ -97,8 +122,31 @@ def load_ignore() -> list[str]:
 
 
 def write_tracked(ids: set[str]) -> None:
+    """Write package IDs in winget export/import format."""
+    from datetime import datetime, timezone
+
+    data = {
+        "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
+        "CreationDate": datetime.now(timezone.utc).isoformat(),
+        "Sources": [
+            {
+                "Packages": [
+                    {"PackageIdentifier": pkg_id}
+                    for pkg_id in sorted(ids, key=str.lower)
+                ],
+                "SourceDetails": {
+                    "Argument": "https://cdn.winget.microsoft.com/cache",
+                    "Identifier": "Microsoft.Winget.Source_8wekyb3d8bbwe",
+                    "Name": "winget",
+                    "Type": "Microsoft.PreIndexed.Package"
+                }
+            }
+        ],
+        "WinGetVersion": "1.11.510"
+    }
+
     TRACKED.write_text(
-        json.dumps({"ids": sorted(ids, key=str.lower)}, indent=2) + "\n",
+        json.dumps(data, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -145,11 +193,139 @@ class Prompter:
                     sys.exit(130)
 
 
+def setup_startup_shortcuts() -> int:
+    """Create startup shortcuts for packages marked in STARTUP_PACKAGES."""
+    import os
+    import shutil
+
+    startup_folder = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs" / "Startup"
+    start_menu = Path(os.environ.get("APPDATA", "")) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
+    winget_packages = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Packages"
+
+    if not startup_folder.exists():
+        die(f"Startup folder not found: {startup_folder}")
+
+    tracked = set(load_tracked())
+    startup_needed = tracked & STARTUP_PACKAGES
+
+    if not startup_needed:
+        print("No tracked packages need startup configuration")
+        return 0
+
+    print(f"Configuring startup for {len(startup_needed)} package(s)...")
+
+    shortcut_names = {
+        "sigoden.WindowSwitcher": "Window Switcher.lnk",
+        "hluk.CopyQ": "CopyQ.lnk",
+        "KeePassXCTeam.KeePassXC": "KeePassXC.lnk",
+        "xanderfrangos.twinkletray": "Twinkle Tray.lnk",
+        "ZhornSoftware.Caffeine": "Caffeine.lnk",
+    }
+
+    def find_exe_from_startup_init(pkg_id: str) -> Path | None:
+        """Look for startup.init file in WinGet Packages to find exe location."""
+        if not winget_packages.exists():
+            return None
+
+        for pkg_dir in winget_packages.iterdir():
+            if not pkg_dir.is_dir():
+                continue
+            if not pkg_dir.name.startswith(pkg_id.replace(".", "_")):
+                continue
+
+            startup_init = pkg_dir / "startup.init"
+            if not startup_init.exists():
+                continue
+
+            try:
+                for line in startup_init.read_text().splitlines():
+                    if line.startswith("exe_name="):
+                        exe_name = line.split("=", 1)[1].strip()
+                        exe_path = pkg_dir / exe_name
+                        if exe_path.exists():
+                            return exe_path
+            except Exception:
+                pass
+
+        return None
+
+    for pkg_id in sorted(startup_needed):
+        shortcut_name = shortcut_names.get(pkg_id)
+        if not shortcut_name:
+            # Fallback: use last part of package ID
+            shortcut_name = f"{pkg_id.split('.')[-1]}.lnk"
+
+        # Look for the shortcut in Start Menu (recursively search subdirs too)
+        shortcut_path = None
+
+        # First check direct path
+        if (start_menu / shortcut_name).exists():
+            shortcut_path = start_menu / shortcut_name
+        else:
+            # Check subdirectories
+            for subdir in start_menu.rglob(shortcut_name):
+                if subdir.is_file():
+                    shortcut_path = subdir
+                    break
+
+        if not shortcut_path:
+            exe_path = find_exe_from_startup_init(pkg_id)
+
+            if exe_path:
+                dest_path = startup_folder / shortcut_name
+
+                if dest_path.exists():
+                    print(f"  = {pkg_id} (already configured)")
+                    continue
+
+                ps_script = f"""
+$WshShell = New-Object -ComObject WScript.Shell
+$Shortcut = $WshShell.CreateShortcut('{dest_path}')
+$Shortcut.TargetPath = '{exe_path}'
+$Shortcut.WorkingDirectory = '{exe_path.parent}'
+$Shortcut.Save()
+"""
+                result = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command", ps_script],
+                    capture_output=True,
+                    text=True,
+                )
+
+                if result.returncode == 0 and dest_path.exists():
+                    print(f"  + {pkg_id} -> {shortcut_name}")
+                else:
+                    print(f"  - {pkg_id}: failed to create shortcut")
+                    if result.stderr:
+                        print(f"    {result.stderr.strip()}")
+                continue
+
+            print(f"  ! {pkg_id}: shortcut '{shortcut_name}' not found in Start Menu")
+            continue
+
+        dest_path = startup_folder / shortcut_name
+
+        if dest_path.exists():
+            print(f"  = {pkg_id} (already configured)")
+            continue
+
+        try:
+            shutil.copy2(shortcut_path, dest_path)
+            print(f"  + {pkg_id} -> {shortcut_name}")
+        except Exception as e:
+            print(f"  - {pkg_id}: failed to copy shortcut: {e}")
+
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(prog="refresh", description=__doc__)
     ap.add_argument("-n", "--dry-run", action="store_true", help="report only, write nothing")
     ap.add_argument("-y", "--yes", action="store_true", help="add every new find without prompting")
+    ap.add_argument("--setup-startup", action="store_true", help="configure Windows startup shortcuts for marked packages")
     args = ap.parse_args()
+
+    if args.setup_startup:
+        return setup_startup_shortcuts()
 
     exported = {p for p in export_ids() if not is_dep(p)}
     tracked = set(load_tracked())

@@ -18,8 +18,11 @@ chooses what to install where:
     roaming = %APPDATA%
     local   = %LOCALAPPDATA%
 
+Special handling:
+  - Fonts: use `fonts = true` to install fonts from the source to Windows fonts directory
+
 `collect` pulls live files into the source tree; `install` pushes them out;
-`evict` drops files that git ignores.
+`evict` drops files that git ignores; `fonts` installs font files.
 """
 
 from __future__ import annotations
@@ -61,6 +64,7 @@ class Mapping:
     subpath: str  # "" means whole source tree
     target: Path
     source: Path  # already-resolved root to copy *from*
+    fonts_mode: bool = False  # special handling for font installation
 
     def src_root(self) -> Path:
         return self.source if self.subpath == "" else self.source / self.subpath
@@ -70,7 +74,7 @@ class Mapping:
 
 
 # Reserved manifest keys that don't define a subpath mapping.
-RESERVED_KEYS = {"source", "target"}
+RESERVED_KEYS = {"source", "target", "fonts"}
 
 
 def parse_manifest(pkg_dir: Path) -> list[Mapping]:
@@ -82,6 +86,7 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
       Long form (any combination):
         source = ../stow/system     # optional; defaults to package dir
         target = %USERPROFILE%      # whole-package target
+        fonts = true                # enable font installation mode
         <subdir> = <path>           # per-subdir target (mutually exclusive with `target`)
     """
     mf = pkg_dir / MANIFEST
@@ -101,6 +106,7 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
 
     pkg_source: Path = pkg_dir
     pkg_target: Path | None = None
+    fonts_mode: bool = False
     subs: list[tuple[str, str]] = []
     for ln in lines:
         if "=" not in ln:
@@ -114,6 +120,9 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
         if k == "target":
             pkg_target = expand(v)
             continue
+        if k == "fonts":
+            fonts_mode = v.lower() in ("true", "yes", "1")
+            continue
         if not k or k in (".", ".."):
             die(f"{mf}: bad key: {k!r}")
         subs.append((k, v))
@@ -121,15 +130,19 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
     if pkg_target is not None and subs:
         die(f"{mf}: cannot mix 'target=' with per-subdir mappings")
     if pkg_target is not None:
-        return [Mapping("", pkg_target, pkg_source)]
-    if not subs:
+        return [Mapping("", pkg_target, pkg_source, fonts_mode)]
+    if not subs and not fonts_mode:
         die(f"{mf}: no target specified")
     mappings: list[Mapping] = []
-    for k, v in subs:
-        sub = pkg_source / k
-        if sub.exists() and not sub.is_dir():
-            die(f"{mf}: {k} exists in source but is not a directory")
-        mappings.append(Mapping(k, expand(v), pkg_source))
+    if fonts_mode:
+        # Font mode: source is the fonts directory, no target needed
+        mappings.append(Mapping("", Path(), pkg_source, fonts_mode=True))
+    else:
+        for k, v in subs:
+            sub = pkg_source / k
+            if sub.exists() and not sub.is_dir():
+                die(f"{mf}: {k} exists in source but is not a directory")
+            mappings.append(Mapping(k, expand(v), pkg_source))
     return mappings
 
 
@@ -164,6 +177,115 @@ def walk_files(root: Path) -> list[Path]:
         if p.is_file() and p.name != MANIFEST and ".git" not in p.parts:
             files.append(p)
     return files
+
+
+# ---------- font installation ----------
+
+
+FONT_EXTENSIONS = {".ttf", ".otf", ".ttc", ".woff", ".woff2"}
+
+
+def is_font_file(path: Path) -> bool:
+    """Check if a file is a font file by extension."""
+    return path.suffix.lower() in FONT_EXTENSIONS
+
+
+def get_windows_fonts_dir() -> Path:
+    """Get the Windows Fonts directory."""
+    windir = Path(os.environ.get("WINDIR", r"C:\Windows"))
+    return windir / "Fonts"
+
+
+def install_font_windows(src: Path, dry: bool = False) -> bool:
+    """Install a font file on Windows using the Windows API.
+    
+    Returns True if the font was installed, False if it already exists.
+    """
+    if not sys.platform.startswith("win"):
+        die("font installation is only supported on Windows")
+    
+    import ctypes
+    from ctypes import wintypes
+    
+    fonts_dir = get_windows_fonts_dir()
+    dst = fonts_dir / src.name
+    
+    # Check if font already installed
+    if dst.exists():
+        if filecmp.cmp(src, dst, shallow=False):
+            return False  # Already installed, same file
+    
+    if dry:
+        return True
+    
+    try:
+        # Copy font to Windows Fonts directory
+        shutil.copy2(src, dst)
+        
+        # Register font with Windows using AddFontResource
+        gdi32 = ctypes.windll.gdi32
+        # AddFontResourceW returns number of fonts added (0 = failure)
+        result = gdi32.AddFontResourceW(str(dst))
+        
+        if result > 0:
+            # Notify all windows that fonts have changed
+            HWND_BROADCAST = 0xFFFF
+            WM_FONTCHANGE = 0x001D
+            user32 = ctypes.windll.user32
+            user32.SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
+            return True
+        else:
+            # If registration failed, clean up the copied file
+            dst.unlink()
+            print(f"  warning: failed to register font {src.name}")
+            return False
+    except Exception as e:
+        print(f"  error installing {src.name}: {e}")
+        if dst.exists():
+            dst.unlink()
+        return False
+
+
+def uninstall_font_windows(font_name: str, dry: bool = False) -> bool:
+    """Uninstall a font file from Windows.
+    
+    Returns True if the font was uninstalled, False if it didn't exist.
+    """
+    if not sys.platform.startswith("win"):
+        die("font uninstallation is only supported on Windows")
+    
+    import ctypes
+    
+    fonts_dir = get_windows_fonts_dir()
+    font_path = fonts_dir / font_name
+    
+    if not font_path.exists():
+        return False
+    
+    if dry:
+        return True
+    
+    try:
+        # Unregister font with Windows using RemoveFontResource
+        gdi32 = ctypes.windll.gdi32
+        result = gdi32.RemoveFontResourceW(str(font_path))
+        
+        if result > 0:
+            # Notify all windows that fonts have changed
+            HWND_BROADCAST = 0xFFFF
+            WM_FONTCHANGE = 0x001D
+            user32 = ctypes.windll.user32
+            user32.SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
+            
+            # Remove the font file
+            font_path.unlink()
+            return True
+        else:
+            print(f"  warning: failed to unregister font {font_name}")
+            return False
+    except Exception as e:
+        print(f"  error uninstalling {font_name}: {e}")
+        return False
 
 
 # ---------- conflict prompt ----------
@@ -232,9 +354,33 @@ def show_diff(a: Path, b: Path) -> None:
 
 def cmd_install(pkgs: list[Path], prompter: Prompter) -> int:
     n_copied = n_skipped = n_same = 0
+    n_fonts_installed = n_fonts_skipped = 0
+    
     for pkg in pkgs:
         for m in parse_manifest(pkg):
             src_root = m.src_root()
+            
+            if m.fonts_mode:
+                # Font installation mode
+                if not src_root.exists():
+                    print(f"[{pkg.name}] skip: {src_root} (no source)")
+                    continue
+                
+                for src in walk_files(src_root):
+                    if not is_font_file(src):
+                        continue
+                    
+                    action = f"would install font" if prompter.dry else "install font"
+                    installed = install_font_windows(src, dry=prompter.dry)
+                    
+                    if installed:
+                        print(f"  {action} {src.name}")
+                        n_fonts_installed += 1
+                    else:
+                        n_fonts_skipped += 1
+                continue
+            
+            # Regular file installation mode
             dst_root = m.dst_root()
             if not src_root.exists():
                 print(f"[{pkg.name}] skip: {src_root} (no source)")
@@ -256,7 +402,12 @@ def cmd_install(pkgs: list[Path], prompter: Prompter) -> int:
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(src, dst)
                 n_copied += 1
-    print(f"\ninstall: {n_copied} copied, {n_skipped} skipped, {n_same} unchanged")
+    
+    if n_fonts_installed > 0 or n_fonts_skipped > 0:
+        print(f"\ninstall: {n_copied} copied, {n_skipped} skipped, {n_same} unchanged, "
+              f"{n_fonts_installed} fonts installed, {n_fonts_skipped} fonts already installed")
+    else:
+        print(f"\ninstall: {n_copied} copied, {n_skipped} skipped, {n_same} unchanged")
     return 0
 
 
@@ -294,10 +445,27 @@ def cmd_collect(pkgs: list[Path], prompter: Prompter) -> int:
 
 
 def cmd_status(pkgs: list[Path]) -> int:
+    fonts_dir = get_windows_fonts_dir()
     for pkg in pkgs:
         print(f"=== {pkg.name} ===")
         for m in parse_manifest(pkg):
             src_root = m.src_root()
+            
+            if m.fonts_mode:
+                print(f"  fonts -> {fonts_dir}")
+                for tracked in walk_files(src_root):
+                    if not is_font_file(tracked):
+                        continue
+                    installed_font = fonts_dir / tracked.name
+                    if not installed_font.exists():
+                        state = "missing"
+                    elif filecmp.cmp(tracked, installed_font, shallow=False):
+                        state = "ok"
+                    else:
+                        state = "differs"
+                    print(f"    [{state}] {tracked.name}")
+                continue
+            
             dst_root = m.dst_root()
             print(f"  {m.subpath or '.'} -> {dst_root}")
             for tracked in walk_files(src_root):
@@ -366,11 +534,15 @@ def cmd_evict(pkgs: list[Path], dry: bool) -> int:
 
 
 def cmd_list() -> int:
+    fonts_dir = get_windows_fonts_dir()
     for pkg in list_packages():
         ms = parse_manifest(pkg)
         redirected = ms[0].source != pkg
         suffix = f"  (source: {ms[0].source})" if redirected else ""
-        if len(ms) == 1 and ms[0].subpath == "":
+        
+        if ms[0].fonts_mode:
+            print(f"  {pkg.name} -> {fonts_dir} (fonts){suffix}")
+        elif len(ms) == 1 and ms[0].subpath == "":
             print(f"  {pkg.name} -> {ms[0].target}{suffix}")
         else:
             print(f"  {pkg.name}{suffix}")

@@ -57,6 +57,11 @@ target = %USERPROFILE%
 `collect` writes back to the source tree, so changes flow into the shared
 Linux config — no duplication.
 
+### 5. `fonts = true` — font installation
+
+Special mode for installing font files to the Windows Fonts directory. When
+enabled, fonts are registered with Windows (via AddFontResource API) and
+copied to `C:\Windows\Fonts`.
 
 ## Commands
 

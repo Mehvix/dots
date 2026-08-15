@@ -1,44 +1,137 @@
 {
-  "ids": [
-    "7zip.7zip",
-    "AirDroid.AirDroid",
-    "astral-sh.uv",
-    "Balena.Etcher",
-    "Canonical.Ubuntu",
-    "ClockworkMod.UniversalADBDriver",
-    "CPUID.CPU-Z",
-    "craftablescience.VPKEdit",
-    "Discord.Discord",
-    "Genymobile.scrcpy",
-    "GermanCoding.SyncTrayzor",
-    "Git.Git",
-    "sigoden.WindowSwitcher",
-    "TTYPlus.MTPuTTY",
-	  "Mozilla.Firefox.ESR",
-    "Google.Chrome",
-    "hluk.CopyQ",
-    "junegunn.fzf",
-    "Guru3D.Afterburner.Beta",
-    "JanDeDobbeleer.OhMyPosh",
-    "KeePassXCTeam.KeePassXC",
-    "Logitech.GHUB",
-    "Microsoft.PowerShell",
-    "Microsoft.VisualStudioCode",
-    "Microsoft.WindowsTerminal",
-    "Microsoft.WSL",
-    "MSYS2.MSYS2",
-    "Notepad++.Notepad++",
-    "OBSProject.OBSStudio",
-    "OpenWhisperSystems.Signal",
-    "PadWorld-Entertainment.WorldOfPadman",
-    "PuTTY.PuTTY",
-    "qBittorrent.qBittorrent",
-    "Rufus.Rufus",
-    "Spotify.Spotify",
-    "Syncthing.Syncthing",
-    "Valve.Steam",
-    "VideoLAN.VLC",
-    "xanderfrangos.twinkletray",
-    "ZhornSoftware.Caffeine"
-  ]
+  "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
+  "CreationDate": "2026-08-15T20:53:02.461151+00:00",
+  "Sources": [
+    {
+      "Packages": [
+        {
+          "PackageIdentifier": "7zip.7zip"
+        },
+        {
+          "PackageIdentifier": "AirDroid.AirDroid"
+        },
+        {
+          "PackageIdentifier": "astral-sh.uv"
+        },
+        {
+          "PackageIdentifier": "Balena.Etcher"
+        },
+        {
+          "PackageIdentifier": "Canonical.Ubuntu"
+        },
+        {
+          "PackageIdentifier": "ClockworkMod.UniversalADBDriver"
+        },
+        {
+          "PackageIdentifier": "CPUID.CPU-Z"
+        },
+        {
+          "PackageIdentifier": "craftablescience.VPKEdit"
+        },
+        {
+          "PackageIdentifier": "Discord.Discord"
+        },
+        {
+          "PackageIdentifier": "Genymobile.scrcpy"
+        },
+        {
+          "PackageIdentifier": "GermanCoding.SyncTrayzor"
+        },
+        {
+          "PackageIdentifier": "Git.Git"
+        },
+        {
+          "PackageIdentifier": "sigoden.WindowSwitcher"
+        },
+        {
+          "PackageIdentifier": "TTYPlus.MTPuTTY"
+        },
+        {
+          "PackageIdentifier": "Mozilla.Firefox.ESR"
+        },
+        {
+          "PackageIdentifier": "Google.Chrome"
+        },
+        {
+          "PackageIdentifier": "hluk.CopyQ"
+        },
+        {
+          "PackageIdentifier": "junegunn.fzf"
+        },
+        {
+          "PackageIdentifier": "Guru3D.Afterburner.Beta"
+        },
+        {
+          "PackageIdentifier": "JanDeDobbeleer.OhMyPosh"
+        },
+        {
+          "PackageIdentifier": "KeePassXCTeam.KeePassXC"
+        },
+        {
+          "PackageIdentifier": "Logitech.GHUB"
+        },
+        {
+          "PackageIdentifier": "Microsoft.PowerShell"
+        },
+        {
+          "PackageIdentifier": "Microsoft.VisualStudioCode"
+        },
+        {
+          "PackageIdentifier": "Microsoft.WindowsTerminal"
+        },
+        {
+          "PackageIdentifier": "Microsoft.WSL"
+        },
+        {
+          "PackageIdentifier": "MSYS2.MSYS2"
+        },
+        {
+          "PackageIdentifier": "Notepad++.Notepad++"
+        },
+        {
+          "PackageIdentifier": "OBSProject.OBSStudio"
+        },
+        {
+          "PackageIdentifier": "OpenWhisperSystems.Signal"
+        },
+        {
+          "PackageIdentifier": "PadWorld-Entertainment.WorldOfPadman"
+        },
+        {
+          "PackageIdentifier": "PuTTY.PuTTY"
+        },
+        {
+          "PackageIdentifier": "qBittorrent.qBittorrent"
+        },
+        {
+          "PackageIdentifier": "Rufus.Rufus"
+        },
+        {
+          "PackageIdentifier": "Spotify.Spotify"
+        },
+        {
+          "PackageIdentifier": "Syncthing.Syncthing"
+        },
+        {
+          "PackageIdentifier": "Valve.Steam"
+        },
+        {
+          "PackageIdentifier": "VideoLAN.VLC"
+        },
+        {
+          "PackageIdentifier": "xanderfrangos.twinkletray"
+        },
+        {
+          "PackageIdentifier": "ZhornSoftware.Caffeine"
+        }
+      ],
+      "SourceDetails": {
+        "Argument": "https://cdn.winget.microsoft.com/cache",
+        "Identifier": "Microsoft.Winget.Source_8wekyb3d8bbwe",
+        "Name": "winget",
+        "Type": "Microsoft.PreIndexed.Package"
+      }
+    }
+  ],
+  "WinGetVersion": "1.11.510"
 }

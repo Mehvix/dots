@@ -1,10 +1,10 @@
 {
     "$help": "https://aka.ms/terminal-documentation",
     "$schema": "https://aka.ms/terminal-profiles-schema",
-    "actions": 
+    "actions":
     [
         {
-            "command": 
+            "command":
             {
                 "action": "sendInput",
                 "input": "\u001b\r"
@@ -12,7 +12,7 @@
             "id": "User.sendInput.8F63D3A9"
         },
         {
-            "command": 
+            "command":
             {
                 "action": "splitPane",
                 "split": "auto"
@@ -20,14 +20,14 @@
             "id": "User.splitPane.91AB55B1"
         },
         {
-            "command": 
+            "command":
             {
                 "action": "closeTab"
             },
             "id": "User.closeTab.0"
         },
         {
-            "command": 
+            "command":
             {
                 "action": "adjustFontSize",
                 "delta": -2
@@ -35,7 +35,7 @@
             "id": "User.adjustFontSize.23EDA85F"
         },
         {
-            "command": 
+            "command":
             {
                 "action": "adjustFontSize",
                 "delta": 2
@@ -43,7 +43,7 @@
             "id": "User.adjustFontSize.27F8A00E"
         },
         {
-            "command": 
+            "command":
             {
                 "action": "switchToTab",
                 "index": 8
@@ -51,7 +51,7 @@
             "id": "User.switchToTab.ED268D78"
         },
         {
-            "command": 
+            "command":
             {
                 "action": "switchToTab",
                 "index": 9
@@ -65,7 +65,7 @@
     "copyOnSelect": true,
     "defaultProfile": "{7f2a1b3c-9d4e-4a5b-8c6d-1e2f3a4b5c6d}",
     "disableAnimations": true,
-    "keybindings": 
+    "keybindings":
     [
         {
             "id": "Terminal.CopyToClipboard",
@@ -220,30 +220,30 @@
             "keys": "ctrl+shift+f11"
         }
     ],
-    "newTabMenu": 
+    "newTabMenu":
     [
         {
             "type": "remainingProfiles"
         }
     ],
-    "profiles": 
+    "profiles":
     {
-        "defaults": 
+        "defaults":
         {
             "bellStyle": "none",
             "colorScheme": "One Dark",
-            "font": 
+            "font":
             {
                 "face": "PTMono Nerd Font",
                 "size": 10
             },
             "opacity": 85
         },
-        "list": 
+        "list":
         [
             {
                 "commandline": "%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-                "font": 
+                "font":
                 {
                     "face": "PTMono Nerd Font"
                 },
@@ -272,7 +272,7 @@
                 "source": "Microsoft.WSL"
             },
             {
-                "commandline": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+                "commandline": "pwsh.exe",
                 "guid": "{7f2a1b3c-9d4e-4a5b-8c6d-1e2f3a4b5c6d}",
                 "hidden": false,
                 "name": "PowerShell",
@@ -292,7 +292,7 @@
             }
         ]
     },
-    "schemes": 
+    "schemes":
     [
         {
             "background": "#282C34",
@@ -319,23 +319,23 @@
         }
     ],
     "theme": "One Dark",
-    "themes": 
+    "themes":
     [
         {
             "name": "One Dark",
-            "tab": 
+            "tab":
             {
                 "background": "#21252BFF",
                 "iconStyle": "default",
                 "showCloseButton": "always",
                 "unfocusedBackground": "#282C34FF"
             },
-            "tabRow": 
+            "tabRow":
             {
                 "background": "#21252BFF",
                 "unfocusedBackground": "#1B1F24FF"
             },
-            "window": 
+            "window":
             {
                 "applicationTheme": "dark",
                 "experimental.rainbowFrame": false,
