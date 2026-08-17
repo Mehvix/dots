@@ -1,5 +1,6 @@
 {
   "terminal_background": "#282c34",
+  "shell_integration": true,
   "upgrade": {
     "notice": false,
     "interval": "168h",

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s extglob  # for mv
+
 alias ❯='' # NOOP prompt 1st char FSO quick and lazy copy paste; ble.sh strips char from history btw
 
 alias restart="sudo reboot"
@@ -9,8 +11,19 @@ alias zzz="sudo systemctl suspend -i"
 alias xcopy='xsel --clipboard --input <'
 
 # sensible defaults + interactive improvements
-mv() {                       # interactive (confirm overwrite), verbose + missing-dest/dotfile/rmdir prompts
-    # ensure destination exists, prompting creation if missing
+alias rm="rm -rv"           # recursive, verbose
+alias cp="cp -rivL"         # recursive, interactive (confirm overwrite), verbose, follow symlinks
+alias cpf="yes | cp -rL"    # recursive, follow symlinks, no confirmation
+alias mkdir="mkdir -vp"     # verbose, create parents as needed
+alias rmdir="rmdir -pv"     # remove empty parent dirs, verbose
+alias df="df -h"            # human-readable sizes
+alias du="du -h"            # human-readable sizes
+alias free="free -m"        # sizes in MB
+touch() {
+    mkdir -p "$(dirname "$1")" && command touch "$1"
+}
+mv() {
+    # interactive (confirm overwrite), verbose + missing-dest/dotfile/rmdir prompts
     local -a _args=()
     local _a _target="" _skipnext=0 _endopts=0
     for _a in "$@"; do
@@ -32,6 +45,7 @@ mv() {                       # interactive (confirm overwrite), verbose + missin
         # >1 source, or trailing slash => dest must be an existing directory
         if (( ${#_args[@]} > 2 )) || [[ "$_dest" == */ ]]; then _need=dir; else _need=parent; fi
     fi
+    # ensure destination exists, prompting creation if missing
     if [[ -n "${_need:-}" ]]; then
         local _mk
         if [[ "$_need" == dir ]]; then _mk="${_dest%/}"; else _mk="$(dirname -- "$_dest")"; fi
@@ -72,17 +86,6 @@ mv() {                       # interactive (confirm overwrite), verbose + missin
         [[ "$ans" =~ ^[Yy]$ ]] && rmdir "$dir"
     fi
 }
-alias rm="rm -rv"           # recursive, verbose
-alias cp="cp -rivL"         # recursive, interactive (confirm overwrite), verbose, follow symlinks
-alias cpf="yes | cp -rL"    # recursive, follow symlinks, no confirmation
-alias mkdir="mkdir -vp"     # verbose, create parents as needed
-alias rmdir="rmdir -pv"     # remove empty parent dirs, verbose
-alias df="df -h"            # human-readable sizes
-alias du="du -h"            # human-readable sizes
-alias free="free -m"        # sizes in MB
-touch() {
-    mkdir -p "$(dirname "$1")" && command touch "$1"
-}
 
 # shortcuts
 alias h=history
@@ -108,6 +111,8 @@ alias gls="gitlinks set"
 alias shizuku="adb shell sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh"
 alias k=kiro-cli
 alias kr="kiro-cli chat -r"
+alias cc="claude --model us.anthropic.claude-opus-4-8[1m]"
+alias ccr="cc --continue"
 # shellcheck disable=SC2154
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
@@ -230,11 +235,12 @@ alias gb="git branch"
 alias ga="git add"
 alias gaa="git add ."
 alias gcm="git commit -m"
+alias gco="git checkout"
+alias gp="git push"
 alias gca="git commit --amend"
 alias gcan="git commit --amend --no-edit"
 alias gbc="GIT_EDITOR=true git rebase --continue"
-alias gco="git checkout"
-alias gp="git push"
+alias gba="git rebase --abort"
 alias gyc="git cherry-pick --continue --no-edit"
 alias gys="git cherry-pick --skip"
 alias gya="git cherry-pick --abort"
@@ -243,8 +249,8 @@ alias gl="git pull"
 alias gll="git log"
 alias glo="git log --oneline"
 alias gd="git diff"
-alias gr="grup -R"
-alias gry="grup -y"
+alias gr="grup -R --no-thin"    # todo rm no-thin
+alias gry="grup -R -y"
 alias grx="git review -x"
 
 # yt-dlp

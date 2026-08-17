@@ -82,7 +82,10 @@ if [[ ${BLE_VERSION-} ]]; then
 fi
 
 
-eval "$(oh-my-posh init bash --config "${OMP_THEME:-$HOME/.config/omp/theme.json}" --print)"
+_omp_config="${OMP_THEME:-$HOME/.config/omp/theme.json}"
+eval "$(oh-my-posh init bash --config "$_omp_config" --print \
+        | sed -E "s#(print (primary|secondary|transient)) #\1 --config '$_omp_config' #g")"
+unset _omp_config
 _dirlabel_last_key=""
 _dirlabel_update() {
     local f="${XDG_CONFIG_HOME:-$HOME/.config}/dirlabels"
@@ -98,6 +101,9 @@ if [ -n "$TMUX" ]; then
     eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')" # fix OMP right-prompt off-by-one
     tmux set -p @last_cmd "" 2>/dev/null
     __tmux_last_histnum=
+    # Record the just-run command into @last_cmd (shown in the pane-border
+    # format). Runs at preexec — no OSC 133;A here: the cursor is already on the
+    # output row, so a mark would tag output, not the prompt (see 133;A below).
     __tmux_preexec() {
       [ -n "$COMP_LINE" ] && return
       local num; num=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*\([0-9]*\)[ ]*.*/\1/')
@@ -108,7 +114,14 @@ if [ -n "$TMUX" ]; then
     }
     if [[ ${BLE_VERSION-} ]]; then
       blehook PREEXEC+='__tmux_preexec'
+      # OSC 133;A (prompt-start) mark that tmux PgUp/PgDn jump between. ble.sh's
+      # transient collapse rewrites past prompts from OMP's transient template on
+      # every render, so the mark must live in that template to persist on the
+      # `❯ cmd` scrollback line. Prepend to the value OMP installed (keeps its
+      # baked-in --config); \[ \] flags the bytes non-printing for width accounting.
+      bleopt prompt_ps1_final='\['$'\e]133;A\a''\]'"$bleopt_prompt_ps1_final"
     else
+      # Plain bash: OMP's primary-prompt 133;A persists on its own; just track @last_cmd.
       trap '__tmux_preexec' DEBUG
     fi
 fi

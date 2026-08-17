@@ -172,23 +172,6 @@ case "$_hostname" in
         export DISPLAY=$(hostname -i):1
         export OMP_HOST_COLOR="#6f6bf8"
         export OMP_HOST_ICON=$'\ue2a6'
-
-        _local_root="/var/tmp/$USER"
-        # bootstrap once; rm /var/tmp/$USER/.bootstrapped to force refresh
-        if [[ ! -f "$_local_root/.bootstrapped" ]]; then
-            mkdir -p "$_local_root"/{cache,state,tmux/plugins,blesh,bin,omp}
-            cp -L "$HOME/.local/bin/oh-my-posh"   "$_local_root/bin/oh-my-posh"  2>/dev/null
-            cp    "$HOME/.config/omp/theme.json"  "$_local_root/omp/theme.json"  2>/dev/null
-            cp -L "$HOME/.local/bin/dirlabel"     "$_local_root/bin/dirlabel"    2>/dev/null
-            : > "$_local_root/.bootstrapped"
-        fi
-        export XDG_CACHE_HOME="$_local_root/cache" \
-               XDG_STATE_HOME="$_local_root/state" \
-               TMUX_PLUGIN_MANAGER_PATH="$_local_root/tmux/plugins" \
-               BLESH_DIR="$_local_root/blesh" \
-               OMP_THEME="$_local_root/omp/theme.json"
-        prepend_path "$_local_root/bin"
-        unset _local_root
         ;;
 esac
 

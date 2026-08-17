@@ -438,9 +438,10 @@ bleopt history_share=
 ## states [the control function SM(>4)] when commands are executed and when
 ## ble.sh has control, respectively.
 
-#bleopt term_modifyOtherKeys_external=auto
-#bleopt term_modifyOtherKeys_internal=auto
+bleopt term_modifyOtherKeys_internal=1   # ble asserts CSI>4;1m when it has control
 
+bleopt term_modifyOtherKeys_external=0   # and CSI>4;0m before running your commands
+# TODO note this may break terminal keybinds, but desirable when using tmux
 
 ## The following setting controls whether the kitty-keyboard-protocol sequences
 ## should pass-through the terminal multiplexers when the outermost terminal is
@@ -1063,6 +1064,49 @@ fi
 
 # ctrl+alt+backspace
 ble-bind -f 'M-C-h' 'kill-backward-uword'
+
+# Swallow stray OSC color reports (fixes "unbound keyseq: M-]" + a literal
+# "11;rgb:2828/2c2c/3434" appearing at the prompt on tmux start/attach).
+# Cause: tmux queries the outer terminal's fg/bg with OSC 10;? / 11;? on every
+# attach. Normally tmux consumes the reply, but over a laggy link the reply can
+# arrive after tmux's read window and get forwarded into the pane. ble.sh has no
+# OSC-input parser, so it decodes the ESC] introducer as the (unbound) key M-]
+# and self-inserts the rest of the report as text.
+# Fix: bind M-] (otherwise unbound — char-search uses C-] / C-M-]) to a widget
+# that, only when followed by a digit (real OSC begins with a number), drains
+# input until the report's terminator (BEL, or ST = ESC \). A lone M-] with no
+# digit is a clean no-op, and a 4096-char cap means a terminator-less ESC] can
+# never eat real keystrokes indefinitely.
+_ble_osc_drain_prev=0 _ble_osc_drain_n=0
+function ble/widget/osc-drain.finish { _ble_decode_char__hook=; _ble_osc_drain_prev=0 _ble_osc_drain_n=0; return 0; }
+function ble/widget/osc-drain.step { # $1=char; returns 0 once the report terminates
+  local c=$1
+  ((c==7)) && return 0                              # BEL
+  ((_ble_osc_drain_prev==27 && c==92)) && return 0  # ST = ESC \
+  _ble_osc_drain_prev=$c
+  return 1
+}
+function ble/widget/osc-drain.hook {
+  ble/widget/osc-drain.step "$1" && { ble/widget/osc-drain.finish; return 0; }
+  ((++_ble_osc_drain_n>4096)) && { ble/widget/osc-drain.finish; return 0; }
+  local char
+  while ble/decode/char-hook/next-char; do
+    ble/widget/osc-drain.step "$char" && { ble/widget/osc-drain.finish; return 0; }
+    ((++_ble_osc_drain_n>4096)) && { ble/widget/osc-drain.finish; return 0; }
+  done
+  _ble_decode_char__hook=ble/widget/osc-drain.hook
+  return 147
+}
+function ble/widget/osc-drain {
+  local char
+  if ble/decode/char-hook/next-char && ((char>=48 && char<=57)); then
+    _ble_osc_drain_prev=$char _ble_osc_drain_n=1
+    _ble_decode_char__hook=ble/widget/osc-drain.hook
+    return 147
+  fi
+  return 0   # lone M-] (not an OSC report): swallow just the introducer
+}
+ble-bind -f 'M-]' 'osc-drain'
 
 ## The default mapping of <SP> in ble.sh is magic-space which performs history
 ## and sabbrev expansion before inserting a space.  If you want to insert just

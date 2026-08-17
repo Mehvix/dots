@@ -9,13 +9,7 @@ if !exists('g:python3_host_prog')
   endif
 endif
 
-let s:host = substitute(hostname(), '\..*', '', '')
-if s:host ==# 'etx-maxv'
-  let s:plug_dir = '/var/tmp/' . $USER . '/nvim/plugged'
-  if !isdirectory(s:plug_dir) | call mkdir(s:plug_dir, 'p') | endif
-else
-  let s:plug_dir = '~/.vim/plugged'
-endif
+let s:plug_dir = '~/.vim/plugged'
 call plug#begin(s:plug_dir)
 
 Plug 'fladson/vim-kitty',   { 'for': 'kitty' }
@@ -117,21 +111,24 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- colorpicker
-require("oklch-color-picker").setup({
-  highlight = {
-    virtual_text = "󰝤 ",
-    style = "foreground+virtual_left",
-    bold = false,
-    italic = false,
-  }
-})
-vim.keymap.set("n", "<leader>cp", function()
-  require("oklch-color-picker").pick_under_cursor()
-end, { desc = "Color pick under cursor" })
-vim.keymap.set("n", "<2-LeftMouse>", function()
-  require("oklch-color-picker").pick_under_cursor()
-end, { desc = "Color pick on double click" })
+-- colorpicker (skipped gracefully if the plugin isn't installed on this machine)
+local ok_oklch, oklch = pcall(require, "oklch-color-picker")
+if ok_oklch then
+  oklch.setup({
+    highlight = {
+      virtual_text = "󰝤 ",
+      style = "foreground+virtual_left",
+      bold = false,
+      italic = false,
+    }
+  })
+  vim.keymap.set("n", "<leader>cp", function()
+    oklch.pick_under_cursor()
+  end, { desc = "Color pick under cursor" })
+  vim.keymap.set("n", "<2-LeftMouse>", function()
+    oklch.pick_under_cursor()
+  end, { desc = "Color pick on double click" })
+end
 
 ---- folds
 --vim.wo[0][0].foldexpr = 'v:lua.vim.treesitter.foldexpr()'

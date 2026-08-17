@@ -1,2 +1,6 @@
 #!/bin/bash
-printf '\033]52;c;%s\a' "$(base64 -w0)" > "$(tmux display -p '#{pane_tty}')"
+# copy stdin to the clipboard via OSC 52.
+# bail when selection is empty or only whitespace.
+sel="$(cat)"
+[[ -n "${sel//[[:space:]]/}" ]] || exit 0
+printf '\033]52;c;%s\a' "$(printf '%s' "$sel" | base64 -w0)" > "$(tmux display -p '#{pane_tty}')"
