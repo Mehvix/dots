@@ -246,12 +246,20 @@ alias gys="git cherry-pick --skip"
 alias gya="git cherry-pick --abort"
 alias gf="git fetch"
 alias gl="git pull"
-alias gll="git log"
-alias glo="git log --oneline"
 alias gd="git diff"
 alias gr="grup -R --no-thin"    # todo rm no-thin
 alias gry="grup -R -y"
 alias grx="git review -x"
+function _numwrap() {
+    local -a a=(); local x
+    for x in "$@"; do
+        [[ $x =~ ^[0-9]+$ ]] && x=-$x
+        a+=("$x")
+    done
+    command "${a[@]}"
+}
+function gll() { _numwrap git log "$@"; }
+function glo() { _numwrap git log --oneline "$@"; }
 
 # yt-dlp
 alias youtube-dl="yt-dlp"
