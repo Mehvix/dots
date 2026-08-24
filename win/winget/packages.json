@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
-  "CreationDate": "2026-08-15T20:53:02.461151+00:00",
+  "CreationDate": "2026-08-24T19:41:27.931729+00:00",
   "Sources": [
     {
       "Packages": [
@@ -41,28 +41,19 @@
           "PackageIdentifier": "Git.Git"
         },
         {
-          "PackageIdentifier": "sigoden.WindowSwitcher"
-        },
-        {
-          "PackageIdentifier": "TTYPlus.MTPuTTY"
-        },
-        {
-          "PackageIdentifier": "Mozilla.Firefox.ESR"
-        },
-        {
           "PackageIdentifier": "Google.Chrome"
-        },
-        {
-          "PackageIdentifier": "hluk.CopyQ"
-        },
-        {
-          "PackageIdentifier": "junegunn.fzf"
         },
         {
           "PackageIdentifier": "Guru3D.Afterburner.Beta"
         },
         {
+          "PackageIdentifier": "hluk.CopyQ"
+        },
+        {
           "PackageIdentifier": "JanDeDobbeleer.OhMyPosh"
+        },
+        {
+          "PackageIdentifier": "junegunn.fzf"
         },
         {
           "PackageIdentifier": "KeePassXCTeam.KeePassXC"
@@ -81,6 +72,9 @@
         },
         {
           "PackageIdentifier": "Microsoft.WSL"
+        },
+        {
+          "PackageIdentifier": "Mozilla.Firefox.ESR"
         },
         {
           "PackageIdentifier": "MSYS2.MSYS2"
@@ -107,10 +101,19 @@
           "PackageIdentifier": "Rufus.Rufus"
         },
         {
+          "PackageIdentifier": "shinchiro.mpv"
+        },
+        {
+          "PackageIdentifier": "sigoden.WindowSwitcher"
+        },
+        {
           "PackageIdentifier": "Spotify.Spotify"
         },
         {
           "PackageIdentifier": "Syncthing.Syncthing"
+        },
+        {
+          "PackageIdentifier": "TTYPlus.MTPuTTY"
         },
         {
           "PackageIdentifier": "Valve.Steam"

@@ -8,7 +8,7 @@
 Runs `winget export`, then reconciles the installed set against the tracked
 list (`packages.json`):
 
-  * packages tracked but no longer installed  -> dropped (reported)
+  * packages tracked but no longer installed   -> prompted: reinstall / drop / ignore / skip
   * packages installed but not tracked         -> prompted: add / ignore / skip
   * transitive deps / OS runtimes              -> filtered silently
   * ignored packages (`.ignore`)               -> never prompted again
@@ -17,9 +17,9 @@ list (`packages.json`):
 "Ignore" at the prompt appends there, so a package you don't want to track
 stops resurfacing on every refresh.
 
-    ./refresh.py            # reconcile, prompt on new finds
+    ./refresh.py            # reconcile, prompt on new + removed finds
     ./refresh.py -n         # dry run: report only, write nothing
-    ./refresh.py -y         # add every new find, no prompt
+    ./refresh.py -y         # add every new find, keep every removed one, no prompt
     ./refresh.py --setup-startup  # configure startup shortcuts for marked packages
 """
 
@@ -52,7 +52,6 @@ DROP_PREFIXES = (
 )
 
 STARTUP_PACKAGES = {
-    "sigoden.WindowSwitcher",
     "hluk.CopyQ",
     "KeePassXCTeam.KeePassXC",
     "xanderfrangos.twinkletray",
@@ -61,7 +60,6 @@ STARTUP_PACKAGES = {
 
 EXE_NAME_MAP = {
     "hluk.CopyQ": "copyq.exe",
-    "sigoden.WindowSwitcher": "window_switcher.exe",
     "xanderfrangos.twinkletray": "twinkle-tray.exe",
 }
 
@@ -193,6 +191,59 @@ class Prompter:
                     sys.exit(130)
 
 
+class RemovedPrompter:
+    """Per-find prompt for tracked packages that are no longer installed."""
+
+    def __init__(self, reinstall_all: bool):
+        self.reinstall_all = reinstall_all
+        self.drop_all = False
+        self.ignore_all = False
+
+    def ask(self, pid: str) -> str:
+        """Return 'reinstall', 'drop', 'ignore', or 'skip'."""
+        if self.reinstall_all:
+            return "reinstall"
+        if self.drop_all:
+            return "drop"
+        if self.ignore_all:
+            return "ignore"
+        while True:
+            ans = input(
+                f"removed: {pid}  (tracked, no longer installed)\n"
+                "  [r]einstall / [d]rop / [i]gnore / [s]kip / [R]/[D]/[I]-all / [q]uit: "
+            ).strip()
+            match ans:
+                case "r" | "reinstall":
+                    return "reinstall"
+                case "d" | "drop":
+                    return "drop"
+                case "i" | "ignore":
+                    return "ignore"
+                case "s" | "skip" | "":
+                    return "skip"
+                case "R":
+                    self.reinstall_all = True
+                    return "reinstall"
+                case "D":
+                    self.drop_all = True
+                    return "drop"
+                case "I":
+                    self.ignore_all = True
+                    return "ignore"
+                case "q" | "quit":
+                    print("aborted; no files written")
+                    sys.exit(130)
+
+
+def winget_install(pid: str) -> bool:
+    """Install a package by id via winget. Returns True on success."""
+    proc = subprocess.run(
+        ["winget", "install", "--id", pid, "-e",
+         "--accept-source-agreements", "--accept-package-agreements"],
+    )
+    return proc.returncode == 0
+
+
 def setup_startup_shortcuts() -> int:
     """Create startup shortcuts for packages marked in STARTUP_PACKAGES."""
     import os
@@ -215,7 +266,6 @@ def setup_startup_shortcuts() -> int:
     print(f"Configuring startup for {len(startup_needed)} package(s)...")
 
     shortcut_names = {
-        "sigoden.WindowSwitcher": "Window Switcher.lnk",
         "hluk.CopyQ": "CopyQ.lnk",
         "KeePassXCTeam.KeePassXC": "KeePassXC.lnk",
         "xanderfrangos.twinkletray": "Twinkle Tray.lnk",
@@ -331,28 +381,49 @@ def main() -> int:
     tracked = set(load_tracked())
     ignored = set(load_ignore())
 
-    removed = tracked - exported                       # tracked, no longer installed
-    new = sorted(exported - tracked - ignored, key=str.lower)  # installed, unaccounted for
-
-    for pid in sorted(removed, key=str.lower):
-        print(f"  - {pid}  (no longer installed)")
+    removed = sorted(tracked - exported - ignored, key=str.lower)  # tracked, no longer installed
+    new = sorted(exported - tracked - ignored, key=str.lower)      # installed, unaccounted for
 
     if not new and not removed:
         print("up to date; nothing to reconcile")
         return 0
 
     if args.dry_run:
+        for pid in removed:
+            print(f"  - {pid}  (removed, would prompt)")
         for pid in new:
             print(f"  ? {pid}  (new, would prompt)")
         print(f"\ndry run: {len(new)} new, {len(removed)} removed; no files written")
         return 0
 
-    if new and not args.yes and not sys.stdin.isatty():
-        die(f"{len(new)} new package(s) but stdin is not a TTY; use -y to add all or -n to preview")
+    if (new or removed) and not args.yes and not sys.stdin.isatty():
+        die(f"{len(new)} new / {len(removed)} removed package(s) but stdin is not a TTY; "
+            "use -y to accept defaults or -n to preview")
+
+    to_drop: set[str] = set()      # removed pids to stop tracking
+    to_add: set[str] = set()       # new pids to start tracking
+    to_ignore: set[str] = set()    # pids to append to .ignore
+
+    # Removed: reinstall to restore, drop from tracking, ignore (drop + .ignore),
+    # or skip (leave tracked so it re-prompts next run). -y keeps them all tracked.
+    removed_prompter = RemovedPrompter(reinstall_all=args.yes)
+    for pid in removed:
+        match removed_prompter.ask(pid):
+            case "reinstall":
+                if winget_install(pid):
+                    print(f"  + {pid}  (reinstalled, kept tracked)")
+                else:
+                    print(f"  ! {pid}  (reinstall failed, kept tracked)")
+            case "drop":
+                to_drop.add(pid)
+                print(f"  - {pid}  (dropped)")
+            case "ignore":
+                to_ignore.add(pid)
+                print(f"  ~ {pid}  (ignored)")
+            case "skip":
+                print(f"  . {pid}  (skipped this run)")
 
     prompter = Prompter(add_all=args.yes)
-    to_add: set[str] = set()
-    to_ignore: set[str] = set()
     for pid in new:
         match prompter.ask(pid):
             case "add":
@@ -364,7 +435,7 @@ def main() -> int:
             case "skip":
                 print(f"  . {pid}  (skipped this run)")
 
-    final = (tracked - removed) | to_add
+    final = (tracked - to_drop) | to_add
     write_tracked(final)
     print(f"\nwrote {TRACKED} ({len(final)} packages)")
     if to_ignore:

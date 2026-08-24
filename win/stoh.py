@@ -179,6 +179,35 @@ def walk_files(root: Path) -> list[Path]:
     return files
 
 
+def _norm_text(text: str) -> list[str]:
+    """Lines with trailing whitespace and trailing blank lines dropped.
+
+    splitlines() already collapses CRLF/LF/CR, so this is line-ending- and
+    trailing-whitespace-insensitive.
+    """
+    lines = [ln.rstrip() for ln in text.splitlines()]
+    while lines and not lines[-1]:
+        lines.pop()
+    return lines
+
+
+def same_content(a: Path, b: Path) -> bool:
+    """True if two files are equal ignoring whitespace-only differences.
+
+    Fast path is an exact byte compare; only files that differ byte-wise are
+    decoded and re-compared with line endings and trailing whitespace ignored.
+    Binary files that don't decode as UTF-8 fall back to the byte result.
+    """
+    if filecmp.cmp(a, b, shallow=False):
+        return True
+    try:
+        return _norm_text(a.read_text(encoding="utf-8")) == _norm_text(
+            b.read_text(encoding="utf-8")
+        )
+    except UnicodeDecodeError:
+        return False
+
+
 # ---------- font installation ----------
 
 
@@ -190,55 +219,84 @@ def is_font_file(path: Path) -> bool:
     return path.suffix.lower() in FONT_EXTENSIONS
 
 
+# Per-user font registry key (HKCU). Writing here needs no admin rights,
+# unlike C:\Windows\Fonts + HKLM. Supported since Windows 10 1809.
+FONT_REG_SUBKEY = r"Software\Microsoft\Windows NT\CurrentVersion\Fonts"
+
+
 def get_windows_fonts_dir() -> Path:
-    """Get the Windows Fonts directory."""
-    windir = Path(os.environ.get("WINDIR", r"C:\Windows"))
-    return windir / "Fonts"
+    """Get the per-user Windows Fonts directory (no admin required)."""
+    local = os.environ.get("LOCALAPPDATA")
+    if not local:
+        die("LOCALAPPDATA not set; cannot locate per-user fonts directory")
+    return Path(local) / "Microsoft" / "Windows" / "Fonts"
+
+
+def _font_reg_name(src: Path) -> str:
+    """Registry value name Windows expects for a font, e.g. 'PT Mono (TrueType)'.
+
+    We can't easily read the font's internal display name without parsing the
+    file, so use the filename stem plus the type tag. This is the value name;
+    the data is the full font path.
+    """
+    tag = "(OpenType)" if src.suffix.lower() in (".otf", ".otc") else "(TrueType)"
+    return f"{src.stem} {tag}"
+
+
+def _notify_font_change() -> None:
+    """Tell all windows the font set changed so new fonts are picked up."""
+    import ctypes
+
+    HWND_BROADCAST = 0xFFFF
+    WM_FONTCHANGE = 0x001D
+    ctypes.windll.user32.SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
 
 
 def install_font_windows(src: Path, dry: bool = False) -> bool:
-    """Install a font file on Windows using the Windows API.
-    
+    """Install a font for the current user (no admin required).
+
+    Copies into %LOCALAPPDATA%\\Microsoft\\Windows\\Fonts and registers it
+    under HKCU so it persists across reboots.
+
     Returns True if the font was installed, False if it already exists.
     """
     if not sys.platform.startswith("win"):
         die("font installation is only supported on Windows")
-    
+
     import ctypes
-    from ctypes import wintypes
-    
+
     fonts_dir = get_windows_fonts_dir()
     dst = fonts_dir / src.name
-    
-    # Check if font already installed
-    if dst.exists():
-        if filecmp.cmp(src, dst, shallow=False):
-            return False  # Already installed, same file
-    
+
+    # Check if font already installed (same bytes at destination).
+    if dst.exists() and filecmp.cmp(src, dst, shallow=False):
+        return False
+
     if dry:
         return True
-    
+
     try:
-        # Copy font to Windows Fonts directory
+        fonts_dir.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-        
-        # Register font with Windows using AddFontResource
+
+        # Register in the session so it's usable immediately...
         gdi32 = ctypes.windll.gdi32
-        # AddFontResourceW returns number of fonts added (0 = failure)
-        result = gdi32.AddFontResourceW(str(dst))
-        
-        if result > 0:
-            # Notify all windows that fonts have changed
-            HWND_BROADCAST = 0xFFFF
-            WM_FONTCHANGE = 0x001D
-            user32 = ctypes.windll.user32
-            user32.SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
-            return True
-        else:
-            # If registration failed, clean up the copied file
+        if gdi32.AddFontResourceW(str(dst)) <= 0:
             dst.unlink()
             print(f"  warning: failed to register font {src.name}")
             return False
+
+        # ...and in HKCU so it survives a reboot. Per-user entries store the
+        # full path as data (system fonts store just the filename).
+        import winreg
+
+        with winreg.OpenKey(
+            winreg.HKEY_CURRENT_USER, FONT_REG_SUBKEY, 0, winreg.KEY_SET_VALUE
+        ) as key:
+            winreg.SetValueEx(key, _font_reg_name(src), 0, winreg.REG_SZ, str(dst))
+
+        _notify_font_change()
+        return True
     except Exception as e:
         print(f"  error installing {src.name}: {e}")
         if dst.exists():
@@ -246,45 +304,43 @@ def install_font_windows(src: Path, dry: bool = False) -> bool:
         return False
 
 
-def uninstall_font_windows(font_name: str, dry: bool = False) -> bool:
-    """Uninstall a font file from Windows.
-    
-    Returns True if the font was uninstalled, False if it didn't exist.
+def uninstall_font_windows(font_file: Path, dry: bool = False) -> bool:
+    """Uninstall a per-user font by its source file.
+
+    Returns True if the font was uninstalled, False if it wasn't present.
     """
     if not sys.platform.startswith("win"):
         die("font uninstallation is only supported on Windows")
-    
+
     import ctypes
-    
+
     fonts_dir = get_windows_fonts_dir()
-    font_path = fonts_dir / font_name
-    
+    font_path = fonts_dir / font_file.name
+
     if not font_path.exists():
         return False
-    
+
     if dry:
         return True
-    
+
     try:
-        # Unregister font with Windows using RemoveFontResource
-        gdi32 = ctypes.windll.gdi32
-        result = gdi32.RemoveFontResourceW(str(font_path))
-        
-        if result > 0:
-            # Notify all windows that fonts have changed
-            HWND_BROADCAST = 0xFFFF
-            WM_FONTCHANGE = 0x001D
-            user32 = ctypes.windll.user32
-            user32.SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
-            
-            # Remove the font file
-            font_path.unlink()
-            return True
-        else:
-            print(f"  warning: failed to unregister font {font_name}")
-            return False
+        ctypes.windll.gdi32.RemoveFontResourceW(str(font_path))
+
+        import winreg
+
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, FONT_REG_SUBKEY, 0, winreg.KEY_SET_VALUE
+            ) as key:
+                winreg.DeleteValue(key, _font_reg_name(font_file))
+        except FileNotFoundError:
+            pass  # registry entry already gone
+
+        font_path.unlink()
+        _notify_font_change()
+        return True
     except Exception as e:
-        print(f"  error uninstalling {font_name}: {e}")
+        print(f"  error uninstalling {font_file.name}: {e}")
         return False
 
 
@@ -345,7 +401,13 @@ def show_diff(a: Path, b: Path) -> None:
         return
     import difflib
 
-    for line in difflib.unified_diff(tb, ta, fromfile=str(b), tofile=str(a), lineterm=""):
+    lines = list(difflib.unified_diff(tb, ta, fromfile=str(b), tofile=str(a), lineterm=""))
+    if not lines:
+        # Content is line-for-line identical, so the files differ only in bytes
+        # that splitlines() drops — line endings (CRLF vs LF) or a trailing newline.
+        print("  (differs only in line endings / trailing newline)")
+        return
+    for line in lines:
         print("  " + line)
 
 
@@ -389,7 +451,7 @@ def cmd_install(pkgs: list[Path], prompter: Prompter) -> int:
                 rel = src.relative_to(src_root)
                 dst = dst_root / rel
                 if dst.exists() and dst.is_file():
-                    if filecmp.cmp(src, dst, shallow=False):
+                    if same_content(src, dst):
                         n_same += 1
                         continue
                     if not prompter.confirm_overwrite(src, dst):
@@ -425,7 +487,7 @@ def cmd_collect(pkgs: list[Path], prompter: Prompter) -> int:
                     print(f"  missing on disk: {live}")
                     n_missing += 1
                     continue
-                if filecmp.cmp(tracked, live, shallow=False):
+                if same_content(tracked, live):
                     n_same += 1
                     continue
                 # live differs from tracked — pull live in
@@ -473,11 +535,49 @@ def cmd_status(pkgs: list[Path]) -> int:
                 live = dst_root / rel
                 if not live.exists():
                     state = "missing"
-                elif filecmp.cmp(tracked, live, shallow=False):
+                elif same_content(tracked, live):
                     state = "ok"
                 else:
                     state = "differs"
                 print(f"    [{state}] {rel}")
+    return 0
+
+
+def cmd_diff(pkgs: list[Path]) -> int:
+    """Show a unified diff (live vs tracked) for every file that differs."""
+    fonts_dir = get_windows_fonts_dir()
+    n_diff = 0
+    for pkg in pkgs:
+        for m in parse_manifest(pkg):
+            src_root = m.src_root()
+
+            if m.fonts_mode:
+                for tracked in walk_files(src_root):
+                    if not is_font_file(tracked):
+                        continue
+                    installed_font = fonts_dir / tracked.name
+                    if not installed_font.exists():
+                        continue
+                    if filecmp.cmp(tracked, installed_font, shallow=False):
+                        continue
+                    print(f"=== {pkg.name}: {tracked.name} ===")
+                    show_diff(tracked, installed_font)
+                    n_diff += 1
+                continue
+
+            dst_root = m.dst_root()
+            for tracked in walk_files(src_root):
+                rel = tracked.relative_to(src_root)
+                live = dst_root / rel
+                if not live.exists():
+                    continue
+                if same_content(tracked, live):
+                    continue
+                print(f"=== {pkg.name}: {rel} ===")
+                show_diff(tracked, live)
+                n_diff += 1
+    if n_diff == 0:
+        print("no differences")
     return 0
 
 
@@ -573,6 +673,10 @@ def main() -> int:
     p_status.add_argument("packages", nargs="*")
     p_status.add_argument("--all", action="store_true")
 
+    p_diff = sub.add_parser("diff", help="show a unified diff for each differing file")
+    p_diff.add_argument("packages", nargs="*")
+    p_diff.add_argument("--all", action="store_true")
+
     p_evict = sub.add_parser("evict", help="remove gitignored files from packages")
     p_evict.add_argument("packages", nargs="*")
     p_evict.add_argument("--all", action="store_true")
@@ -587,7 +691,7 @@ def main() -> int:
 
     pkgs = (
         []
-        if args.cmd not in ("install", "collect", "status", "evict")
+        if args.cmd not in ("install", "collect", "status", "diff", "evict")
         else resolve_packages(getattr(args, "packages", []), getattr(args, "all", False))
     )
 
@@ -597,6 +701,8 @@ def main() -> int:
         return cmd_collect(pkgs, Prompter(args.force, args.dry_run))
     if args.cmd == "status":
         return cmd_status(pkgs)
+    if args.cmd == "diff":
+        return cmd_diff(pkgs)
     if args.cmd == "evict":
         return cmd_evict(pkgs, args.dry_run)
     die(f"unknown command: {args.cmd}")

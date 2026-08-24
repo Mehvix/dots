@@ -1,0 +1,2 @@
+source = ../../stow/mpv/.config/mpv
+target = %APPDATA%\mpv

@@ -1,3 +1,5 @@
+Set-PSReadLineOption -EditMode Emacs    # MUST precede the oh-my-posh init below, as this resets ALL PSReadLine key handlers to the mode's default
+
 # --- oh-my-posh: cached + trimmed init ---
 # oh-my-posh renders by spawning its 20MB binary, and process creation is slow
 # on this box (EDR scans every launch, ~350ms each). We cache the generated init
@@ -28,7 +30,6 @@ if ($ompExe) {
     . $ompCache
 }
 
-Set-PSReadLineOption -EditMode Emacs                       # bindkey -e
 Set-PSReadLineOption -HistoryNoDuplicates                  # HIST_IGNORE_ALL_DUPS
 Set-PSReadLineOption -MaximumHistoryCount 100000           # HISTSIZE
 Set-PSReadLineOption -HistorySaveStyle SaveIncrementally   # INC_APPEND_HISTORY / histappend
