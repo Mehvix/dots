@@ -266,9 +266,9 @@ def setup_startup_shortcuts() -> int:
     print(f"Configuring startup for {len(startup_needed)} package(s)...")
 
     shortcut_names = {
-        "hluk.CopyQ": "CopyQ.lnk",
+        # "hluk.CopyQ": "CopyQ.lnk",
         "KeePassXCTeam.KeePassXC": "KeePassXC.lnk",
-        "xanderfrangos.twinkletray": "Twinkle Tray.lnk",
+        # "xanderfrangos.twinkletray": "Twinkle Tray.lnk",
         "ZhornSoftware.Caffeine": "Caffeine.lnk",
     }
 
