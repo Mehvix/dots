@@ -137,6 +137,9 @@ function tls() {
         printf "%-20s  created: %s  last active: %s  %s\n" \
           "$name" "$(date -d @$cre '+%b %d %H:%M')" "$(date -d @$act '+%b %d %H:%M')" \
           "$([ "$att" = 1 ] && echo '(attached)')"
+        tmux list-panes -s -t "$name" -F '#{pane_current_path}' \
+          | sort -u \
+          | while read -r p; do printf '    %s\n' "$p"; done
       done
 }
 function extract() {
@@ -182,6 +185,7 @@ function nixos-switch () {
 
 # replacement/alternatives
 [ -n "$KITTY_PID" ] && alias ssh="kitty +kitten ssh"
+alias s=ssh
 alias v=nvim
 alias vim=nvim
 alias json=fx

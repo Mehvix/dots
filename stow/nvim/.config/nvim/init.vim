@@ -183,23 +183,24 @@ wilder.set_option('pipeline', {
     wilder.python_search_pipeline()
   ),
 })
-local accent = {{a = 1}, {foreground = '180', bold = true}, {foreground = '#E5C07B', bold = true}}
--- menu bg: black #282C34/235, cursor_grey #2C323C/236, visual_grey #3E4452/237
-local fg, bg, sel_bg = '#ABB2BF', '#282C34', '#3E4452'
-local normal   = {{a = 1}, {foreground = '145', background = '235'}, {foreground = fg, background = bg}}
-local selected = {{a = 1}, {foreground = '145', background = '237'}, {foreground = fg, background = sel_bg, bold = true}}
+local fg, sel_bg = '#ABB2BF', '#3E4452'
+vim.api.nvim_set_hl(0, 'WilderNormal',         { fg = fg,        bg = 'NONE' })
+vim.api.nvim_set_hl(0, 'WilderSelected',       { fg = fg,        bg = sel_bg, bold = true })
+vim.api.nvim_set_hl(0, 'WilderAccent',         { fg = '#E5C07B', bg = 'NONE', bold = true })
+vim.api.nvim_set_hl(0, 'WilderSelectedAccent', { fg = '#E5C07B', bg = sel_bg, bold = true })
+vim.api.nvim_set_hl(0, 'WilderBorder',         { fg = fg,        bg = 'NONE' })
 wilder.set_option('renderer', wilder.popupmenu_renderer(
   wilder.popupmenu_border_theme({
-    pumblend = 40,
+    pumblend = 0,
     highlighter = wilder.basic_highlighter(),
     left  = {' ', wilder.popupmenu_devicons()},
     right = {' ', wilder.popupmenu_scrollbar()},
     highlights = {
-      border          = 'FloatBorder',
-      default         = wilder.make_hl('WilderNormal',         'Pmenu',    normal),
-      selected        = wilder.make_hl('WilderSelected',       'PmenuSel', selected),
-      accent          = wilder.make_hl('WilderAccent',         'Pmenu',    accent),
-      selected_accent = wilder.make_hl('WilderSelectedAccent', 'PmenuSel', accent),
+      border          = 'WilderBorder',
+      default         = 'WilderNormal',
+      selected        = 'WilderSelected',
+      accent          = 'WilderAccent',
+      selected_accent = 'WilderSelectedAccent',
     },
     border = 'double',
   })

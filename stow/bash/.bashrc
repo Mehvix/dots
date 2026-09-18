@@ -43,6 +43,22 @@ _dest_dir_complete() {
 }
 complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent=dirs
 # dirs only, sorted naturally (1,2,10) rather than lexically (1,10,2)
+#
+# Shared awk: emit a natural sort key from a line's basename, zero-padding each
+# digit run to 20 places so 2 < 10 < 100. Reads TAB-separated `name<TAB>payload`;
+# emits `key<TAB>payload`. With no TAB (bare path) payload defaults to the name,
+# so the same program serves both the -F function and the ble.sh resort below.
+_natural_sort_awk='BEGIN { FS = OFS = "\t" }
+{
+  name = $1; payload = (NF > 1 ? $2 : $1)
+  base = name; sub(/.*\//, "", base)
+  key = base; out = ""
+  while (match(key, /[0-9]+/)) {
+    out = out substr(key, 1, RSTART-1) sprintf("%020d", substr(key, RSTART, RLENGTH)+0)
+    key = substr(key, RSTART+RLENGTH)
+  }
+  print out key, payload
+}'
 # pad to 20 digits and sort to avoid '@tmp'-suffix dir funnies
 # -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 # -o nosort tells ble.sh to honor our COMPREPLY order.
@@ -53,29 +69,68 @@ complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent
 #     to :menu-show-prefix: in comp_type, which forces the whole candidate to be shown.
 #     Strip that flag locally (dynamic scope reaches ble's frame) so the menu shows
 #     basenames while insertion keeps the full path. No-op / harmless under stock bash.
+# NOTE: this handles the EXACT-PREFIX case (`cd foo<TAB>`) only. For ambiguous
+# nested matches (`cd f/sb<TAB>` fuzzy/substr/subseq) our -F function returns
+# nothing for the literal word and ble.sh falls back to its built-in source:file,
+# which glob-sorts LEXICALLY and ignores -o nosort -- see _natural_path_resort.
 _natural_dir_complete() {
   compopt -o filenames 2>/dev/null
   [[ ${comp_type-} ]] && comp_type=${comp_type//:menu-show-prefix:/:}
   mapfile -t COMPREPLY < <(
     compgen -d -- "${COMP_WORDS[COMP_CWORD]}" |
-    awk '{
-      base = $0; sub(/.*\//, "", base)
-      key = base; out = ""
-      while (match(key, /[0-9]+/)) {
-        out = out substr(key, 1, RSTART-1) sprintf("%020d", substr(key, RSTART, RLENGTH)+0)
-        key = substr(key, RSTART+RLENGTH)
-      }
-      printf "%s%s\t%s\n", out, key, $0
-    }' | LC_ALL=C sort -t$'\t' -k1,1 | cut -f2-
+    awk "$_natural_sort_awk" | LC_ALL=C sort -t$'\t' -k1,1 | cut -f2-
   )
 }
 complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd
 # fzf's deferred completion (loaded by ble-attach) hijacks cd/du/rmdir/pushd with
 # _fzf_{dir,path}_completion, dropping our sort -V; re-register after it loads.
 if [[ ${BLE_VERSION-} ]]; then
+  # ble.sh generates path candidates without honoring -o nosort in two spots our
+  # -F function can't reach: (a) the ambiguous-match fallback for cd/du/... (any
+  # nested fuzzy/substr/subseq, e.g. `cd parent/sb`), which drops into ble's own
+  # source:file and glob-sorts lexically; and (b) EVERY other command's path arg
+  # (`ss h/9`, `cat`, `vim`, `grep x d/`), completed by ble's file source or by
+  # bash-completion's _filedir -- neither of which we register. Re-sort the final
+  # candidate list naturally, after generation, whenever ALL candidates are paths.
+  #
+  # Path-ness is read off the candidate action, not the command name, so this
+  # covers arbitrary commands: ble native paths carry action file/dir/cdpath/tilde;
+  # bash-completion's _filedir arrives as progcomp with :filenames: in its payload.
+  # Mixed/non-path menus (kill PIDs, git subcommands, variables) keep ble's order.
+  # Skipped for auto-complete (:auto:, per-keystroke) and flag words (COMPV=-*).
+  _natural_path_resort() {
+    ((cand_count > 1)) || return 0
+    [[ :$comp_type: == *:auto:* || $COMPV == -* ]] && return 0
+
+    # Every candidate must be a filesystem path, else leave ble's order intact.
+    local i pack
+    for ((i = 0; i < cand_count; i++)); do
+      pack=${cand_pack[i]}
+      case ${pack%%:*} in
+        (file|dir|cdpath|tilde) ;;
+        (progcomp) [[ :${pack#*:*:} == *:filenames:* ]] || return 0 ;;
+        (*) return 0 ;;
+      esac
+    done
+
+    local order
+    order=$(
+      for ((i = 0; i < cand_count; i++)); do
+        printf '%s\t%s\n' "${cand_word[i]}" "$i"
+      done | awk "$_natural_sort_awk" | LC_ALL=C sort -t$'\t' -k1,1 -s | cut -f2
+    )
+    local -a nc=() nw=() np=()
+    local n=0
+    while IFS= read -r i; do
+      nc[n]=${cand_cand[i]}; nw[n]=${cand_word[i]}; np[n]=${cand_pack[i]}
+      ((n++))
+    done <<< "$order"
+    cand_cand=("${nc[@]}"); cand_word=("${nw[@]}"); cand_pack=("${np[@]}")
+  }
   blehook/eval-after-load complete '
     builtin unset -f ble/cmdinfo/complete:cd 2>/dev/null
     builtin unset -f ble/cmdinfo/complete:pushd 2>/dev/null
+    ble/function#advice after ble/complete/candidates/generate _natural_path_resort
   '
   ble/util/import/eval-after-load integration/fzf-completion \
     'complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd'

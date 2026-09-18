@@ -78,9 +78,28 @@
 
 ## The following setting turns on the delayed load of history when an non-empty
 ## value is set.
-
+##
+## NB: on bash>=4.0 (i.e. us) ble.sh ALWAYS loads history asynchronously via an
+## idle task regardless of this option -- history_lazyload is only consulted on
+## bash 3.1-3.x (see ble/history:bash/reset). So this value is effectively inert
+## here; the async load is what the force-sync hook below counteracts.
 bleopt history_lazyload=1
 # bleopt history_lazyload=
+
+## Close the async-history-load race. ble.sh loads history in a background idle
+## task (on bash>=4.0 always, regardless of history_lazyload), so the searchable
+## array _ble_history is EMPTY until the load lands. While _ble_history_load_done
+## is unset, ble/history/get-entry returns "" -- so if you run a command and press
+## Up before the load finishes, your just-run command is skipped ("run a command,
+## go up, it's gone"). It's NOT a one-time startup race either: running a command
+## re-clears load_done (ble/builtin/history/.load-recent-entries -> reset when a
+## large delta of builtin-history entries is detected), reopening the window.
+## Fix: a PERSISTENT precmd hook that forces a synchronous load whenever load_done
+## is unset. It's a cheap no-op once loaded (initialize returns immediately), and
+## the first real load is ~70ms for a 20k-line history. Verified: closes the race
+## at every keypress gap (baseline missed 5/5 at a 0.2s gap; this passes 5/5).
+_ble_hist_force_sync() { [[ ${_ble_history_load_done:-} ]] || ble/history:bash/initialize; }
+blehook PRECMD+='_ble_hist_force_sync'
 
 blehook ADDHISTORY+='[[ $1 != ❯\ * ]] || { ble/builtin/history -s -- "${1#❯ }"; return 1; }'
 
@@ -952,10 +971,10 @@ bleopt complete_auto_complete=
 ## default.
 
 #bleopt highlight_syntax=
-if [[ "${HOSTNAME:-$(hostname)}" == etx-maxv ]]; then
-  bleopt highlight_filename=
-  bleopt highlight_variable=
-fi
+# if [[ "${HOSTNAME:-$(hostname)}" == etx-maxv ]]; then
+#   bleopt highlight_filename=
+#   bleopt highlight_variable=
+# fi
 
 
 ## The following settings control the timeout and user-input cancellation of
@@ -1065,6 +1084,9 @@ fi
 # ctrl+alt+backspace
 ble-bind -f 'M-C-h' 'kill-backward-uword'
 
+ble-bind -m emacs -f up   'backward-line history'
+ble-bind -m emacs -f down 'forward-line history'
+
 # Swallow stray OSC color reports (fixes "unbound keyseq: M-]" + a literal
 # "11;rgb:2828/2c2c/3434" appearing at the prompt on tmux start/attach).
 # Cause: tmux queries the outer terminal's fg/bg with OSC 10;? / 11;? on every
@@ -1107,6 +1129,21 @@ function ble/widget/osc-drain {
   return 0   # lone M-] (not an OSC report): swallow just the introducer
 }
 ble-bind -f 'M-]' 'osc-drain'
+
+# Reset mouse tracking at every prompt (fixes "unbound keyseq: mouse").
+# Cause: ble.sh never enables mouse tracking itself, so a stray "mouse" key means
+# some *other* program (fzf C-t/C-r, vim, less, htop, ...) turned on a mouse DEC
+# mode (1000/1002/1003/1006) and never sent the matching disable -- it died
+# abnormally, or the reset was lost across a laggy/dropped ssh reconnect. The
+# mode outlives the program in the upstream terminal (Windows Terminal directly,
+# or tmux passing it through), so at the prompt the wheel emits SGR mouse events
+# (\e[<..M) that ble.sh decodes as the unbindable key "mouse".
+# Fix: disable all mouse-tracking DEC modes on every prompt. Programs that want
+# the mouse re-assert it on startup, so this is safe; it only runs when ble.sh
+# has control, leaving a TUI's mid-command mouse use untouched. (Not tmux-
+# specific -- fires the same over plain ssh.) NB: alternate-scroll (1007) is
+# deliberately left alone; disabling it would kill wheel scrolling in less/man.
+blehook PRECMD+='ble/util/put $'\''\e[?1000l\e[?1002l\e[?1003l\e[?1006l'\'
 
 ## The default mapping of <SP> in ble.sh is magic-space which performs history
 ## and sabbrev expansion before inserting a space.  If you want to insert just
