@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
-  "CreationDate": "2026-08-24T19:41:27.931729+00:00",
+  "CreationDate": "2026-09-25T16:44:55.815135+00:00",
   "Sources": [
     {
       "Packages": [
@@ -15,6 +15,9 @@
         },
         {
           "PackageIdentifier": "Balena.Etcher"
+        },
+        {
+          "PackageIdentifier": "BurntSushi.ripgrep.MSVC"
         },
         {
           "PackageIdentifier": "Canonical.Ubuntu"
@@ -99,6 +102,12 @@
         },
         {
           "PackageIdentifier": "Rufus.Rufus"
+        },
+        {
+          "PackageIdentifier": "sharkdp.bat"
+        },
+        {
+          "PackageIdentifier": "sharkdp.fd"
         },
         {
           "PackageIdentifier": "shinchiro.mpv"
