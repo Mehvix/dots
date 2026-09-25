@@ -66,6 +66,7 @@ export FZF_CTRL_R_OPTS="
 --exact             # exact substring match
 --nth 2..           # dont match w history
 --bind 'ctrl-h:backward-kill-word'      # ctrl+backspace deletes word
+--bind 'esc:become(echo {q})'           # esc keeps typed query on cmdline (not orig line)
 "
 
 # windows-unique
@@ -181,6 +182,44 @@ if [[ $- == *i* ]]; then
     [[ -t 0 ]] && stty -ixon # if stdin: turn off ctrl+s freezing terminal (XOFF)
 
     # [ -z "$SSH_AUTH_SOCK" ] && eval "$(ssh-agent -s)"
+
+    # history re-write (ADDHISTORY hook helper): when $PWD is inside $root,
+    # rewrite paths under $root before they land in history. Two modes:
+    #   no $3  -> ABSOLUTE: expand relative tokens resolving under $root to abs
+    #            paths (foo -> /tank/proj/foo). Only fires when $PWD is in $root.
+    #   $3=VAR -> ABBREVIATE: rewrite any $root occurrence to $VAR-relative
+    #            paths; existing relative tokens are first resolved to absolute
+    #            (needs $PWD in $root) so they abbreviate too.
+    _hist_rewrite() {
+      local root=$1 cmd=$2 var=$3 rw=$2
+      [[ $root ]] || return 0
+      # resolve existing relative tokens to absolute (only meaningful in $root)
+      if [[ "$PWD" == "$root" || "$PWD" == "$root"/* ]]; then
+        local tok resolved first=1 out; local -a words; read -ra words <<< "$cmd"
+        rw=""
+        for tok in "${words[@]}"; do
+          out=$tok
+          if [[ "$tok" != /* && "$tok" != -* && -e "$tok" ]]; then
+            resolved=$(realpath -- "$tok" 2>/dev/null)
+            [[ "$resolved" == "$root" || "$resolved" == "$root"/* ]] && out=$resolved
+          fi
+          (( first )) && first=0 || rw+=" "
+          rw+="$out"
+        done
+      fi
+      # abbreviate mode: fold every absolute $root occurrence down to $VAR
+      [[ $var ]] && rw=${rw//"$root"/\$$var}
+      [[ "$rw" == "$cmd" ]] && return 0
+      ble/builtin/history -s -- "$rw"
+      return 1
+    }
+
+    _hist_rewrite_nixos() { _hist_rewrite /etc/nixos "$1"; }
+    _hist_rewrite_tank()  { _hist_rewrite /tank "$1"; }
+    if [[ ${BLE_VERSION-} ]]; then
+      [[ -d /etc/nixos ]] && blehook ADDHISTORY+=_hist_rewrite_nixos
+      [[ -d /tank ]]      && blehook ADDHISTORY+=_hist_rewrite_tank
+    fi
 
     source $HOME/.aliases
     [ -f $HOME/.secrets ] && source $HOME/.secrets

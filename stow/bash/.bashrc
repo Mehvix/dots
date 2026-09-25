@@ -242,9 +242,9 @@ _register_alias_completions() {
 _deferred_evals=(
   'command -v uv  &>/dev/null && eval "$(uv generate-shell-completion bash)"'
   'command -v uvx &>/dev/null && eval "$(uvx --generate-shell-completion bash)"'
-  'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
   '[[ -z "${VTE_VERSION:-}" && -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
   'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
+  'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
   # bash-completion ships `_cd` and `complete -F _cd -o nospace cd pushd` -- clobber em
   '_cd() { _natural_dir_complete; }; complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
   '_register_alias_completions'
