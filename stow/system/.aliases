@@ -116,7 +116,7 @@ alias ccr="cc --continue"
 # shellcheck disable=SC2154
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
-alias pi=picard
+alias pic=picard
 alias pt=puddletag
 
 # new commands
