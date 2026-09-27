@@ -97,6 +97,7 @@ alias where=which
 alias mk=mkdir
 alias p="ps uaxf"
 alias x="chmod +x"
+alias s=ssh # todo shorthand hostname 
 
 # non-core shortcuts
 alias python3='uv run python'
