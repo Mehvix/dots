@@ -164,7 +164,8 @@ case "$_hostname" in
         export OMP_HOST_COLOR="#c678dd"
         export OMP_HOST_ICON=$'󱛠'
         append_path "~/Android/Sdk/platform-tools"
-        export PATH="/run/user/1000/fnm_multishells/31189_1790466748584/bin":"$PATH"
+
+        prepend_path "/run/user/1000/fnm_multishells/31189_1790466748584/bin"
         export FNM_MULTISHELL_PATH="/run/user/1000/fnm_multishells/31189_1790466748584"
         export FNM_VERSION_FILE_STRATEGY="local"
         export FNM_DIR="/home/max/.local/share/fnm"
@@ -177,6 +178,16 @@ case "$_hostname" in
     wayside)
         export OMP_HOST_COLOR="#56b6c2"
         export OMP_HOST_ICON=$'󰴺'
+
+        prepend_path "/run/user/1000/fnm_multishells/2967120_1790463526449/bin"
+        export FNM_MULTISHELL_PATH="/run/user/1000/fnm_multishells/2967120_1790463526449"
+        export FNM_VERSION_FILE_STRATEGY="local"
+        export FNM_DIR="/home/max/.local/share/fnm"
+        export FNM_LOGLEVEL="info"
+        export FNM_NODE_DIST_MIRROR="https://nodejs.org/dist"
+        export FNM_COREPACK_ENABLED="false"
+        export FNM_RESOLVE_ENGINES="true"
+        export FNM_ARCH="x64"
         ;;
     etx-maxv)
         export DISPLAY=$(hostname -i):1

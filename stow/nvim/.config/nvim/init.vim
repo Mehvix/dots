@@ -172,15 +172,23 @@ local wilder = require('wilder')
 wilder.setup({modes = {':', '/', '?'}})
 wilder.set_option('pipeline', {
   wilder.branch(
-    wilder.python_file_finder_pipeline({
-      file_command = {'fd', '-tf', '-H', '-E', '.git'},
-      dir_command = {'fd', '-td', '-H', '-E', '.git'},
-      -- use {'cpsm_filter'} for performance, requires cpsm vim plugin
-      -- found at https://github.com/nixprime/cpsm
-      filters = {'fuzzy_filter', 'difflib_sorter'},
+    wilder.cmdline_pipeline({
+      file_command = function(_, arg)
+        if string.find(arg, '.', 1, true) ~= nil then
+          return {'fd', '-tf', '-H', '-E', '.git', '--', arg}
+        else
+          return {'fd', '-tf', '-H', '-E', '.git'}
+        end
+      end,
+      dir_command = function(_, arg)
+        if string.find(arg, '.', 1, true) ~= nil then
+          return {'fd', '-td', '-H', '-E', '.git', '--', arg}
+        else
+          return {'fd', '-td', '-H', '-E', '.git'}
+        end
+      end,
     }),
-    wilder.cmdline_pipeline(),
-    wilder.python_search_pipeline()
+    wilder.vim_search_pipeline()
   ),
 })
 local fg, sel_bg = '#ABB2BF', '#3E4452'
