@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
-  "CreationDate": "2026-09-25T16:44:55.815135+00:00",
+  "CreationDate": "2026-09-28T18:29:09.906121+00:00",
   "Sources": [
     {
       "Packages": [
@@ -30,6 +30,9 @@
         },
         {
           "PackageIdentifier": "craftablescience.VPKEdit"
+        },
+        {
+          "PackageIdentifier": "DenoLand.Deno"
         },
         {
           "PackageIdentifier": "Discord.Discord"
@@ -132,6 +135,12 @@
         },
         {
           "PackageIdentifier": "xanderfrangos.twinkletray"
+        },
+        {
+          "PackageIdentifier": "yt-dlp.FFmpeg"
+        },
+        {
+          "PackageIdentifier": "yt-dlp.yt-dlp"
         },
         {
           "PackageIdentifier": "ZhornSoftware.Caffeine"

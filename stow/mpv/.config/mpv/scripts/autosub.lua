@@ -3,7 +3,9 @@
 --=============================================================================
 --          This script uses Subliminal to download subtitles,
 --          so make sure to specify your system's Subliminal location below:
-local subliminal = (os.getenv('HOME') or '') .. '/.local/bin/subliminal'
+local subliminal = package.config:sub(1, 1) == '\\'
+    and 'subliminal'                                   -- Windows: resolved via PATH
+    or (os.getenv('HOME') .. '/.local/bin/subliminal')
 --=============================================================================
 -->>    SUBTITLE LANGUAGE:
 --=============================================================================
@@ -72,7 +74,7 @@ function download_subs(language)
         log('No Language found\n')
         return false
     end
-            
+
     log('Searching ' .. language[1] .. ' subtitles ...', 30)
 
     -- Build the `subliminal` command, starting with the executable:

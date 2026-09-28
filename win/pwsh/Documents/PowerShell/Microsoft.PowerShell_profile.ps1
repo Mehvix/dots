@@ -87,6 +87,7 @@ function ipp { Write-Host "Your ip is:"; (Invoke-RestMethod https://api.ipify.or
 function npp { & "C:\Program Files\Notepad++\notepad++.exe" $args }
 function m { mwinit.exe -f }
 function s { ssh.exe @args }
+function se { ssh.exe etx }
 
 # git
 'gl', 'gp', 'gcm' | ForEach-Object { Remove-Item "Alias:$_" -Force -ErrorAction SilentlyContinue }
