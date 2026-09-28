@@ -235,6 +235,8 @@ _register_alias_completions() {
         line="${line#\'}"; line="${line%\'}"
         target="${line%% *}"
         [[ -z "$target" || "$target" == "$name" ]] && continue
+        # don't clobber a completion already registered on the alias name (e.x. _ac)
+        complete -p "$name" &>/dev/null && continue
         complete -F _complete_alias "$name"
     done < <(alias -p)
 }

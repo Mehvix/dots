@@ -97,7 +97,10 @@ alias where=which
 alias mk=mkdir
 alias p="ps uaxf"
 alias x="chmod +x"
-alias s=ssh # todo shorthand hostname 
+alias s=ssh
+alias sw="ssh wayside"
+alias se="ssh etx"
+alias sp="ssh thepod"
 
 # non-core shortcuts
 alias python3='uv run python'
@@ -192,8 +195,16 @@ alias vim=nvim
 alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
-ft() { stat --printf='modified: %y\naccessed: %x\n' "$@"; }
+ft() { # file info in rows: size (human), created, modified
+	local f
+	for f in "$@"; do
+		printf 'size:     '
+		numfmt --to=iec "$(stat -c %s "$f")" || continue
+		stat --printf='created:  %w\nmodified: %y\n' "$f"
+	done
+}
 alias l="eza --all --long --header --classify --icons --group-directories-first" # --git
+alias lc="eza --all --long --header --classify --icons --sort=created"
 alias lt="eza --all --long --header --classify --icons --sort=modified"
 alias dirs="eza --list-dirs"
 alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
@@ -254,6 +265,7 @@ alias gl="git pull"
 alias gd="git diff"
 alias gr="grup -R --no-thin"    # todo rm no-thin
 alias gry="grup -R -y"
+alias gryr="gry && review-since-tag"
 alias grx="git review -x"
 function _numwrap() {
     local -a a=(); local x

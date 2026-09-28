@@ -47,7 +47,6 @@ _loc=$(locale -a 2>/dev/null | grep -ixm1 'en_US\.utf-\?8') \
 export LANG="$_loc" LANGUAGE="$_loc" LC_ALL="$_loc"
 unset _loc
 export BASH_SILENCE_DEPRECATION_WARNING=1
-export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
 # export DISPLAY=:0
 export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" || echo "less")
 
@@ -118,10 +117,11 @@ case "$_hostname" in
 
         export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 
+        export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
+
         export GTK2_RC_FILES="$HOME/.gtkrc-2.0"
         export QT_QPA_PLATFORMTHEME="qt5ct"
         export QT_AUTO_SCREEN_SCALE_FACTOR=0
-        export QT_QPA_PLATFORMTHEME="qt5ct"
         export QT_SELECT=5
         export PATH=/usr/local/Qt-5.15.6/bin/:$PATH
 
@@ -163,31 +163,11 @@ case "$_hostname" in
     houdini)
         export OMP_HOST_COLOR="#c678dd"
         export OMP_HOST_ICON=$'󱛠'
-        append_path "~/Android/Sdk/platform-tools"
-
-        prepend_path "/run/user/1000/fnm_multishells/31189_1790466748584/bin"
-        export FNM_MULTISHELL_PATH="/run/user/1000/fnm_multishells/31189_1790466748584"
-        export FNM_VERSION_FILE_STRATEGY="local"
-        export FNM_DIR="/home/max/.local/share/fnm"
-        export FNM_LOGLEVEL="info"
-        export FNM_NODE_DIST_MIRROR="https://nodejs.org/dist"
-        export FNM_COREPACK_ENABLED="false"
-        export FNM_RESOLVE_ENGINES="true"
-        export FNM_ARCH="x64"
+        append_path "$HOME/Android/Sdk/platform-tools"
         ;;
     wayside)
         export OMP_HOST_COLOR="#56b6c2"
         export OMP_HOST_ICON=$'󰴺'
-
-        prepend_path "/run/user/1000/fnm_multishells/2967120_1790463526449/bin"
-        export FNM_MULTISHELL_PATH="/run/user/1000/fnm_multishells/2967120_1790463526449"
-        export FNM_VERSION_FILE_STRATEGY="local"
-        export FNM_DIR="/home/max/.local/share/fnm"
-        export FNM_LOGLEVEL="info"
-        export FNM_NODE_DIST_MIRROR="https://nodejs.org/dist"
-        export FNM_COREPACK_ENABLED="false"
-        export FNM_RESOLVE_ENGINES="true"
-        export FNM_ARCH="x64"
         ;;
     etx-maxv)
         export DISPLAY=$(hostname -i):1
@@ -195,6 +175,15 @@ case "$_hostname" in
         export OMP_HOST_ICON=$'\ue2a6'
         ;;
 esac
+
+if command -v fnm >/dev/null; then
+    export FNM_DIR="$HOME/.local/share/fnm"
+    export FNM_VERSION_FILE_STRATEGY="local"
+    export FNM_NODE_DIST_MIRROR="https://nodejs.org/dist"
+    export FNM_COREPACK_ENABLED="false"
+    export FNM_RESOLVE_ENGINES="true"
+    eval "$(fnm env --use-on-cd)"
+fi
 
 
 # interactive shell only
