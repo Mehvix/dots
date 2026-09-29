@@ -169,6 +169,30 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 
 -- wilder
 local wilder = require('wilder')
+-- wilder's vim_search uses :substitute with / as a delimiter, so searching for
+-- a literal / (e.g. a path) breaks its completion pipeline. Match directly.
+local function search_candidates(_, pattern)
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local current = vim.api.nvim_win_get_cursor(0)[1]
+  local candidates, seen = {}, {}
+  for _, bounds in ipairs({{current, #lines}, {1, current}}) do
+    for i = bounds[1], bounds[2] do
+      local offset = 0
+      while offset <= #lines[i] do
+        local ok, result = pcall(vim.fn.matchstrpos, lines[i], pattern, offset)
+        if not ok or result[2] == -1 then break end
+        local match, start, finish = result[1], result[2], result[3]
+        if not seen[match] then
+          seen[match] = true
+          table.insert(candidates, match)
+          if #candidates >= 300 then return candidates end
+        end
+        offset = math.max(finish, start + 1) -- advance even on empty matches
+      end
+    end
+  end
+  return candidates
+end
 wilder.setup({modes = {':', '/', '?'}})
 wilder.set_option('pipeline', {
   wilder.branch(
@@ -188,7 +212,11 @@ wilder.set_option('pipeline', {
         end
       end,
     }),
-    wilder.vim_search_pipeline()
+    wilder.vim_search_pipeline({pipeline = {
+      wilder.vim_substring_pattern(),
+      search_candidates,
+      wilder.result_output_escape('^$*~[]/\\'),
+    }})
   ),
 })
 local fg, sel_bg = '#ABB2BF', '#3E4452'
