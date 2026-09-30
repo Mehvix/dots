@@ -57,7 +57,19 @@ target = %USERPROFILE%
 `collect` writes back to the source tree, so changes flow into the shared
 Linux config — no duplication.
 
-### 5. `fonts = true` — font installation
+### 5. `ignore =` — machine-local lines
+
+Regex (repeatable), matched per line. Matching lines are skipped when
+comparing (`status`/`diff`/conflicts) and stripped on `collect`, so window
+positions, device GUIDs etc. never enter the repo. `install` writes the
+tracked file as-is; the app regenerates the stripped lines.
+```
+target = %ProgramFiles%\EqualizerAPO\config
+ignore = ^Window .* Position=
+ignore = ^Device( GUID)?=
+```
+
+### 6. `fonts = true` — font installation
 
 Special mode for installing font files to the Windows Fonts directory. When
 enabled, fonts are registered with Windows (via AddFontResource API) and

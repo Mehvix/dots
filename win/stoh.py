@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import filecmp
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -65,6 +66,7 @@ class Mapping:
     target: Path
     source: Path  # already-resolved root to copy *from*
     fonts_mode: bool = False  # special handling for font installation
+    ignore: tuple[re.Pattern[str], ...] = ()  # machine-local lines, never tracked
 
     def src_root(self) -> Path:
         return self.source if self.subpath == "" else self.source / self.subpath
@@ -74,7 +76,7 @@ class Mapping:
 
 
 # Reserved manifest keys that don't define a subpath mapping.
-RESERVED_KEYS = {"source", "target", "fonts"}
+RESERVED_KEYS = {"source", "target", "fonts", "ignore"}
 
 
 def parse_manifest(pkg_dir: Path) -> list[Mapping]:
@@ -87,6 +89,7 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
         source = ../stow/system     # optional; defaults to package dir
         target = %USERPROFILE%      # whole-package target
         fonts = true                # enable font installation mode
+        ignore = ^Window .* Position=   # regex; matching lines are machine-local (repeatable)
         <subdir> = <path>           # per-subdir target (mutually exclusive with `target`)
     """
     mf = pkg_dir / MANIFEST
@@ -107,6 +110,7 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
     pkg_source: Path = pkg_dir
     pkg_target: Path | None = None
     fonts_mode: bool = False
+    ignore: list[re.Pattern[str]] = []
     subs: list[tuple[str, str]] = []
     for ln in lines:
         if "=" not in ln:
@@ -123,6 +127,12 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
         if k == "fonts":
             fonts_mode = v.lower() in ("true", "yes", "1")
             continue
+        if k == "ignore":
+            try:
+                ignore.append(re.compile(v))
+            except re.error as e:
+                die(f"{mf}: bad ignore regex {v!r}: {e}")
+            continue
         if not k or k in (".", ".."):
             die(f"{mf}: bad key: {k!r}")
         subs.append((k, v))
@@ -130,7 +140,7 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
     if pkg_target is not None and subs:
         die(f"{mf}: cannot mix 'target=' with per-subdir mappings")
     if pkg_target is not None:
-        return [Mapping("", pkg_target, pkg_source, fonts_mode)]
+        return [Mapping("", pkg_target, pkg_source, fonts_mode, tuple(ignore))]
     if not subs and not fonts_mode:
         die(f"{mf}: no target specified")
     mappings: list[Mapping] = []
@@ -142,7 +152,7 @@ def parse_manifest(pkg_dir: Path) -> list[Mapping]:
             sub = pkg_source / k
             if sub.exists() and not sub.is_dir():
                 die(f"{mf}: {k} exists in source but is not a directory")
-            mappings.append(Mapping(k, expand(v), pkg_source))
+            mappings.append(Mapping(k, expand(v), pkg_source, ignore=tuple(ignore)))
     return mappings
 
 
@@ -179,20 +189,29 @@ def walk_files(root: Path) -> list[Path]:
     return files
 
 
-def _norm_text(text: str) -> list[str]:
-    """Lines with trailing whitespace and trailing blank lines dropped.
+Ignore = tuple[re.Pattern[str], ...]
+
+
+def _is_ignored(line: str, ignore: Ignore) -> bool:
+    return any(p.search(line) for p in ignore)
+
+
+def _norm_text(text: str, ignore: Ignore = ()) -> list[str]:
+    """Lines with trailing whitespace, trailing blank lines and ignored lines dropped.
 
     splitlines() already collapses CRLF/LF/CR, so this is line-ending- and
     trailing-whitespace-insensitive.
     """
     lines = [ln.rstrip() for ln in text.splitlines()]
+    lines = [ln for ln in lines if not _is_ignored(ln, ignore)]
     while lines and not lines[-1]:
         lines.pop()
     return lines
 
 
-def same_content(a: Path, b: Path) -> bool:
-    """True if two files are equal ignoring whitespace-only differences.
+def same_content(a: Path, b: Path, ignore: Ignore = ()) -> bool:
+    """True if two files are equal ignoring whitespace-only differences
+    and lines matching an `ignore` pattern.
 
     Fast path is an exact byte compare; only files that differ byte-wise are
     decoded and re-compared with line endings and trailing whitespace ignored.
@@ -201,11 +220,30 @@ def same_content(a: Path, b: Path) -> bool:
     if filecmp.cmp(a, b, shallow=False):
         return True
     try:
-        return _norm_text(a.read_text(encoding="utf-8")) == _norm_text(
-            b.read_text(encoding="utf-8")
+        return _norm_text(a.read_text(encoding="utf-8"), ignore) == _norm_text(
+            b.read_text(encoding="utf-8"), ignore
         )
     except UnicodeDecodeError:
         return False
+
+
+def copy_filtered(src: Path, dst: Path, ignore: Ignore = ()) -> None:
+    """Copy src to dst, dropping ignored lines. Line endings are preserved.
+
+    Binary files (NUL bytes or not UTF-8, e.g. .lnk) are copied verbatim.
+    """
+    if ignore:
+        data = src.read_bytes()
+        try:
+            text = None if b"\0" in data else data.decode("utf-8")
+        except UnicodeDecodeError:
+            text = None
+        if text is not None:
+            kept = [ln for ln in text.splitlines(keepends=True) if not _is_ignored(ln.rstrip(), ignore)]
+            dst.write_bytes("".join(kept).encode("utf-8"))
+            shutil.copystat(src, dst)
+            return
+    shutil.copy2(src, dst)
 
 
 # ---------- font installation ----------
@@ -354,7 +392,7 @@ class Prompter:
         self.yes_all = False
         self.no_all = False
 
-    def confirm_overwrite(self, src: Path, dst: Path) -> bool:
+    def confirm_overwrite(self, src: Path, dst: Path, ignore: Ignore = ()) -> bool:
         if self.force or self.yes_all:
             return True
         if self.no_all:
@@ -386,16 +424,16 @@ class Prompter:
                 self.no_all = True
                 return False
             if ans == "d":
-                show_diff(src, dst)
+                show_diff(src, dst, ignore)
                 continue
             if ans == "q":
                 sys.exit(130)
 
 
-def show_diff(a: Path, b: Path) -> None:
+def show_diff(a: Path, b: Path, ignore: Ignore = ()) -> None:
     try:
-        ta = a.read_text(encoding="utf-8").splitlines()
-        tb = b.read_text(encoding="utf-8").splitlines()
+        ta = _norm_text(a.read_text(encoding="utf-8"), ignore)
+        tb = _norm_text(b.read_text(encoding="utf-8"), ignore)
     except UnicodeDecodeError:
         print("  (binary, skipping diff)")
         return
@@ -451,10 +489,10 @@ def cmd_install(pkgs: list[Path], prompter: Prompter) -> int:
                 rel = src.relative_to(src_root)
                 dst = dst_root / rel
                 if dst.exists() and dst.is_file():
-                    if same_content(src, dst):
+                    if same_content(src, dst, m.ignore):
                         n_same += 1
                         continue
-                    if not prompter.confirm_overwrite(src, dst):
+                    if not prompter.confirm_overwrite(src, dst, m.ignore):
                         print(f"  skip {dst}")
                         n_skipped += 1
                         continue
@@ -487,18 +525,18 @@ def cmd_collect(pkgs: list[Path], prompter: Prompter) -> int:
                     print(f"  missing on disk: {live}")
                     n_missing += 1
                     continue
-                if same_content(tracked, live):
+                if same_content(tracked, live, m.ignore):
                     n_same += 1
                     continue
                 # live differs from tracked — pull live in
-                if not prompter.confirm_overwrite(live, tracked):
+                if not prompter.confirm_overwrite(live, tracked, m.ignore):
                     print(f"  keep {tracked}")
                     n_skipped += 1
                     continue
                 action = f"would pull" if prompter.dry else "pull"
                 print(f"  {action} {live} -> {tracked}")
                 if not prompter.dry:
-                    shutil.copy2(live, tracked)
+                    copy_filtered(live, tracked, m.ignore)
                 n_copied += 1
     print(
         f"\ncollect: {n_copied} pulled, {n_skipped} kept, {n_same} unchanged, {n_missing} missing-on-disk"
@@ -535,7 +573,7 @@ def cmd_status(pkgs: list[Path]) -> int:
                 live = dst_root / rel
                 if not live.exists():
                     state = "missing"
-                elif same_content(tracked, live):
+                elif same_content(tracked, live, m.ignore):
                     state = "ok"
                 else:
                     state = "differs"
@@ -571,10 +609,10 @@ def cmd_diff(pkgs: list[Path]) -> int:
                 live = dst_root / rel
                 if not live.exists():
                     continue
-                if same_content(tracked, live):
+                if same_content(tracked, live, m.ignore):
                     continue
                 print(f"=== {pkg.name}: {rel} ===")
-                show_diff(tracked, live)
+                show_diff(tracked, live, m.ignore)
                 n_diff += 1
     if n_diff == 0:
         print("no differences")

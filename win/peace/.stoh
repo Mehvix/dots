@@ -1,0 +1,8 @@
+config  = %ProgramFiles%\EqualizerAPO
+Startup = %APPDATA%\Microsoft\Windows\Start Menu\Programs
+
+ignore = ^Window .* Position=
+ignore = ^Windows (Version|Build|UBR) Number=
+ignore = ^Volume [XY]=
+ignore = ^(Top Index Configurations|Minimized|Muted|OnOff|Selected Configuration)=
+ignore = ^Device( GUID)?=
