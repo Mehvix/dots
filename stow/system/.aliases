@@ -101,6 +101,7 @@ alias s=ssh
 alias sw="ssh wayside"
 alias se="ssh etx"
 alias sp="ssh thepod"
+alias sa="ssh ark"
 
 # non-core shortcuts
 alias python3='uv run python'

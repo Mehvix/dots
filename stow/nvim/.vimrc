@@ -157,6 +157,9 @@ nnoremap <S-Tab> <<
 vnoremap <S-Tab> <gv
 
 " searching
+" Make :s default to the whole file; use :.s for the current line.
+" Only expand a bare :s, so explicit ranges (:.s, :42s, :%s) stay intact.
+cnoreabbrev <expr> s getcmdtype() ==# ':' && getcmdline() ==# 's' ? '%s' : 's'
 set ignorecase      " do case insensitive matching
 set smartcase       " do smart case matching
 set incsearch       " show incremental search matches

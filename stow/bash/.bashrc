@@ -1,6 +1,8 @@
 #!/bin/bash
 
 [[ $- == *i* ]] || return 0
+
+[[ -o emacs || -o vi ]] || return 0 # nixos build-time bash (ie bash --noediting) cannot run ble.sh/completions.
 [[ -z "${ANTIGRAVITY_AGENT:-}${CLAUDE_CODE:-}${KIRO_AGENT:-}" ]] || return 0
 
 _blesh="${BLESH_DIR:-$HOME/.local/share/blesh}/ble.sh"; [[ -f $_blesh ]] && source -- "$_blesh" --attach=none; unset _blesh;

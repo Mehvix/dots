@@ -378,6 +378,10 @@ local function expand_dot_to_current_dir(fallback_char)
   end
   local cmd = vim.fn.getcmdline()
   local pos = vim.fn.getcmdpos()
+  -- These mapped keys bypass Vim's :s abbreviation in .vimrc.
+  if cmd == 's' and pos == 2 then
+    return '\b%s' .. fallback_char
+  end
   local char_before = cmd:sub(pos - 1, pos - 1)
   if char_before == '.' then
     local first_word = cmd:match("^%s*(%a+)")
