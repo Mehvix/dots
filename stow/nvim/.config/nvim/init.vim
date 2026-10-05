@@ -37,7 +37,8 @@ Plug 'tpope/vim-surround'
 " Plug 'chaoren/vim-wordmotion'
 Plug 'lukas-reineke/indent-blankline.nvim'
 Plug 'echasnovski/mini.indentscope'
-Plug 'nvim-treesitter/nvim-treesitter', { 'do': ':TSUpdate \| TSInstall! lua python javascript typescript c cpp bash diff git_config git_rebase haskell ini latex perl nix' }
+Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'master', 'do': ':TSUpdate \| TSInstall! lua python javascript typescript c cpp bash diff git_config git_rebase haskell ini latex perl nix' }
+Plug 'nvim-treesitter/nvim-treesitter-context'
 Plug 'stevearc/conform.nvim'
 " Plug 'godlygeek/tabular'
 
@@ -102,18 +103,99 @@ require("conform").setup({
 })
 
 -- tree-sitter + indent-blankline
+-- Start treesitter highlighting and, when it attaches, turn OFF the legacy
+-- regex syntax engine for that buffer. Leaving both on means the buffer is
+-- highlighted twice: the colours clash and, worse, the legacy engine does a
+-- *synchronous* highlight pass on open that blocks the UI (~160ms on an 8k-line
+-- file, far worse on bigger ones). Treesitter parses the visible range only
+-- (~1ms), so dropping the regex engine fixes the double-highlight freeze.
+--
+-- Exceptions (ts_skip_hl): filetypes we deliberately keep on the legacy regex
+-- syntax engine instead of treesitter highlighting.
+--
+-- Force synchronous parsing globally: on nvim 0.11+ parses are time-sliced
+-- across frames, so on a big file the module header (which needs the tree
+-- parsed all the way up to the enclosing `module` at the top) only appears
+-- after several seconds. Sync parsing makes the full tree ready at once — a
+-- one-time ~0.4-0.8s cost on opening a large file, in exchange for the header
+-- showing immediately.
+vim.g._ts_force_sync_parsing = true
+local ts_skip_hl = { nix = true }
 vim.api.nvim_create_autocmd('FileType', {
   pattern = '*',
   callback = function(args)
     local ft = vim.bo[args.buf].filetype
-    if ft == 'nix' or ft == '' then return end
-    pcall(vim.treesitter.start, args.buf)
+    if ft == '' or ts_skip_hl[ft] then return end
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(args.buf) then return end
+      if pcall(vim.treesitter.start, args.buf) then
+        vim.bo[args.buf].syntax = ''  -- treesitter attached: drop legacy regex syntax
+      end
+    end)
   end,
 })
 
+-- sticky-scroll context headers
+if ok_tsctx then
+  tsctx.setup({
+    max_lines = 4,           -- enclosing scope
+    multiline_threshold = 1, -- collapse each context to a single line
+    trim_scope = 'outer',
+    mode = 'cursor',         -- context dictated by cursor's scope
+  })
+  local function tsctx_hl()
+    local surface = '#1d2029'
+    vim.api.nvim_set_hl(0, 'TreesitterContext',           { bg = surface, italic = true })
+    vim.api.nvim_set_hl(0, 'TreesitterContextLineNumber', { bg = surface, fg = '#636d83' })
+  end
+  vim.api.nvim_create_autocmd('ColorScheme', { callback = tsctx_hl })
+  tsctx_hl() -- apply now (colorscheme is already set above)
+end
+
+function _G.tsctx_go_to_context_end(depth)
+  depth = depth or 1
+  local line = vim.api.nvim_win_get_cursor(0)[1] -- 1-based
+  local ok, parser = pcall(vim.treesitter.get_parser, 0)
+  if not ok or not parser then return end
+  local range = { line - 1, 0, line - 1, 1 }
+  parser:parse(range)
+  local query = vim.treesitter.query.get(parser:lang(), 'context')
+  if not query then return end
+  local tree = parser:tree_for_range(range, { ignore_injections = true })
+  if not tree then return end
+
+  -- collect enclosing contexts: header starts above the cursor, scope ends at/below it
+  local enclosing = {}
+  for id, node in query:iter_captures(tree:root(), 0, 0, -1) do
+    if query.captures[id] == 'context' then
+      local srow, _, erow, ecol = node:range()
+      if srow + 1 < line and erow + 1 >= line then
+        enclosing[#enclosing + 1] = { srow = srow, erow = erow, ecol = ecol }
+      end
+    end
+  end
+  if #enclosing == 0 then return end
+  table.sort(enclosing, function(a, b) return a.srow > b.srow end) -- innermost first
+  local target = enclosing[math.min(depth, #enclosing)]
+
+  -- a range ending at col 0 means the node stops at the start of the next line,
+  -- so the real last content line is the one before it
+  local erow = target.erow
+  if target.ecol == 0 and erow > 0 then erow = erow - 1 end
+  vim.cmd([[normal! m']]) -- record jump so <C-o> comes back
+  vim.api.nvim_win_set_cursor(0, { erow + 1, 0 })
+end
+
 -- colorpicker (skipped gracefully if the plugin isn't installed on this machine)
+local function glibc_ok()
+  local out = (vim.fn.systemlist('getconf GNU_LIBC_VERSION')[1] or '')
+  local maj, min = out:match('glibc%s+(%d+)%.(%d+)')
+  if not maj then return true end -- not glibc (macOS/musl) or unknown -> don't block
+  return (tonumber(maj) * 1000 + tonumber(min)) >= 2030
+end
+
 local ok_oklch, oklch = pcall(require, "oklch-color-picker")
-if ok_oklch then
+if ok_oklch and glibc_ok() then
   oklch.setup({
     highlight = {
       virtual_text = "󰝤 ",
@@ -289,6 +371,72 @@ require('telescope').setup {
 }
 require('telescope').load_extension('fzf')
 
+-- Store oldfiles relative to the roots named in $PATH_ABBREV_VARS (colon-
+-- separated var names, set per-site, see .profile _hist_rewrite_abbrev): a path
+-- under a root is folded to a literal "$NAME/..." token on save, and expanded
+-- back to the *current* $NAME on read. This makes the recent-files list
+-- portable across checkouts (a file remembered in one checkout opens in
+-- another). Longest root wins for nested roots. Note: nvim does NOT auto-expand
+-- $VAR in paths (filereadable/:edit see the literal), so we keep the in-memory
+-- list absolute and only write tokens to ShaDa. $HOME is always an implicit
+-- root, folded to "~/..." (same as the shell history rewrite).
+local function abbrev_roots()        -- { {name, value}, ... } longest value first
+  local roots = {}
+  for name in (vim.env.PATH_ABBREV_VARS or ''):gmatch('[^:]+') do
+    local v = name:match('^[%a_][%w_]*$') and vim.env[name]
+    if v then v = v:gsub('/$', '') end
+    if v and v:match('^/.') then roots[#roots + 1] = { name, v } end
+  end
+  local home = (vim.env.HOME or ''):gsub('/$', '')
+  if home:match('^/.') then roots[#roots + 1] = { '~', home } end
+  table.sort(roots, function(a, b) return #a[2] > #b[2] end)
+  return roots
+end
+local function path_abbrev(path, roots)   -- absolute -> "$NAME/..." / "~/..." (save side)
+  for _, r in ipairs(roots) do
+    local name, root = r[1], r[2]
+    local tok = name == '~' and '~' or '$' .. name
+    if path == root then return tok end
+    if path:sub(1, #root + 1) == root .. '/' then return tok .. path:sub(#root + 1) end
+  end
+  return path
+end
+local function path_expand(path)     -- "$NAME/..." / "~/..." -> absolute (read side)
+  if path == '~' or path:sub(1, 2) == '~/' then
+    local home = vim.env.HOME
+    return (home and home ~= '') and (home:gsub('/$', '') .. path:sub(2)) or path
+  end
+  -- any $NAME token, not just listed ones: entries survive list edits, and an
+  -- unset var leaves the literal, which oldfile_is_junk drops as unreadable
+  local name, rest = path:match('^%$([%a_][%w_]*)(.*)$')
+  if not name or (rest ~= '' and rest:sub(1, 1) ~= '/') then return path end
+  local v = vim.env[name]
+  return (v and v ~= '') and (v:gsub('/$', '') .. rest) or path
+end
+
+-- Junk is that which is unreadable + manually spec'd:
+local function oldfile_is_junk(file)
+  return file:match("%[Wilder")
+    or file:match("^/tmp/")
+    or file:match("^/var/tmp/")
+    or file:match("/%.git/")
+    or vim.fn.filereadable(file) == 0
+end
+
+-- junk-free telescope old-files
+local function telescope_oldfiles()
+  local seen, cleaned = {}, {}
+  for _, f in ipairs(vim.v.oldfiles) do
+    f = path_expand(f)
+    if not seen[f] and not oldfile_is_junk(f) then
+      seen[f] = true
+      cleaned[#cleaned + 1] = f
+    end
+  end
+  vim.v.oldfiles = cleaned
+  require('telescope.builtin').oldfiles()
+end
+
 -- brighten dim telescope counter (x/y/z) and fuzzy-match chars
 local function telescope_hl()
   vim.api.nvim_set_hl(0, 'TelescopePromptCounter', { fg = '#ABB2BF' })       -- was NonText (dim)
@@ -349,8 +497,11 @@ for _, m in ipairs({
   -- clear search highlight
   { 'n', '<Esc>',       '<cmd>nohlsearch<cr>' },
   -- git hunks
-  { 'n', '<A-k>',       '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k
-  { 'n', '<A-j>',       '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j
+  { 'n', '<A-k>',       '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k, jump to next git hunk
+  { 'n', '<A-j>',       '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j, jump to next git hunk
+  -- treesitter context
+  { 'n', '[c',          function() require('treesitter-context').go_to_context(vim.v.count1) end }, -- jump to enclosing context header
+  { 'n', ']c',          function() _G.tsctx_go_to_context_end(vim.v.count1) end },                  -- jump to enclosing context end/tail
   -- char search repeat (defined in .vimrc)
   { 'n', '<Space>',     '<cmd>call RepeatCharSearch(0)<cr>' },
   { 'n', ',',           '<cmd>call RepeatCharSearch(1)<cr>' },
@@ -361,7 +512,7 @@ for _, m in ipairs({
   -- telescope
   { 'n', '<C-p>',       '<cmd>Telescope find_files<cr>' },
   { 'n', '<C-f>',       '<cmd>Telescope live_grep<cr>' },
-  { 'n', '<C-e>',       '<cmd>Telescope oldfiles<cr>' },
+  { 'n', '<C-e>',       function() telescope_oldfiles() end },
   { 'n', '<C-S-f>',     '<cmd>Telescope grep_string<cr>' },              -- ctrl+shift+f
   { 'n', '<A-b>',       '<cmd>Telescope buffers<cr>' },                  -- alt+b
   { 'n', '<A-h>',       '<cmd>Telescope help_tags<cr>' },                -- alt+h
@@ -403,18 +554,15 @@ end
 vim.keymap.set('c', '/', function() return expand_dot_to_current_dir('/') end, { expr = true })
 vim.keymap.set('c', '<Space>', function() return expand_dot_to_current_dir(' ') end, { expr = true })
 
--- Clean up oldfiles before saving ShaDa to prevent pollution from temporary
--- buffers (like wilder.nvim float windows) and deleted files.
+-- Clean up oldfiles before saving ShaDa: drop junk, then fold paths under $PATH_ABBREV_VARS
 vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = function()
-    vim.v.oldfiles = vim.tbl_filter(function(file)
-      -- Exclude wilder float buffers, temporary directories, and unreadable/deleted files
-      if file:match("%[Wilder") then return false end
-      if file:match("^/tmp/") then return false end
-      if file:match("^/var/tmp/") then return false end
-      if vim.fn.filereadable(file) == 0 then return false end
-      return true
-    end, vim.v.oldfiles)
+    local out, roots = {}, abbrev_roots()
+    for _, f in ipairs(vim.v.oldfiles) do
+      f = path_expand(f)
+      if not oldfile_is_junk(f) then out[#out + 1] = path_abbrev(f, roots) end
+    end
+    vim.v.oldfiles = out
   end,
 })
 EOF

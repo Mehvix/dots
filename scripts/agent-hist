@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Shell commands run by Claude Code (incl. subagents) and pi, newest first, deduped.
+# Output: ts \t agent \t cwd \t cmd   (newlines in cmd as ⏎, tabs as ↹)
+# Rows are cached; only transcripts modified since the last run are re-parsed.
+set -euo pipefail
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/agent-hist"
+rows="$cache/rows.tsv" stamp="$cache/stamp"
+mkdir -p "$cache"
+[[ ${1-} == --rebuild ]] && rm -f "$rows" "$stamp"
+touch "$rows" "$stamp.new"
+
+newer=(); [[ -f $stamp ]] && newer=(-newer "$stamp")
+cc_dir="$HOME/.claude/projects" pi_dir="$HOME/.pi/agent/sessions"
+
+esc='gsub("\n";"⏎") | gsub("\t";"↹")'
+{
+  [[ -d $cc_dir ]] && find "$cc_dir" -name '*.jsonl' "${newer[@]}" -print0 \
+    | xargs -0r grep -h '"name":"Bash"' \
+    | jq -r "select(.type==\"assistant\") | .timestamp as \$t | .cwd as \$d
+        | .message.content[]? | select(.type==\"tool_use\" and .name==\"Bash\")
+        | [\$t, \"cc\", \$d, (.input.command | $esc)] | join(\"\t\")"
+  # pi: cwd lives in each file's session header, so parse per file
+  [[ -d $pi_dir ]] && find "$pi_dir" -name '*.jsonl' "${newer[@]}" -print0 \
+    | xargs -0r -n1 jq -rn "foreach inputs as \$l (null; if \$l.type==\"session\" then \$l.cwd else . end;
+        . as \$d | \$l | select(.type==\"message\") | .timestamp as \$t
+        | .message.content[]? | select(.type==\"toolCall\" and .name==\"bash\")
+        | [\$t, \"pi\", \$d, (.arguments.command | $esc)] | join(\"\t\"))"
+} 2>/dev/null >> "$rows" || true
+
+sort -u -o "$rows" "$rows"   # re-parsed (still-active) sessions yield identical rows
+mv "$stamp.new" "$stamp"
+
+sort -r "$rows" | awk -F'\t' '!seen[$4]++'

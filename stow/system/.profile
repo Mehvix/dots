@@ -5,6 +5,7 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CACHE_HOME="$HOME/.cache"
 
+# add dir to PATH if absent: append=lowest priority (default), prepend=overrides system
 append_path () {
     case ":$PATH:" in
         *:"$1":*)
@@ -67,6 +68,18 @@ export FZF_CTRL_R_OPTS="
 --bind 'ctrl-h:backward-kill-word'      # ctrl+backspace deletes word
 --bind 'esc:become(echo {q})'           # esc keeps typed query on cmdline (not orig line)
 "
+
+# alt+r: pick a command run by claude code / pi (see dots/scripts/agent-hist); prints it
+_fzf_agent_hist() {
+    "$HOME/dots/scripts/agent-hist" | fzf --query "$1" \
+        --delimiter '\t' --with-nth 2,4 --nth 2 \
+        --info inline --no-sort --exact --scheme history \
+        --preview $'printf "%s\n\n" {3}; printf "%s\n" {4} | sed "s/⏎/\\n/g; s/↹/\\t/g"' \
+        --preview-window 'down,40%,wrap' \
+        --bind 'ctrl-h:backward-kill-word' \
+        --bind 'esc:become(echo {q})' \
+    | cut -f4 | sed 's/⏎/\n/g; s/↹/\t/g'
+}
 
 # windows-unique
 if [[ "$OSTYPE" == msys || "$OSTYPE" == cygwin ]]; then
@@ -199,25 +212,31 @@ if [[ $- == *i* ]]; then
     #   $3=VAR -> ABBREVIATE: rewrite any $root occurrence to $VAR-relative
     #            paths; existing relative tokens are first resolved to absolute
     #            (needs $PWD in $root) so they abbreviate too.
+    # helper, in place on $rw: when $PWD is in $1, relative tokens that resolve
+    # under $1 become absolute (so the abbreviate step can fold them).
+    _hist_resolve_rel() {
+      local root=$1
+      [[ "$PWD" == "$root" || "$PWD" == "$root"/* ]] || return 0
+      [[ $rw == *$'\n'* ]] && return 0
+      local tok resolved first=1 out new changed=; local -a words; read -ra words <<< "$rw"
+      for tok in "${words[@]}"; do
+        out=$tok
+        if [[ "$tok" != /* && "$tok" != [-~\$]* && -e "$tok" ]]; then
+          resolved=$(realpath -s -- "$PWD/$tok" 2>/dev/null) # -s: symlinks kept
+          [[ "$resolved" == "$root" || "$resolved" == "$root"/* ]] && out=$resolved changed=1
+        fi
+        (( first )) && first=0 || new+=" "
+        new+="$out"
+      done
+      [[ $changed ]] && rw=$new
+      return 0
+    }
     _hist_rewrite() {
       local root=$1 cmd=$2 var=$3 rw=$2
       [[ $root ]] || return 0
-      # resolve existing relative tokens to absolute (only meaningful in $root)
-      if [[ "$PWD" == "$root" || "$PWD" == "$root"/* ]]; then
-        local tok resolved first=1 out; local -a words; read -ra words <<< "$cmd"
-        rw=""
-        for tok in "${words[@]}"; do
-          out=$tok
-          if [[ "$tok" != /* && "$tok" != -* && -e "$tok" ]]; then
-            resolved=$(realpath -- "$tok" 2>/dev/null)
-            [[ "$resolved" == "$root" || "$resolved" == "$root"/* ]] && out=$resolved
-          fi
-          (( first )) && first=0 || rw+=" "
-          rw+="$out"
-        done
-      fi
+      _hist_resolve_rel "$root"
       # abbreviate mode: fold every absolute $root occurrence down to $VAR
-      [[ $var ]] && rw=${rw//"$root"/\$$var}
+      [[ $var ]] && _path_abbrev_fold "$root" "$var"
       [[ "$rw" == "$cmd" ]] && return 0
       ble/builtin/history -s -- "$rw"
       return 1
@@ -229,6 +248,82 @@ if [[ $- == *i* ]]; then
       [[ -d /etc/nixos ]] && blehook ADDHISTORY+=_hist_rewrite_nixos
       [[ -d /tank ]]      && blehook ADDHISTORY+=_hist_rewrite_tank
     fi
+
+    # PATH_ABBREV_VARS: colon-separated var NAMES (e.g. "SOC_ROOT:QLINK_H_DIE_ROOT")
+    # whose values are checkout/area roots. Commands are stored in history with
+    # those roots folded to $NAME, so they replay against whatever the var points
+    # at now (another checkout / tonight's run). Values are read at hook time.
+    # Set the list per-site (e.g. ~/.profile_amzn); nvim's oldfiles does the same.
+    # One hook for all vars (each rewriting hook adds its own history entry).
+    # Longest value first, so nested roots fold to the most specific var.
+    # $HOME is always an implicit root, folded to ~ (name "~"); being short, it
+    # only wins for paths not under a more specific listed root.
+    _path_abbrev_roots() { # -> lines "len<TAB>name<TAB>value", longest first
+      local n v; local -a names
+      IFS=: read -ra names <<< "${PATH_ABBREV_VARS-}"
+      {
+        for n in "${names[@]}"; do
+          [[ $n =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] || continue
+          v=${!n-}; v=${v%/}
+          [[ $v == /?* ]] && printf '%d\t%s\t%s\n' "${#v}" "$n" "$v"
+        done
+        v=${HOME%/}
+        [[ $v == /?* ]] && printf '%d\t~\t%s\n' "${#v}" "$v"
+      } | sort -t$'\t' -k1,1nr
+    }
+    # true if the end of $1 sits inside a '...' string ($VAR wouldn't expand
+    # there); with $2=any, inside "..." too (~ expands in neither)
+    _in_squote() {
+      local s=$1 i c q=
+      for ((i = 0; i < ${#s}; i++)); do
+        c=${s:i:1}
+        case $q$c in
+          (\\) ((i++)) ;;                    # escape outside quotes
+          ("'") q=s ;; ("s'") q= ;;
+          ('"') q=d ;; ('d"') q= ;; ('d\') ((i++)) ;;
+        esac
+      done
+      [[ $q == s || ( $2 == any && $q ) ]]
+    }
+    # fold $root -> $var in $rw, only at path boundaries: preceded by start /
+    # space / quote / = / : / ( and followed by end / "/" / space / quote / : ; )
+    # (so root /p/a leaves /p/ab and /x/p/a alone), and never inside '...'.
+    # var "~" folds to a bare ~, which bash only expands unquoted at a word start
+    # or right after an assignment's NAME=, so it gets those stricter rules.
+    _path_abbrev_fold() {
+      local root=$1 var=$2 out= rest=$rw pre ok
+      while [[ $rest == *"$root"* ]]; do
+        pre=${rest%%"$root"*}; rest=${rest#*"$root"}
+        if [[ $var == '~' ]]; then
+          [[ ( -z $out$pre || $out$pre == *[[:space:]\(\;\|\&] ||
+               $out$pre =~ (^|[[:space:]])[_a-zA-Z][_a-zA-Z0-9]*=$ ) &&
+             ( -z $rest || $rest == [/[:space:]\;\)\|\&]* ) ]] &&
+            ! _in_squote "$out$pre" any
+        else
+          [[ ( -z $out$pre || $out$pre == *[[:space:]\"=:\(] ) &&
+             ( -z $rest || $rest == [/[:space:]\'\":\;\)]* ) ]] &&
+            ! _in_squote "$out$pre"
+        fi
+        ok=$?
+        if ((ok == 0)); then
+          [[ $var == '~' ]] && out+=$pre'~' || out+=$pre\$$var
+        else
+          out+=$pre$root
+        fi
+      done
+      rw=$out$rest
+    }
+    _hist_rewrite_abbrev() {
+      local rw=$1 len name root
+      while IFS=$'\t' read -r len name root; do
+        _hist_resolve_rel "$root"
+        _path_abbrev_fold "$root" "$name"
+      done < <(_path_abbrev_roots)
+      [[ $rw == "$1" ]] && return 0
+      ble/builtin/history -s -- "$rw"
+      return 1
+    }
+    [[ ${BLE_VERSION-} ]] && blehook ADDHISTORY+=_hist_rewrite_abbrev
 
     source $HOME/.aliases
     [ -f $HOME/.secrets ] && source $HOME/.secrets

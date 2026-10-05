@@ -100,6 +100,16 @@ if [[ ${BLE_VERSION-} ]]; then
   # bash-completion's _filedir arrives as progcomp with :filenames: in its payload.
   # Mixed/non-path menus (kill PIDs, git subcommands, variables) keep ble's order.
   # Skipped for auto-complete (:auto:, per-keystroke) and flag words (COMPV=-*).
+  #
+  # Also strips :menu-show-prefix: here (same trick as _natural_dir_complete,
+  # same reason) so ALL-path menus show basenames: ble's native file source
+  # yields candidates as full evaluated paths (e.g. every entry under $VAR/
+  # arrives as /proj/.../workspace/.../name), and .inputrc's
+  # menu-complete-display-prefix=on forces the whole path into the menu, which
+  # wraps unreadably. Each candidate's PREFIX_LEN already holds the dir-prefix
+  # length; dropping the flag lets the menu use it. comp_type here is the
+  # caller's local (dynamic scope) and is saved to _ble_complete_menu_comp
+  # AFTER generate returns, so the strip persists into menu rendering.
   _natural_path_resort() {
     ((cand_count > 1)) || return 0
     [[ :$comp_type: == *:auto:* || $COMPV == -* ]] && return 0
@@ -115,6 +125,8 @@ if [[ ${BLE_VERSION-} ]]; then
       esac
     done
 
+    [[ ${comp_type-} ]] && comp_type=${comp_type//:menu-show-prefix/}
+
     local order
     order=$(
       for ((i = 0; i < cand_count; i++)); do
@@ -129,10 +141,96 @@ if [[ ${BLE_VERSION-} ]]; then
     done <<< "$order"
     cand_cand=("${nc[@]}"); cand_word=("${nw[@]}"); cand_pack=("${np[@]}")
   }
+  # $VAR path completion. Both are `around` advices whose skip path sets
+  # ADVICE_EXIT=1 without running the source -- ble reads that as "no
+  # candidates" and falls through to the next source for the word.
+  #
+  # (a) dive-into-dir: for `cmd $NAME<TAB>` ble runs variable-name completion
+  # first. When NAME is fully typed and names a directory, that menu is a trap
+  # if sibling vars exist (NAME_ROOT...): it re-offers names forever and TAB
+  # never enters the dir. Skip it so the file source completes `$NAME/` and the
+  # next TAB lists the entries. Partial names (`$QLINK_H<TAB>`) still menu.
+  _blesh_dollar_var_dive() {
+    if ((COMP1 > 0)) && [[ ${comp_text:COMP1-1:1} == '$' ]]; then
+      local n=$COMPS   # variable source's COMPS = the name after `$`
+      if [[ $n =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ && ${!n+set} && -d ${!n} ]]; then
+        ADVICE_EXIT=1
+        return 0
+      fi
+    fi
+    ble/function#advice/do
+  }
+  # (b) empty-var guard: `$TYPO` (unset var) evaluates to "", so file
+  # completion lists the CWD and a second TAB replaces the `$TYPO` word with a
+  # cwd file. Yield nothing instead; ble's ambiguous pass can then suggest the
+  # correctly-spelled var ($QLINK_HDIE -> $QLINK_H_DIE).
+  _blesh_empty_var_guard() {
+    if [[ ${COMPS-} == *'$'* && -z ${COMPV[*]-} ]]; then
+      ADVICE_EXIT=1
+      return 0
+    fi
+    ble/function#advice/do
+  }
+  # TAB watchdog: completion functions run IN the shell, so a slow external call
+  # inside one (`$(git ...)` on NFS, make -qp, a script run for argcomplete...)
+  # freezes the prompt, and C-c can't help -- ble has the tty in raw mode, so it
+  # is just a byte queued behind the hang. Around each candidate generation, a
+  # background sleeper fires after COMPLETE_TIMEOUT secs and kills the processes
+  # the completion spawned: every descendant of the shell except the subtrees of
+  # background jobs that existed before TAB (`jobs -p`, snapshotted up front)
+  # and the watchdog's own subtree. TERM, then KILL survivors; the completion
+  # function sees empty output and returns, and the (partial) candidate list is
+  # dropped so TAB just bells instead of falling back to some filename.
+  # Pure-bash infinite loops (no child process) aren't covered.
+  #
+  # Job control is switched off for the generation (`local -` restores it):
+  # otherwise a direct `cmd` in a completion function is a foreground JOB, and
+  # killing it makes bash print "Terminated  cmd" over the command line. (Not
+  # SIGINT/SIGPIPE to dodge that: a fg child dying of INT makes bash act as if
+  # C-c hit the shell, wedging ble mid-widget; PIPE is inherited-ignored here.)
+  # The watchdog launches inside $(...) so it never gets a job-table entry.
+  _comp_watchdog_fire() {
+    local t=$1 shell=$2 me=$BASHPID pids p; shift 2
+    sleep "$t"
+    pids=$(ps -e -o pid=,ppid= | awk -v root="$shell" -v skip="$me $*" '
+      BEGIN { n = split(skip, s, " "); for (i = 1; i <= n; i++) ex[s[i]] = 1 }
+      { par[$1] = $2 }
+      END {
+        for (p in par) {
+          for (q = p; q in par && q > 1; q = par[q]) {
+            if (q in ex) break
+            if (par[q] == root) { print p; break }
+          }
+        }
+      }')
+    [[ $pids ]] || return 0
+    kill -TERM $pids 2>/dev/null
+    sleep 1
+    for p in $pids; do kill -KILL "$p" 2>/dev/null; done
+    return 0
+  }
+  _comp_watchdog() {
+    local -; set +m
+    local t=${COMPLETE_TIMEOUT:-2} wd bg ret t0
+    ble/util/clock; t0=$ret   # ms; bash 4.4 has no EPOCHREALTIME, $SECONDS is too coarse
+    bg=$(jobs -p)   # bash keeps the job table visible inside $(...)
+    wd=$(_comp_watchdog_fire "$t" $$ $bg </dev/null &>/dev/null & echo $!)
+    ble/function#advice/do
+    kill "$wd" 2>/dev/null
+    # elapsed, not "is wd alive": wd lingers through its TERM->KILL grace period
+    ble/util/clock
+    ((ret - t0 >= t * 1000)) || return 0
+    ble/complete/candidates/clear
+    ble/widget/.bell "complete: timed out after ${t}s (COMPLETE_TIMEOUT)"
+  }
   blehook/eval-after-load complete '
+    ble/function#advice around ble/complete/generate-candidates-from-opts _comp_watchdog
     builtin unset -f ble/cmdinfo/complete:cd 2>/dev/null
     builtin unset -f ble/cmdinfo/complete:pushd 2>/dev/null
     ble/function#advice after ble/complete/candidates/generate _natural_path_resort
+    ble/function#advice around ble/complete/source:variable _blesh_dollar_var_dive
+    ble/function#advice around ble/complete/source:file     _blesh_empty_var_guard
+    ble/function#advice around ble/complete/source:argument _blesh_empty_var_guard
   '
   ble/util/import/eval-after-load integration/fzf-completion \
     'complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd'
@@ -264,3 +362,10 @@ unset _deferred_evals _cmd
 
 # fzf: fallback to eval when not using ble.sh
 [[ ${BLE_VERSION-} ]] || eval "$(fzf --bash)"
+
+# alt+r: agent (claude code / pi) command history
+__agent_hist_widget() {
+  local sel; sel=$(_fzf_agent_hist "$READLINE_LINE") || return
+  READLINE_LINE=$sel READLINE_POINT=${#sel}
+}
+bind -x '"\er": __agent_hist_widget'
