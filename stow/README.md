@@ -25,6 +25,17 @@ stow -Dvt ~ zsh
 
 ---
 
+## Manual
+
+
+### tools
+
+```sh
+uv tool install bpython
+uv tool install shfmt-py
+uv tool install shellcheck-py
+```
+
 ### tmux
 
 TPM:
@@ -56,4 +67,3 @@ Plugins are submodules; if you didn't pull with `--recurse-submodules` then you'
 ```shell
 git submodule update --init --recursive
 ```
-

@@ -46,21 +46,19 @@ _dest_dir_complete() {
 complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent=dirs
 # dirs only, sorted naturally (1,2,10) rather than lexically (1,10,2)
 #
-# Shared awk: emit a natural sort key from a line's basename, zero-padding each
-# digit run to 20 places so 2 < 10 < 100. Reads TAB-separated `name<TAB>payload`;
-# emits `key<TAB>payload`. With no TAB (bare path) payload defaults to the name,
-# so the same program serves both the -F function and the ble.sh resort below.
-_natural_sort_awk='BEGIN { FS = OFS = "\t" }
-{
-  name = $1; payload = (NF > 1 ? $2 : $1)
-  base = name; sub(/.*\//, "", base)
-  key = base; out = ""
-  while (match(key, /[0-9]+/)) {
-    out = out substr(key, 1, RSTART-1) sprintf("%020d", substr(key, RSTART, RLENGTH)+0)
-    key = substr(key, RSTART+RLENGTH)
-  }
-  print out key, payload
-}'
+# Shared perl: natural-sort lines by their basename, zero-padding each digit run
+# to 20 places so 2 < 10 < 100 (bytewise compare, stable). Reads TAB-separated
+# `name<TAB>payload`, prints payloads in order. With no TAB (bare path) payload
+# defaults to the name, so the same program serves both the -F function and the
+# ble.sh resort below. One process instead of awk | sort | cut.
+_natural_sort_pl='my @r;
+while (<STDIN>) {
+  chomp; my ($name, $payload) = split /\t/, $_, 2; $payload //= $name;
+  (my $key = $name) =~ s{.*/}{};
+  $key =~ s/([0-9]+)/sprintf "%020s", $1/ge;
+  push @r, [$key, $payload, $.];
+}
+print "$_->[1]\n" for sort { $a->[0] cmp $b->[0] || $a->[2] <=> $b->[2] } @r;'
 # pad to 20 digits and sort to avoid '@tmp'-suffix dir funnies
 # -o dirnames ensures ble.sh ambiguous fallback stays dirs-only
 # -o nosort tells ble.sh to honor our COMPREPLY order.
@@ -79,8 +77,7 @@ _natural_dir_complete() {
   compopt -o filenames 2>/dev/null
   [[ ${comp_type-} ]] && comp_type=${comp_type//:menu-show-prefix:/:}
   mapfile -t COMPREPLY < <(
-    compgen -d -- "${COMP_WORDS[COMP_CWORD]}" |
-    awk "$_natural_sort_awk" | LC_ALL=C sort -t$'\t' -k1,1 | cut -f2-
+    compgen -d -- "${COMP_WORDS[COMP_CWORD]}" | perl -e "$_natural_sort_pl"
   )
 }
 complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd
@@ -131,7 +128,7 @@ if [[ ${BLE_VERSION-} ]]; then
     order=$(
       for ((i = 0; i < cand_count; i++)); do
         printf '%s\t%s\n' "${cand_word[i]}" "$i"
-      done | awk "$_natural_sort_awk" | LC_ALL=C sort -t$'\t' -k1,1 -s | cut -f2
+      done | perl -e "$_natural_sort_pl"
     )
     local -a nc=() nw=() np=()
     local n=0
@@ -170,6 +167,31 @@ if [[ ${BLE_VERSION-} ]]; then
       return 0
     fi
     ble/function#advice/do
+  }
+  # (c) unset-var highlight: `$TYPO` as the command word is red (it expands to
+  # an empty, not-found command), but as an argument (`cd $TYPO`) ble only uses
+  # the dim varname_unset face. Promote unset reads to the error face -- what
+  # ble already does under `set -u` -- unless a default/alt/assign/error
+  # operator follows (`${TYPO:-x}`). Positional/special params and arithmetic
+  # (`(( TYPO ))`, readvar:expr) are left alone. The leading `$`/`${` gets the
+  # error face too, so it looks like the command-word case: check-dollar has
+  # already written the `$` attr at i-1 for `$NAME` (2 args), but for `${NAME`
+  # (3 args, tail) it writes the `${` attr at i after we return, so defer that.
+  _blesh_unset_var_err() {
+    [[ $ret == "$_ble_attr_VAR_UNSET" && ${ADVICE_WORDS[2]-} == readvar:global ]] || return 0
+    [[ ${ADVICE_WORDS[1]} =~ ^[_a-zA-Z][_a-zA-Z0-9]*$ ]] || return 0
+    ble/string#match "${ADVICE_WORDS[3]-}" '^:?[-+?=]' && return 0
+    ret=$_ble_attr_ERR
+    if ((${#ADVICE_WORDS[@]} > 3)); then
+      _blesh_unset_var_err_dollar=$i
+    else
+      _ble_syntax_attr[i-1]=$_ble_attr_ERR
+    fi
+  }
+  _blesh_unset_var_err_fixup() {
+    [[ ${_blesh_unset_var_err_dollar-} ]] || return 0
+    _ble_syntax_attr[_blesh_unset_var_err_dollar]=$_ble_attr_ERR
+    _blesh_unset_var_err_dollar=
   }
   # TAB watchdog: completion functions run IN the shell, so a slow external call
   # inside one (`$(git ...)` on NFS, make -qp, a script run for argcomplete...)
@@ -232,6 +254,9 @@ if [[ ${BLE_VERSION-} ]]; then
     ble/function#advice around ble/complete/source:file     _blesh_empty_var_guard
     ble/function#advice around ble/complete/source:argument _blesh_empty_var_guard
   '
+  ble/util/import/eval-after-load lib/core-syntax \
+    'ble/function#advice after ble/syntax/highlight/vartype _blesh_unset_var_err
+     ble/function#advice after ble/syntax:bash/check-dollar _blesh_unset_var_err_fixup'
   ble/util/import/eval-after-load integration/fzf-completion \
     'complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd'
 fi
@@ -242,12 +267,25 @@ eval "$(oh-my-posh init bash --config "$_omp_config" --print \
         | sed -E "s#(print (primary|secondary|transient)) #\1 --config '$_omp_config' #g")"
 unset _omp_config
 _dirlabel_last_key=""
+_dirlabel_colors=()
+# In-process `eval "$(dirlabel env)"`: no fork per prompt. The labels file is tiny,
+# so slurp it with builtin read; re-match on dir change or label edit (any shell).
 _dirlabel_update() {
-    local f="${XDG_CONFIG_HOME:-$HOME/.config}/dirlabels"
-    local key="$PWD:$(stat -c %Y "$f" 2>/dev/null)"    # re-eval on dir change or label edit
+    local f="${XDG_CONFIG_HOME:-$HOME/.config}/dirlabels" data=
+    [[ -r $f ]] && IFS= read -rd '' data < "$f"
+    local key="$PWD"$'\n'"$data"
     [[ "$key" == "$_dirlabel_last_key" ]] && return
     _dirlabel_last_key="$key"
-    eval "$(dirlabel 2>/dev/null)"
+    ((${#_dirlabel_colors[@]})) || mapfile -t _dirlabel_colors < <(dirlabel colors 2>/dev/null)
+    local cur dir label ci best= best_len=0 best_ci=0
+    cur=$(builtin pwd -P)
+    while IFS=$'\t' read -r dir label ci; do
+        [[ -z "$dir" ]] && continue
+        if [[ "$cur" == "$dir" || "$cur" == "$dir"/* ]] && (( ${#dir} > best_len )); then
+            best=$label best_len=${#dir} best_ci=${ci:-0}
+        fi
+    done <<< "$data"
+    export DIR_LABEL="$best" DIR_LABEL_COLOR="${_dirlabel_colors[best_ci]-}"
 }
 [[ " ${PROMPT_COMMAND[*]} " == *" _dirlabel_update "* ]] || PROMPT_COMMAND=(_dirlabel_update "${PROMPT_COMMAND[@]}")
 # PS1='$(_omp_get_primary)'
@@ -261,10 +299,12 @@ if [ -n "$TMUX" ]; then
     # output row, so a mark would tag output, not the prompt (see 133;A below).
     __tmux_preexec() {
       [ -n "$COMP_LINE" ] && return
-      local num; num=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*\([0-9]*\)[ ]*.*/\1/')
+      # "  123  cmd" -> num/cmd via expansions (one subshell, no sed)
+      local h num cmd; h=$(HISTTIMEFORMAT= history 1)
+      h=${h#"${h%%[! ]*}"}; num=${h%%[!0-9]*}
       [ "$num" = "$__tmux_last_histnum" ] && return
       __tmux_last_histnum=$num
-      local cmd; cmd=$(HISTTIMEFORMAT= history 1 | sed 's/^[ ]*[0-9]*[ ]*//')
+      cmd=${h#"$num"}; cmd=${cmd#"${cmd%%[! ]*}"}
       tmux set -p @last_cmd "$cmd" 2>/dev/null
     }
     if [[ ${BLE_VERSION-} ]]; then

@@ -74,8 +74,10 @@ _fzf_agent_hist() {
     "$HOME/dots/scripts/agent-hist" | fzf --query "$1" \
         --delimiter '\t' --with-nth 2,4 --nth 2 \
         --info inline --no-sort --exact --scheme history \
-        --preview $'printf "%s\n\n" {3}; printf "%s\n" {4} | sed "s/⏎/\\n/g; s/↹/\\t/g"' \
-        --preview-window 'down,40%,wrap' \
+        --height 70% \
+        --preview '"$HOME/dots/scripts/agent-hist" --preview {4}' \
+        --preview-window 'down,50%,wrap' \
+        --bind 'focus:transform-preview-label:echo " {3} "' \
         --bind 'ctrl-h:backward-kill-word' \
         --bind 'esc:become(echo {q})' \
     | cut -f4 | sed 's/⏎/\n/g; s/↹/\t/g'
@@ -214,11 +216,18 @@ if [[ $- == *i* ]]; then
     #            (needs $PWD in $root) so they abbreviate too.
     # helper, in place on $rw: when $PWD is in $1, relative tokens that resolve
     # under $1 become absolute (so the abbreviate step can fold them).
+    # Existence is all it checks, so a plain string that happens to name a file
+    # here gets rewritten too (`ta dots` in ~ -> `ta ~/dots`). Commands in
+    # HIST_REL_SKIP_CMDS (space-separated; the first word, one alias level
+    # expanded, so `ta` -> tmux) take names, not paths: leave their args alone.
+    HIST_REL_SKIP_CMDS=${HIST_REL_SKIP_CMDS-tmux}
     _hist_resolve_rel() {
       local root=$1
       [[ "$PWD" == "$root" || "$PWD" == "$root"/* ]] || return 0
       [[ $rw == *$'\n'* ]] && return 0
       local tok resolved first=1 out new changed=; local -a words; read -ra words <<< "$rw"
+      local cmd=${words[0]-}; [[ $cmd && ${BASH_ALIASES[$cmd]+set} ]] && cmd=${BASH_ALIASES[$cmd]%% *}
+      [[ " $HIST_REL_SKIP_CMDS " == *" ${cmd##*/} "* ]] && return 0
       for tok in "${words[@]}"; do
         out=$tok
         if [[ "$tok" != /* && "$tok" != [-~\$]* && -e "$tok" ]]; then

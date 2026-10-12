@@ -2,7 +2,45 @@
 # Shell commands run by Claude Code (incl. subagents) and pi, newest first, deduped.
 # Output: ts \t agent \t cwd \t cmd   (newlines in cmd as ⏎, tabs as ↹)
 # Rows are cached; only transcripts modified since the last run are re-parsed.
+#   agent-hist --preview CMD   pretty-print one (encoded) cmd for the fzf preview
 set -euo pipefail
+
+if [[ ${1-} == --preview ]]; then
+  # Decode ⏎/↹, then put one command per line: break after `;` (not ;; ;&) and
+  # after a leading do/then/else/{ -- outside quotes, comments and heredoc
+  # bodies. shfmt then indents (it keeps multi-line compounds multi-line, but
+  # never expands one-liners itself); if it can't parse, show the split text.
+  split=$(perl -e '
+    $_ = shift; s/⏎/\n/g; s/↹/\t/g;
+    my ($o, $bol, @hd) = ("", 1);
+    while (length) {
+      if ($bol && s/^([ \t]*)(do|then|else|\{)[ \t]+(?=\S)//) { $o .= "$1$2\n"; next }
+      $bol = 0;
+      if (s/^(\\.|\x27[^\x27]*\x27?)//s) { $o .= $1; next }                # \x  or  '...'
+      if (s/^("(?:\\.|[^"\\])*"?|`(?:\\.|[^`\\])*`?)//s) { $o .= $1; next } # "..." or `...`
+      if ($o =~ /(^|\s)$/ && s/^(#[^\n]*)//) { $o .= $1; next }            # comment
+      if (s/^(<<-?[ \t]*([\x27"]?)(\w+)\2)//) { $o .= $1; push @hd, $3; next }
+      if (s/^(;;&?|;&)//) { $o .= $1; next }
+      if (s/^;[ \t]*//) { $o .= ";\n"; $bol = 1; next }
+      if (s/^\n//) {
+        $o .= "\n"; $bol = 1;
+        while (my $t = shift @hd) {                                         # heredoc body verbatim
+          while (s/^([^\n]*)(\n|$)//) { $o .= "$1$2"; last if $1 =~ /^\t*\Q$t\E$/ || !length }
+        }
+        next;
+      }
+      s/^(.)//s; $o .= $1;
+    }
+    print $o;
+  ' "${2-}")
+  fmt=$(shfmt -i 2 -ln bash <<<"$split" 2>/dev/null) || fmt=$split
+  if command -v bat >/dev/null; then
+    bat --language bash --style plain --color always --paging never <<<"$fmt"
+  else
+    printf '%s\n' "$fmt"
+  fi
+  exit 0
+fi
 
 cache="${XDG_CACHE_HOME:-$HOME/.cache}/agent-hist"
 rows="$cache/rows.tsv" stamp="$cache/stamp"
@@ -28,7 +66,13 @@ esc='gsub("\n";"⏎") | gsub("\t";"↹")'
         | [\$t, \"pi\", \$d, (.arguments.command | $esc)] | join(\"\t\"))"
 } 2>/dev/null >> "$rows" || true
 
-sort -u -o "$rows" "$rows"   # re-parsed (still-active) sessions yield identical rows
-mv "$stamp.new" "$stamp"
-
-sort -r "$rows" | awk -F'\t' '!seen[$4]++'
+# One pass: dedup rows (re-parsed, still-active sessions yield identical rows),
+# save them sorted, advance the stamp, then print newest first, unique by cmd.
+perl -e '
+  my ($rows, $stamp) = @ARGV;
+  open my $in, "<", $rows or die "$rows: $!"; my %u; $u{$_} = 1 while <$in>; close $in;
+  my @r = sort keys %u;
+  open my $out, ">", "$rows.tmp" or die "$rows.tmp: $!"; print $out @r; close $out or die;
+  rename "$rows.tmp", $rows or die; rename "$stamp.new", $stamp or die;
+  my %seen; for (reverse @r) { print unless $seen{(split /\t/, $_, 5)[3] // ""}++ }
+' "$rows" "$stamp"

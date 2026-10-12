@@ -8,7 +8,7 @@ mkdir -p "$(dirname "$file")"
 : > /dev/null; [[ -f "$file" ]] || : > "$file"
 
 arg="${1:-env}"
-case "$arg" in env|set|clear|list|help|-h|--help) cmd="$arg"; shift || true ;; *) echo "unknown command: $arg" >&2; exit 2 ;; esac
+case "$arg" in env|set|clear|list|colors|help|-h|--help) cmd="$arg"; shift || true ;; *) echo "unknown command: $arg" >&2; exit 2 ;; esac
 
 _colors=(
   '#fcda43'
@@ -100,6 +100,9 @@ case "$cmd" in
     done < "$file"
     printf 'export DIR_LABEL=%q DIR_LABEL_COLOR=%s\n' "$best" "${_colors[$best_ci]}"
     ;;
+  colors) # palette, one per line (index = line number - 1); read once by .bashrc
+    printf '%s\n' "${_colors[@]}"
+    ;;
   list)
     while IFS=$'\t' read -r dir label ci; do
       [[ -z "$dir" ]] && continue
@@ -115,6 +118,7 @@ dirlabel — per-directory labels for the OMP prompt
   dirlabel clear [path]   remove label (default: cwd)
   dirlabel list           show all entries with colors
   dirlabel env            export DIR_LABEL & DIR_LABEL_COLOR (default)
+  dirlabel colors         print the color palette
   dirlabel help           this message
 
 Prompt integration:  eval "$(dirlabel)"

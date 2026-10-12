@@ -246,14 +246,39 @@ alias comp="~/Pictures/photos-pc/Computer\ Misc/"
 alias pics="~/Pictures/"
 
 # git
+function git_busy() {
+    local d
+    d=$(git rev-parse --git-dir 2>/dev/null) || return 1
+    if [ -d "$d/rebase-apply" ] && [ -f "$d/rebase-apply/applying" ]; then
+        echo "am in progress: git am --continue|--skip|--abort"
+    elif [ -d "$d/rebase-merge" ] || [ -d "$d/rebase-apply" ]; then
+        echo "rebase in progress: git rebase --continue|--skip|--abort"
+    elif [ -f "$d/MERGE_HEAD" ]; then
+        echo "merge in progress: git merge --continue|--abort"
+    elif [ -f "$d/CHERRY_PICK_HEAD" ]; then
+        echo "cherry-pick in progress: git cherry-pick --continue|--skip|--abort"
+    elif [ -f "$d/REVERT_HEAD" ]; then
+        echo "revert in progress: git revert --continue|--skip|--abort"
+    elif [ -f "$d/BISECT_LOG" ]; then
+        echo "bisect in progress: git bisect reset"
+    else
+        return 1
+    fi
+}
 alias gs="git status"
 alias gss="git show"
 alias gb="git branch"
 alias ga="git add"
 alias gaa="git add ."
 alias gcm="git commit -m"
-alias gco="git checkout"
-alias gp="git push"
+unalias gco gp gl 2>/dev/null
+function gco() {
+    # allow file checkouts (conflict resolution) mid-operation
+    [[ " $* " =~ \ (--|--ours|--theirs)\  ]] || { git_busy >&2 && return 1; }
+    git checkout "$@"
+}
+function gp() { git_busy >&2 && return 1; git push "$@"; }
+function gl() { git_busy >&2 && return 1; git pull "$@"; }
 alias gca="git commit --amend"
 alias gcan="git commit --amend --no-edit"
 alias gbc="GIT_EDITOR=true git rebase --continue"
@@ -262,7 +287,6 @@ alias gyc="git cherry-pick --continue --no-edit"
 alias gys="git cherry-pick --skip"
 alias gya="git cherry-pick --abort"
 alias gf="git fetch"
-alias gl="git pull"
 alias gd="git diff"
 alias gr="grup -R --no-thin"    # todo rm no-thin
 alias gry="grup -R -y"
