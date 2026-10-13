@@ -33,6 +33,7 @@ append_path "$HOME/.cargo/env"
 
 # cache output to avoid fork
 _ac() {
+    # shellcheck disable=SC2139 # define-time expansion is the point
     alias "$1=$2"
     local _c="${XDG_CACHE_HOME:-$HOME/.cache}/argcomplete-$1.bash"
     [[ -f $_c ]] || register-python-argcomplete "$1" --external-argcomplete-script "$2" > "$_c" 2>/dev/null
@@ -49,6 +50,7 @@ export LANG="$_loc" LANGUAGE="$_loc" LC_ALL="$_loc"
 unset _loc
 export BASH_SILENCE_DEPRECATION_WARNING=1
 # export DISPLAY=:0
+# shellcheck disable=SC2155 # status unused; both branches yield a value
 export SYSTEMD_PAGER=$(command -v bat >/dev/null && echo "bat --paging=always" || echo "less")
 
 # fzf
@@ -70,6 +72,7 @@ export FZF_CTRL_R_OPTS="
 "
 
 # alt+r: pick a command run by claude code / pi (see dots/scripts/agent-hist); prints it
+# shellcheck disable=SC2016 # preview cmd: $HOME expands in fzf's shell, not here
 _fzf_agent_hist() {
     "$HOME/dots/scripts/agent-hist" | fzf --query "$1" \
         --delimiter '\t' --with-nth 2,4 --nth 2 \
@@ -185,6 +188,7 @@ case "$_hostname" in
         export OMP_HOST_ICON=$'󰴺'
         ;;
     etx-maxv)
+        # shellcheck disable=SC2155 # hostname -i failing just yields ":1"
         export DISPLAY=$(hostname -i):1
         export OMP_HOST_COLOR="#6f6bf8"
         export OMP_HOST_ICON=$'\ue2a6'
@@ -286,6 +290,7 @@ if [[ $- == *i* ]]; then
       local s=$1 i c q=
       for ((i = 0; i < ${#s}; i++)); do
         c=${s:i:1}
+        # shellcheck disable=SC1003 # ('d\') is a literal backslash, not an escape
         case $q$c in
           (\\) ((i++)) ;;                    # escape outside quotes
           ("'") q=s ;; ("s'") q= ;;
@@ -300,7 +305,7 @@ if [[ $- == *i* ]]; then
     # var "~" folds to a bare ~, which bash only expands unquoted at a word start
     # or right after an assignment's NAME=, so it gets those stricter rules.
     _path_abbrev_fold() {
-      local root=$1 var=$2 out= rest=$rw pre ok
+      local root=$1 var=$2 out='' rest=$rw pre ok
       while [[ $rest == *"$root"* ]]; do
         pre=${rest%%"$root"*}; rest=${rest#*"$root"}
         if [[ $var == '~' ]]; then
@@ -324,6 +329,7 @@ if [[ $- == *i* ]]; then
     }
     _hist_rewrite_abbrev() {
       local rw=$1 len name root
+      # shellcheck disable=SC2034 # len: sort-key column, read only to skip it
       while IFS=$'\t' read -r len name root; do
         _hist_resolve_rel "$root"
         _path_abbrev_fold "$root" "$name"
@@ -334,9 +340,9 @@ if [[ $- == *i* ]]; then
     }
     [[ ${BLE_VERSION-} ]] && blehook ADDHISTORY+=_hist_rewrite_abbrev
 
-    source $HOME/.aliases
-    [ -f $HOME/.secrets ] && source $HOME/.secrets
-    [ -f $HOME/.profile_amzn ] && source $HOME/.profile_amzn
+    source "$HOME/.aliases"
+    [ -f "$HOME/.secrets" ] && source "$HOME/.secrets"
+    [ -f "$HOME/.profile_amzn" ] && source "$HOME/.profile_amzn"
 
     # auto-source .env
     if [ -f .env ]; then

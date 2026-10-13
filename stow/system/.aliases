@@ -41,7 +41,7 @@ mv() {
     if [[ -n "$_target" ]]; then
         _dest="$_target"; _need=dir      # -t always names a directory
     elif (( ${#_args[@]} >= 2 )); then
-        _dest="${_args[@]: -1}"
+        _dest="${_args[-1]}"
         # >1 source, or trailing slash => dest must be an existing directory
         if (( ${#_args[@]} > 2 )) || [[ "$_dest" == */ ]]; then _need=dir; else _need=parent; fi
     fi
@@ -60,12 +60,10 @@ mv() {
         fi
     fi
     command mv -iv "$@"
-    local src
-    # detect 'mv dir/* ...' pattern: check if any arg is a glob-expanded path sharing a common dir
-    for src in "$@"; do
-        [[ "$src" == "$@" ]] && continue  # skip if only one arg (the dest)
-        break
-    done
+    # detect 'mv dir/* ...' pattern: look at the first source's dir (options
+    # skipped via _args; needs a known dest, i.e. -t or >=2 operands)
+    [[ -n "${_dest:-}" ]] || return
+    local src="${_args[0]}"
     local dir
     dir="$(dirname "$src" 2>/dev/null)"
     [[ -z "$dir" || "$dir" == "." || ! -d "$dir" ]] && return
@@ -77,7 +75,7 @@ mv() {
         printf '  %s\n' "${dots[@]##*/}"
         read -rp "Move these too? [y/N] " ans
         if [[ "$ans" =~ ^[Yy]$ ]]; then
-            command mv -iv "${dots[@]}" "${@: -1}"
+            command mv -iv "${dots[@]}" "$_dest"
         fi
     fi
     # prompt to remove dir if now empty
@@ -138,9 +136,9 @@ function mkcdtmp() {
 function tls() {
   tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
     | sort -t'|' -k1 -rn \
-    | while IFS='|' read act name cre att; do
+    | while IFS='|' read -r act name cre att; do
         printf "%-20s  created: %s  last active: %s  %s\n" \
-          "$name" "$(date -d @$cre '+%b %d %H:%M')" "$(date -d @$act '+%b %d %H:%M')" \
+          "$name" "$(date -d "@$cre" '+%b %d %H:%M')" "$(date -d "@$act" '+%b %d %H:%M')" \
           "$([ "$att" = 1 ] && echo '(attached)')"
         tmux list-panes -s -t "$name" -F '#{pane_current_path}' \
           | sort -u \
@@ -161,6 +159,7 @@ function extract() {
         *)                echo "unknown: $1";;
     esac
 }
+# shellcheck disable=SC2155 # local x=$(...): exit statuses aren't checked here
 function bkup() {
     local d=false
     [[ "$1" == "-d" ]] && d=true && shift
@@ -211,6 +210,7 @@ alias dirs="eza --list-dirs"
 alias t="eza --tree" #  --git-ignore --no-git # <- git ignore hangs ..
 alias t2="eza --tree --level=2 -l"
 alias t3="eza --tree --level=3 -l"
+# shellcheck disable=SC2155,SC2164 # mktemp status unchecked; cd guarded by -d
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
 	command yazi "$@" --cwd-file="$tmp"

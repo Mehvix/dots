@@ -1,3 +1,4 @@
+# shellcheck disable=SC2148
 # -*- mode: sh; mode: sh-bash -*-
 
 ## This is a template for "~/.blerc".
@@ -101,6 +102,7 @@ bleopt history_lazyload=1
 _ble_hist_force_sync() { [[ ${_ble_history_load_done:-} ]] || ble/history:bash/initialize; }
 blehook PRECMD+='_ble_hist_force_sync'
 
+# shellcheck disable=SC2016 # hook body: $1 expands when ble runs it
 blehook ADDHISTORY+='[[ $1 != ❯\ * ]] || { ble/builtin/history -s -- "${1#❯ }"; return 1; }'
 
 ## The following setting turns on the delete selection mode when an non-empty

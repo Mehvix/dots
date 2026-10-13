@@ -7,7 +7,7 @@
 
 _blesh="${BLESH_DIR:-$HOME/.local/share/blesh}/ble.sh"; [[ -f $_blesh ]] && source -- "$_blesh" --attach=none; unset _blesh;
 
-source $HOME/.profile
+source "$HOME/.profile"
 
 
 # History
@@ -51,6 +51,7 @@ complete -o filenames -F _dest_dir_complete mv cp  # first arg=files, subsequent
 # `name<TAB>payload`, prints payloads in order. With no TAB (bare path) payload
 # defaults to the name, so the same program serves both the -F function and the
 # ble.sh resort below. One process instead of awk | sort | cut.
+# shellcheck disable=SC2016 # perl source: $vars are perl's, not the shell's
 _natural_sort_pl='my @r;
 while (<STDIN>) {
   chomp; my ($name, $payload) = split /\t/, $_, 2; $payload //= $name;
@@ -83,6 +84,8 @@ _natural_dir_complete() {
 complete -o dirnames -o filenames -o nosort -F _natural_dir_complete cd du rmdir pushd
 # fzf's deferred completion (loaded by ble-attach) hijacks cd/du/rmdir/pushd with
 # _fzf_{dir,path}_completion, dropping our sort -V; re-register after it loads.
+# ble.sh integration block: ble sets/reads cand_*, comp_*, COMP1/COMPS,ADVICE_*, _ble_attr_* behind shellcheck's back.
+# shellcheck disable=SC2034,SC2153,SC2154
 if [[ ${BLE_VERSION-} ]]; then
   # ble.sh generates path candidates without honoring -o nosort in two spots our
   # -F function can't reach: (a) the ambiguous-match fallback for cd/du/... (any
@@ -226,6 +229,7 @@ if [[ ${BLE_VERSION-} ]]; then
         }
       }')
     [[ $pids ]] || return 0
+    # shellcheck disable=SC2086 # $pids: whitespace-separated list, split on purpose
     kill -TERM $pids 2>/dev/null
     sleep 1
     for p in $pids; do kill -KILL "$p" 2>/dev/null; done
@@ -236,6 +240,7 @@ if [[ ${BLE_VERSION-} ]]; then
     local t=${COMPLETE_TIMEOUT:-2} wd bg ret t0
     ble/util/clock; t0=$ret   # ms; bash 4.4 has no EPOCHREALTIME, $SECONDS is too coarse
     bg=$(jobs -p)   # bash keeps the job table visible inside $(...)
+    # shellcheck disable=SC2086 # $bg: job pid list -> separate args
     wd=$(_comp_watchdog_fire "$t" $$ $bg </dev/null &>/dev/null & echo $!)
     ble/function#advice/do
     kill "$wd" 2>/dev/null
@@ -277,7 +282,7 @@ _dirlabel_update() {
     [[ "$key" == "$_dirlabel_last_key" ]] && return
     _dirlabel_last_key="$key"
     ((${#_dirlabel_colors[@]})) || mapfile -t _dirlabel_colors < <(dirlabel colors 2>/dev/null)
-    local cur dir label ci best= best_len=0 best_ci=0
+    local cur dir label ci best='' best_len=0 best_ci=0
     cur=$(builtin pwd -P)
     while IFS=$'\t' read -r dir label ci; do
         [[ -z "$dir" ]] && continue
@@ -291,6 +296,7 @@ _dirlabel_update() {
 # PS1='$(_omp_get_primary)'
 
 if [ -n "$TMUX" ]; then
+    # shellcheck disable=SC2016 # literal ${COLUMNS...} text for sed to rewrite
     eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')" # fix OMP right-prompt off-by-one
     tmux set -p @last_cmd "" 2>/dev/null
     __tmux_last_histnum=
@@ -300,7 +306,7 @@ if [ -n "$TMUX" ]; then
     __tmux_preexec() {
       [ -n "$COMP_LINE" ] && return
       # "  123  cmd" -> num/cmd via expansions (one subshell, no sed)
-      local h num cmd; h=$(HISTTIMEFORMAT= history 1)
+      local h num cmd; h=$(HISTTIMEFORMAT='' history 1)
       h=${h#"${h%%[! ]*}"}; num=${h%%[!0-9]*}
       [ "$num" = "$__tmux_last_histnum" ] && return
       __tmux_last_histnum=$num
@@ -314,6 +320,7 @@ if [ -n "$TMUX" ]; then
       # every render, so the mark must live in that template to persist on the
       # `❯ cmd` scrollback line. Prepend to the value OMP installed (keeps its
       # baked-in --config); \[ \] flags the bytes non-printing for width accounting.
+      # shellcheck disable=SC2154 # bleopt_* vars are defined by ble.sh
       bleopt prompt_ps1_final='\['$'\e]133;A\a''\]'"$bleopt_prompt_ps1_final"
     else
       # Plain bash: OMP's primary-prompt 133;A persists on its own; just track @last_cmd.
@@ -381,6 +388,7 @@ _register_alias_completions() {
     done < <(alias -p)
 }
 
+# shellcheck disable=SC2016 # code strings, eval'd later
 _deferred_evals=(
   'command -v uv  &>/dev/null && eval "$(uv generate-shell-completion bash)"'
   'command -v uvx &>/dev/null && eval "$(uvx --generate-shell-completion bash)"'
