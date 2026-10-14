@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+; Disable power throttling (EcoQoS) of background processes (revert to Windows default)
+; applies: reboot
+; admin
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Power\PowerThrottling]
+"PowerThrottlingOff"=-
