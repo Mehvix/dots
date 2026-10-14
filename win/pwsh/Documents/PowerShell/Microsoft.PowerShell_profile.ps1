@@ -30,6 +30,20 @@ if ($ompExe) {
     . $ompCache
 }
 
+# Reset terminal modes at every prompt (wraps oh-my-posh's prompt, so must follow it).
+# If a program dies without its teardown -- e.g. ssh dropped by PC sleep, so the
+# remote tmux never disables its modes -- WT is left in alt-screen + mouse
+# reporting and the wheel stops scrolling / cycles history. Programs re-enable
+# what they need on startup, so this only clears leftovers. Same idea as the
+# ble.sh PRECMD reset in stow/bash/.config/blesh/init.sh.
+$__promptInner = $function:prompt
+function prompt {
+    $p = & $__promptInner   # first: omp reads $? / $LASTEXITCODE, which any statement here would clobber
+    $e = [char]27
+    [Console]::Write("$e[?1000l$e[?1002l$e[?1003l$e[?1006l$e[?1004l$e[?2004l$e[?1049l$e[?25h")
+    $p
+}
+
 Set-PSReadLineOption -HistoryNoDuplicates                  # HIST_IGNORE_ALL_DUPS
 Set-PSReadLineOption -MaximumHistoryCount 100000           # HISTSIZE
 Set-PSReadLineOption -HistorySaveStyle SaveIncrementally   # INC_APPEND_HISTORY / histappend
