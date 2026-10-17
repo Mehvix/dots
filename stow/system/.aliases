@@ -304,8 +304,9 @@ function gll() { _numwrap git log "$@"; }
 function glo() { _numwrap git log --oneline "$@"; }
 
 # yt-dlp
+alias yt-dlp='yt-dlp --cookies-from-browser brave:~/.config/BraveSoftware/Brave-Browser/Default --extractor-args "youtube:player_client=web_safari"'
 alias youtube-dl="yt-dlp"
-alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor --cookies-from-browser brave -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
+alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/%(title)s.%(ext)s"'
 
