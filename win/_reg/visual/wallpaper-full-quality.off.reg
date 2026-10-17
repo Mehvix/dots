@@ -1,0 +1,7 @@
+Windows Registry Editor Version 5.00
+
+; Do not recompress JPEG wallpapers (revert to Windows default)
+; applies: re-set wallpaper
+
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"JPEGImportQuality"=-

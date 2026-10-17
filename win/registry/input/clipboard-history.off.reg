@@ -1,7 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Enable clipboard history (Win+V) (revert to Windows default)
-; applies: immediate
-
-[HKEY_CURRENT_USER\Software\Microsoft\Clipboard]
-"EnableClipboardHistory"=dword:00000000

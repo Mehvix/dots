@@ -1,0 +1,9 @@
+Windows Registry Editor Version 5.00
+
+; Disable Alt+Shift / Ctrl+Shift input language switching
+; applies: sign out
+
+[HKEY_CURRENT_USER\Keyboard Layout\Toggle]
+"Hotkey"="3"
+"Language Hotkey"="3"
+"Layout Hotkey"="3"

@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Disable Fast Startup (shutdown is a real shutdown)
-; applies: next shutdown
-; admin
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Power]
-"HiberbootEnabled"=dword:00000000

@@ -1,2 +1,4 @@
 @echo off
-uv run --quiet "%~dp0stoh.py" %*
+setlocal
+set PYTHONUNBUFFERED=1
+uv run "%~dp0stoh.py" %*

@@ -1,6 +1,6 @@
 {
   "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
-  "CreationDate": "2026-09-28T18:29:09.906121+00:00",
+  "CreationDate": "2026-10-17T16:14:20.484514+00:00",
   "Sources": [
     {
       "Packages": [
@@ -15,6 +15,9 @@
         },
         {
           "PackageIdentifier": "Balena.Etcher"
+        },
+        {
+          "PackageIdentifier": "Brave.Brave"
         },
         {
           "PackageIdentifier": "BurntSushi.ripgrep.MSVC"
@@ -53,10 +56,16 @@
           "PackageIdentifier": "Guru3D.Afterburner.Beta"
         },
         {
+          "PackageIdentifier": "Guru3D.RTSS"
+        },
+        {
           "PackageIdentifier": "hluk.CopyQ"
         },
         {
           "PackageIdentifier": "JanDeDobbeleer.OhMyPosh"
+        },
+        {
+          "PackageIdentifier": "jeffvli.Feishin"
         },
         {
           "PackageIdentifier": "junegunn.fzf"
@@ -84,6 +93,9 @@
         },
         {
           "PackageIdentifier": "MSYS2.MSYS2"
+        },
+        {
+          "PackageIdentifier": "Neovim.Neovim"
         },
         {
           "PackageIdentifier": "Notepad++.Notepad++"

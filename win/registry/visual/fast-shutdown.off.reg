@@ -1,9 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Kill hung apps / apps blocking shutdown after 2s (revert to Windows default)
-; applies: sign out
-
-[HKEY_CURRENT_USER\Control Panel\Desktop]
-"WaitToKillAppTimeout"=-
-"HungAppTimeout"=-
-"AutoEndTasks"=-

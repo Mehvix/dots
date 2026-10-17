@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Hardware-accelerated GPU scheduling (revert to Windows default)
-; applies: reboot
-; admin
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers]
-"HwSchMode"=dword:00000001

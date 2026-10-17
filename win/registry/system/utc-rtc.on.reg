@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Hardware clock is UTC (dual-boot with Linux only)
-; applies: reboot
-; admin
-
-[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\TimeZoneInformation]
-"RealTimeIsUniversal"=dword:00000001

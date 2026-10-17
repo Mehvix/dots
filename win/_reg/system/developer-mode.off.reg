@@ -1,0 +1,8 @@
+Windows Registry Editor Version 5.00
+
+; Developer mode (unelevated symlinks, sideloading) (revert to Windows default)
+; applies: immediate
+; admin
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock]
+"AllowDevelopmentWithoutDevLicense"=dword:00000000

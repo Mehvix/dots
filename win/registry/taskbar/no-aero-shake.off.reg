@@ -1,7 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Disable shake-to-minimize (revert to Windows default)
-; applies: immediate
-
-[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
-"DisallowShaking"=-

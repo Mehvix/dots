@@ -282,12 +282,20 @@ def _font_reg_name(src: Path) -> str:
 
 
 def _notify_font_change() -> None:
-    """Tell all windows the font set changed so new fonts are picked up."""
+    """Notify windows without waiting for potentially unresponsive applications."""
     import ctypes
+    from ctypes import wintypes
 
     HWND_BROADCAST = 0xFFFF
     WM_FONTCHANGE = 0x001D
-    ctypes.windll.user32.SendMessageW(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
+    post_message = ctypes.windll.user32.PostMessageW
+    post_message.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
+    post_message.restype = wintypes.BOOL
+    # SendMessageW blocks until every recipient responds; one hung window can
+    # stall the entire install. Queue this notification instead. A notification
+    # failure must not roll back an otherwise successfully registered font.
+    if not post_message(HWND_BROADCAST, WM_FONTCHANGE, 0, 0):
+        print("  warning: could not broadcast font change; restart apps to refresh fonts")
 
 
 def install_font_windows(src: Path, dry: bool = False) -> bool:
@@ -457,6 +465,7 @@ def cmd_install(pkgs: list[Path], prompter: Prompter) -> int:
     n_fonts_installed = n_fonts_skipped = 0
     
     for pkg in pkgs:
+        print(f"=== {pkg.name} ===", flush=True)
         for m in parse_manifest(pkg):
             src_root = m.src_root()
             
@@ -470,11 +479,11 @@ def cmd_install(pkgs: list[Path], prompter: Prompter) -> int:
                     if not is_font_file(src):
                         continue
                     
-                    action = f"would install font" if prompter.dry else "install font"
+                    action = "would install font" if prompter.dry else "check/install font"
+                    print(f"  {action} {src.name}", flush=True)
                     installed = install_font_windows(src, dry=prompter.dry)
                     
                     if installed:
-                        print(f"  {action} {src.name}")
                         n_fonts_installed += 1
                     else:
                         n_fonts_skipped += 1

@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Never combine taskbar buttons (show labels), all monitors
-; applies: explorer restart
-
-[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
-"TaskbarGlomLevel"=dword:00000002
-"MMTaskbarGlomLevel"=dword:00000002

@@ -1,9 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Disable 'Enhance pointer precision' (revert to Windows default)
-; applies: sign out
-
-[HKEY_CURRENT_USER\Control Panel\Mouse]
-"MouseSpeed"="1"
-"MouseThreshold1"="6"
-"MouseThreshold2"="10"

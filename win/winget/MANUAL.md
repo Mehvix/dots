@@ -1,1 +1,1 @@
-* Peace: https://sourceforge.net/projects/peace-equalizer-apo-extension/files/latest/download
+* Peace: https://sourceforge.net/projects/equalizerapo/files/latest/download + https://sourceforge.net/projects/peace-equalizer-apo-extension/files/latest/download

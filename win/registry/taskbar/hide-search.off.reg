@@ -1,7 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Hide taskbar search box/icon (revert to Windows default)
-; applies: explorer restart
-
-[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Search]
-"SearchboxTaskbarMode"=-

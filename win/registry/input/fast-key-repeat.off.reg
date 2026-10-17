@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Shortest key repeat delay, fastest rate (revert to Windows default)
-; applies: sign out
-
-[HKEY_CURRENT_USER\Control Panel\Keyboard]
-"KeyboardDelay"="1"
-"KeyboardSpeed"="31"

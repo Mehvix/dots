@@ -1,0 +1,6 @@
+Windows Registry Editor Version 5.00
+
+; Classic right-click menu (no 'Show more options') (revert to Windows default)
+; applies: explorer restart
+
+[-HKEY_CURRENT_USER\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}]
