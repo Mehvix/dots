@@ -13,7 +13,7 @@ source "$HOME/.profile"
 # History
 export HISTSIZE=100000
 export HISTFILESIZE=100000
-export HISTCONTROL=ignoreboth        # ignorespace + ignoredups; no erasedups as that causes history sync, issues w ble.sh (?)
+export HISTCONTROL=ignoredups        # record leading spaces; no erasedups as that causes history sync, issues w ble.sh (?)
 export HISTIGNORE='cd ..'            # don't record the Ctrl+N shortcut
 shopt -s histappend           # append to history, don't overwrite
 shopt -s cmdhist              # multi-line as one entry

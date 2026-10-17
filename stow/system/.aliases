@@ -95,11 +95,6 @@ alias where=which
 alias mk=mkdir
 alias p="ps uaxf"
 alias x="chmod +x"
-alias s=ssh
-alias sw="ssh wayside"
-alias se="ssh etx"
-alias sp="ssh thepod"
-alias sa="ssh ark"
 
 # non-core shortcuts
 alias python3='uv run python'
@@ -119,8 +114,10 @@ alias ccr="cc --continue"
 # shellcheck disable=SC2154
 alias exifll="exiftool -p '\$gpslatitude, \$gpslongitude' -n"
 alias exiftool="exiftool -n"    # numerical value output
+
 alias pic=picard
 alias pt=puddletag
+alias sk="QT_QPA_PLATFORM=xcb ./SoulseekQt-2024-6-30.AppImage"
 
 # new commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
@@ -146,18 +143,31 @@ function tls() {
       done
 }
 function extract() {
-    case "$1" in
-        *.tar.gz|*.tgz)  tar xzf "$1";;
-        *.tar.bz2|*.tbz) tar xjf "$1";;
-        *.tar.xz|*.txz)  tar xJf "$1";;
-        *.tar)            tar xf "$1";;
-        *.zip)            unzip "$1";;
-        *.gz)             gunzip "$1";;
-        *.bz2)            bunzip2 "$1";;
-        *.xz)             unxz "$1";;
-        *.7z)             7z x "$1";;
-        *)                echo "unknown: $1";;
-    esac
+    if (( $# == 0 )); then
+        echo "Usage: extract FILE... (e.g. extract *.zip)" >&2
+        return 1
+    fi
+    local f status=0
+    for f in "$@"; do
+        if [[ ! -f "$f" ]]; then
+            echo "extract: not a file: $f" >&2
+            status=1
+            continue
+        fi
+        case "$f" in
+            *.tar.gz|*.tgz)   tar xzf "$f";;
+            *.tar.bz2|*.tbz)  tar xjf "$f";;
+            *.tar.xz|*.txz)   tar xJf "$f";;
+            *.tar)            tar xf "$f";;
+            *.zip)            unzip "$f";;
+            *.gz)             gunzip "$f";;
+            *.bz2)            bunzip2 "$f";;
+            *.xz)             unxz "$f";;
+            *.7z)             7z x "$f";;
+            *)                echo "extract: unknown format: $f" >&2; false;;
+        esac || status=$?
+    done
+    return "$status"
 }
 # shellcheck disable=SC2155 # local x=$(...): exit statuses aren't checked here
 function bkup() {
@@ -190,11 +200,27 @@ function nixos-switch () {
 # replacement/alternatives
 [ -n "$KITTY_PID" ] && alias ssh="kitty +kitten ssh"
 alias s=ssh
+alias sw="ssh wayside"
+alias se="ssh etx"
+alias sa="ssh ark"
+alias sp="ssh thepod"
+alias si="ssh pi"
+alias sn="ssh pon"
+
 alias v=nvim
 alias vim=nvim
 alias json=fx
 alias cat=bat
 alias ccat="bat --wrap=never"
+
+tf() { # stream file tail
+    local n=10
+    if [[ "$1" =~ ^[0-9]+$ ]] && [[ $# -gt 1 ]]; then
+        n="$1"
+        shift
+    fi
+    tail -n "$n" -f -- "$@"
+}
 ft() { # file info in rows: size (human), created, modified
 	local f
 	for f in "$@"; do
@@ -203,6 +229,7 @@ ft() { # file info in rows: size (human), created, modified
 		stat --printf='created:  %w\nmodified: %y\n' "$f"
 	done
 }
+
 alias l="eza --all --long --header --classify --icons --group-directories-first" # --git
 alias lc="eza --all --long --header --classify --icons --sort=created"
 alias lt="eza --all --long --header --classify --icons --sort=modified"
@@ -239,11 +266,9 @@ function timesh () {
 }
 
 # directories
-alias code="cd \${CODE_ROOT}"
-alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
 alias www="/var/www/"
-alias comp="~/Pictures/photos-pc/Computer\ Misc/"
 alias pics="~/Pictures/"
+alias comp="~/Pictures/photos-pc/Computer\ Misc/"
 
 # git
 function git_busy() {
@@ -309,6 +334,9 @@ alias youtube-dl="yt-dlp"
 alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias yta='yt-dlp --yes-playlist -x --audio-format mp3 -o "~/Music/%(title)s.%(ext)s"'
+
+
+dlt() { curl -fL --output-dir /tmp -O "$1"; }
 
 
 # image convert

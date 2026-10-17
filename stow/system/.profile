@@ -170,8 +170,8 @@ case "$_hostname" in
         export OMP_HOST_ICON=$'\uef09'
 
         alias code="cd \${CODE_ROOT}"
-        # alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
-        # alias sch="~/Documents/School/"
+        alias notes="cd \${CODE_ROOT}/notes/hugo/static/docs/"
+        alias sch="~/Documents/School/"
         alias dots="cd \${CODE_ROOT}/dotfiles/"
         alias www="/var/www/"
         alias comp="~/Pictures/photos-pc/Computer\ Misc/"
@@ -179,6 +179,8 @@ case "$_hostname" in
         alias lock="dm-tool lock"
         ;;
     houdini)
+        export CODE_ROOT="${HOME}/Documents/code"
+        alias code="cd \${CODE_ROOT}"
         export OMP_HOST_COLOR="#c678dd"
         export OMP_HOST_ICON=$'󱛠'
         append_path "$HOME/Android/Sdk/platform-tools"
