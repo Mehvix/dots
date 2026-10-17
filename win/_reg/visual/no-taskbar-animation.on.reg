@@ -1,10 +1,14 @@
 Windows Registry Editor Version 5.00
 
-; No taskbar animations
-; applies: explorer restart
+; No UI animations (menu/tooltip fades, slides, etc.)
+; applies: sign out
+; also disables smooth font edges and drop shadows (best-performance preset)
 
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced]
 "TaskbarAnimations"=dword:00000000
 
 [HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects]
 "VisualFXSetting"=dword:00000003
+
+[HKEY_CURRENT_USER\Control Panel\Desktop]
+"UserPreferencesMask"=hex:90,12,03,80,10,00,00,00
