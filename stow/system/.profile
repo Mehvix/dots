@@ -226,6 +226,8 @@ if [[ $- == *i* ]]; then
     # here gets rewritten too (`ta dots` in ~ -> `ta ~/dots`). Commands in
     # HIST_REL_SKIP_CMDS (space-separated; the first word, one alias level
     # expanded, so `ta` -> tmux) take names, not paths: leave their args alone.
+    # Pure dot tokens (`..`, `../..`, `.`) stay relative: `cd ..` means "up one
+    # from wherever I am", not a fixed dir.
     HIST_REL_SKIP_CMDS=${HIST_REL_SKIP_CMDS-tmux}
     _hist_resolve_rel() {
       local root=$1
@@ -236,7 +238,7 @@ if [[ $- == *i* ]]; then
       [[ " $HIST_REL_SKIP_CMDS " == *" ${cmd##*/} "* ]] && return 0
       for tok in "${words[@]}"; do
         out=$tok
-        if [[ "$tok" != /* && "$tok" != [-~\$]* && -e "$tok" ]]; then
+        if [[ "$tok" != /* && "$tok" != [-~\$]* && "$tok" == *[!./]* && -e "$tok" ]]; then
           resolved=$(realpath -s -- "$PWD/$tok" 2>/dev/null) # -s: symlinks kept
           [[ "$resolved" == "$root" || "$resolved" == "$root"/* ]] && out=$resolved changed=1
         fi
@@ -345,6 +347,9 @@ if [[ $- == *i* ]]; then
     source "$HOME/.aliases"
     [ -f "$HOME/.secrets" ] && source "$HOME/.secrets"
     [ -f "$HOME/.profile_amzn" ] && source "$HOME/.profile_amzn"
+    [[ ${LD_LIBRARY_PATH-} ]] && printf '\e[33mwarning: LD_LIBRARY_PATH is set:\e[0m %s\n' \
+        "${LD_LIBRARY_PATH//:/ }" >&2
+    # ^EVIL
 
     # auto-source .env
     if [ -f .env ]; then

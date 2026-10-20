@@ -130,17 +130,25 @@ function mkcd() {
 function mkcdtmp() {
     cd "$(mktemp -d /tmp/tmp.XXXXXXXXXX)" || return
 }
-function tls() {
-  tmux ls -F '#{session_activity}|#{session_name}|#{session_created}|#{session_attached}' \
-    | sort -t'|' -k1 -rn \
-    | while IFS='|' read -r act name cre att; do
-        printf "%-20s  created: %s  last active: %s  %s\n" \
-          "$name" "$(date -d "@$cre" '+%b %d %H:%M')" "$(date -d "@$act" '+%b %d %H:%M')" \
-          "$([ "$att" = 1 ] && echo '(attached)')"
-        tmux list-panes -s -t "$name" -F '#{pane_current_path}' \
-          | sort -u \
-          | while read -r p; do printf '    %s\n' "$p"; done
-      done
+vsplit() { # vsplit PATH: a var's value one entry per line (split on : or space)
+    [[ $1 ]] || { echo "usage: vsplit VARNAME" >&2; return 1; }
+    [[ ${!1-} ]] || { echo "vsplit: \$$1 is empty or unset" >&2; return 1; }
+    tr ':[:space:]' '\n' <<< "${!1}" | sed '/^$/d'
+}
+prange() { # prange N M file: lines N-M, quits at M so huge logs are fast
+    sed -n "${1},${2}p;${2}q" "$3"
+}
+function tls() { # pick a tmux session (most recent first) and attach/switch; ctrl-x kills
+  # rows are "<date> <*|space><!|space>\t<name>"; the prefix is fixed-width so names line up
+  local list='tmux ls -F "#{session_activity}	#{t/f/%b %d %H#:%M:session_activity} #{?session_attached,*, }#{?#{W:#{P:#{@attn}}},!, }	#{session_name}" | sort -rn | cut -f2-'
+  local sel
+  sel=$(eval "$list" | fzf --delimiter='\t' --nth=2 --tabstop=1 --no-sort --reverse --height=60% \
+      --header='enter: attach  ctrl-x: kill  (* attached, ! needs attention)' \
+      --bind="ctrl-x:execute-silent(tmux kill-session -t ={2})+reload:$list" \
+      --preview='tmux list-panes -s -t ={2} -F "#{?@attn,⚑ #I.#P #{@attn},}" | grep .; tmux list-panes -s -t ={2} -F "#{pane_current_path}" | sort -u; echo; tmux capture-pane -ep -t ={2}:' \
+      --preview-window=right,60%) || return
+  sel=${sel#*$'\t'}
+  if [[ $TMUX ]]; then tmux switch-client -t "=$sel"; else tmux attach -t "=$sel"; fi
 }
 function extract() {
     if (( $# == 0 )); then
@@ -270,6 +278,54 @@ alias www="/var/www/"
 alias pics="~/Pictures/"
 alias comp="~/Pictures/photos-pc/Computer\ Misc/"
 
+_pct_color() { # severity color for a percentage: >90 red, >75 yellow, else green
+    if (( $1 > 90 )); then printf '\e[31m'; elif (( $1 > 75 )); then printf '\e[33m'; else printf '\e[32m'; fi
+}
+cwdquota() {
+    local fstype pool mnt q=n/a
+    read -r _ fstype _ _ _ pool mnt < <(df -PT -- "${1:-.}" 2>/dev/null | tail -1)
+    [[ $mnt ]] || { echo "cwdquota: no mount for ${1:-.}" >&2; return 1; }
+    if [[ $fstype == nfs* ]] && command -v quota &>/dev/null; then
+        # last line: blocks(KiB, '*' if over) quota limit ...; soft limit, else hard
+        q=$(quota -v --hide-device -f "$mnt" 2>/dev/null | tail -1 | awk '
+            function h(k) { return k >= 2^30 ? sprintf("%.2fT", k/2^30) : sprintf("%.1fG", k/2^20) }
+            { sub(/\*/, "", $1); lim = ($2+0 > 0 ? $2 : $3)
+              if (lim+0 > 0) printf "%d %s/%s", 100*$1/lim, h($1), h(lim) }')
+    fi
+    printf '%s  ' "$mnt"
+    if [[ $q != n/a && $q ]]; then
+        printf 'quota %s%s%%\e[0m (%s)  ' "$(_pct_color "${q%% *}")" "${q%% *}" "${q#* }"
+    else
+        printf 'quota n/a  '
+    fi
+    printf 'pool %s%s\e[0m\n' "$(_pct_color "${pool%\%}")" "$pool"
+}
+
+# slurm job history (sacct). Top-level jobs only, workdir trimmed to its last
+# 3 dirs. RUNNING/PENDING rows squeue doesn't know are stale accounting records
+# (runaway jobs) and are dropped. This cluster's sacct refuses windows > 7 days.
+_sacct_rows() {
+    local live; live=" $(squeue -h -u "$USER" -o %i 2>/dev/null | tr '\n' ' ') "
+    sacct -u "$USER" -X --format=JobID%-12,JobName%30,State%-11,Start,Elapsed,WorkDir%-200 "$@" \
+        | awk -v live="$live" '{ sub(/ +$/, "") }
+            NR == 1 { w = length($0) } NR == 2 { $0 = substr($0, 1, w) }
+            NR > 2 && $3 ~ /^(RUNNING|PENDING)/ && !index(live, " " $1 " ") { next }
+            { print }' \
+        | sed 's|/[^ ]*/\([^/]*/[^/]*/[^/]*\)$|.../\1|'
+}
+jlast() { # jlast [N]: last N (default 10) jobs from the past 2 days
+    _sacct_rows -S now-2days | awk -v n="${1:-10}" 'NR <= 2 { print; next }
+        { r[++k] = $0 } END { for (i = (k > n ? k - n + 1 : 1); i <= k; i++) print r[i] }'
+}
+jf() { # jf [days]: failed/timed-out/OOM/node-failed jobs, default past 2 days
+    _sacct_rows -S "now-${1:-2}days" -E now --state=FAILED,TIMEOUT,OUT_OF_MEMORY,NODE_FAIL
+}
+jweek() { _sacct_rows -S now-7days; } # all jobs, past 7 days (the max window)
+swhich() { # swhich -j N: full forensics (submit line, reason, node, workdir)
+    sacct -X -o jobid%15,jobname%30,partition%15,submit,start,end,elapsed,state%15,nodelist%25,reason%20,workdir%200,submitline%400 "$@" \
+        | less -SX
+}
+
 # git
 function git_busy() {
     local d
@@ -327,6 +383,19 @@ function _numwrap() {
 }
 function gll() { _numwrap git log "$@"; }
 function glo() { _numwrap git log --oneline "$@"; }
+# glast [N] file: last N (default 1) commits touching file; glastsrv: same on the
+# upstream branch after a quiet fetch (worktree untouched)
+_glast_fmt='--format=%h %an %ad %s'
+function glast() {
+    local n=1; [[ $1 =~ ^[0-9]+$ && $# -gt 1 ]] && { n=$1; shift; }
+    git log -"$n" --date=short "$_glast_fmt" -- "$@"
+}
+function glastr() {
+    local n=1 up; [[ $1 =~ ^[0-9]+$ && $# -gt 1 ]] && { n=$1; shift; }
+    up=$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null) || up=origin/HEAD
+    git fetch -q 2>/dev/null || echo "glastr: fetch failed, showing cached $up" >&2
+    git log -"$n" --date=short "$_glast_fmt" "$up" -- "$@"
+}
 
 # yt-dlp
 alias yt-dlp='yt-dlp --cookies-from-browser brave:~/.config/BraveSoftware/Brave-Browser/Default --extractor-args "youtube:player_client=web_safari"'

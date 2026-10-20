@@ -28,3 +28,24 @@ case "$sr" in
     *) [ -x "$TPM_PATH/tmux-continuum/scripts/continuum_save.sh" ] && \
            tmux set -g status-right "${save_hook}${sr}" ;;
 esac
+
+# Attention segment (scripts/attn)
+arrow=$'\xee\x82\xb0' sep=$'\xee\x82\xb1'
+sess='#be5046' save='#636363' o='#e06c75'   # session-colors dark_red, save segment bg, flag bg
+pfx=$(tmux show -gv @tmux2k-prefix-highlight 2>/dev/null); pfx=${pfx:-#61afef}   # tmux2k's prefix tint
+any='#{S:#{W:#{P:#{@attn}}}}'
+# thin separator before every item, then strip the first so it only sits between items;
+# the :window_index is dropped for single-window sessions
+items="#{s/^$sep//:#{S:#{W:#{P:#{?@attn,$sep ⚑ #{session_name}#{?#{==:#{session_windows},1},,:#{window_index}} #{=24:@attn} ,}}}}}"
+old="#[fg=$sess,bg=$save]#{?client_prefix,#[fg=$pfx],}$arrow"
+new="#{?$any,#[fg=$sess bg=$o],#[fg=$sess bg=$save]}#{?client_prefix,#[fg=$pfx],}$arrow"
+new+="#{?$any,#[fg=#2d3139 bg=$o]$items#[fg=$o bg=$save]$arrow,}"
+sl=$(tmux show -gv status-left 2>/dev/null)
+# tmux2k's prefix tint only swaps the session bg; also swap its text to black so it stays readable
+sl=${sl//"#{?client_prefix,#[bg=$pfx],}"/"#{?client_prefix,#[bg=$pfx fg=#2d3139],}"}
+case "$sl" in
+    *@attn*) ;;                                     # already patched (tmux2k resets it on reload)
+    *"$old"*) # + sweep job, only while the viewed pane is tinted (no shell otherwise)
+              tmux set -g status-left "${sl/"$old"/"$new"}#{?@attn_done,#($HOME/.config/tmux/scripts/attn sweep #{socket_path} #{pane_id}),}"
+              tmux set -g status-left-length 200 ;; # tmux2k's 100 would clip the list
+esac

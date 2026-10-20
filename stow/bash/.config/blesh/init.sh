@@ -1085,6 +1085,7 @@ bleopt complete_auto_complete=
 
 # ctrl+alt+backspace
 ble-bind -f 'M-C-h' 'kill-backward-uword'
+ble-bind -f 'M-DEL' 'kill-backward-fword'
 
 ble-bind -m emacs -f up   'backward-line history'
 ble-bind -m emacs -f down 'forward-line history'
@@ -1256,6 +1257,7 @@ blehook/eval-after-load keymap_emacs blerc/emacs-load-hook
 ble-import -d integration/fzf-completion
 ble-import integration/fzf-key-bindings
 ble-bind -m emacs -f C-s ''  # unbind
+ble-bind -m emacs -c C-t tls  # tmux session picker (replaces fzf-file-widget)
 
 ble-import -d integration/bash-completion
 

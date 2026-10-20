@@ -1,0 +1,78 @@
+#!/bin/bash
+# Per-pane "needs attention" flag (@attn), set by Claude/pi hooks and the shell's precmd.
+#   attn set [-q] [-s STATE] TEXT
+#                        flag $TMUX_PANE unless it's in view; bell every client
+#                        (-q: no bell if the pane's session is the viewed one, it rang itself;
+#                        -s: also record the agent state, even when in view)
+#                        "In view" = active pane of the session your most recently used client shows.
+#   attn clear [PANE]    drop the flag and tint (default $TMUX_PANE)
+#   attn busy            agent started working: clear, and mark @agent busy
+#   attn jump [CLIENT]   switch CLIENT to the most recently flagged pane
+#   attn sweep SOCKET PANE
+#                        run from the status line while the viewed pane is tinted: snapshot
+#                        its screen the first time, clear the tint once it changes (= you typed
+#                        or scrolled; tmux has no keystroke hook)
+# Shown by window-status-format, the status-left segment (patch-status.sh) and tls.
+# @agent (busy/input/done) drives the per-pane glyphs in set-titles-string (tmux.conf).
+[ "$1" = sweep ] && export TMUX="$2,0,0"   # status #() jobs don't get $TMUX
+[ -n "$TMUX" ] || exit 0
+
+clear_tint() {
+    tmux set -pu -t "$1" @attn_done \; set -pu -t "$1" @attn_hash \
+        \; set -pu -t "$1" window-style \; set -pu -t "$1" window-active-style
+}
+
+case "$1" in
+set)
+    shift
+    quiet= state=
+    while :; do case "$1" in -q) quiet=1; shift ;; -s) state=$2; shift 2 ;; *) break ;; esac; done
+    pane=${TMUX_PANE:?}
+    [ -n "$state" ] && tmux set -p -t "$pane" @agent "$state" \; refresh-client -S 2>/dev/null
+    read -r active sid < <(tmux display -p -t "$pane" \
+        '#{&&:#{pane_active},#{window_active}} #{session_id}')
+    # "Viewed" = the session of the client you last typed in; stale clients left attached
+    # elsewhere don't count.
+    viewed=$(tmux list-clients -F '#{client_activity} #{session_id}' | sort -rn | head -1 | cut -d' ' -f2)
+    [ "$active" = 1 ] && [ "$sid" = "$viewed" ] && exit 0   # already looking at it
+    # @attn (status bar) clears when you look at the pane; @attn_done and its background tint
+    # (@attn_tint) stay until you interact: next shell command / Claude prompt / pi run.
+    # window-style is a real pane option (unlike pane-border-style, which is per-window).
+    tint=$(tmux show -gv @attn_tint 2>/dev/null); tint=${tint:-#1e3236}
+    tmux set -p -t "$pane" @attn "$*" \; set -p -t "$pane" @attn_t "$(date +%s)" \; set -p -t "$pane" @attn_done 1 \
+        \; set -pu -t "$pane" @attn_hash \
+        \; set -p -t "$pane" window-style "bg=$tint" \; set -p -t "$pane" window-active-style "bg=$tint"
+    if [ -z "$quiet" ] || [ "$sid" != "$viewed" ]; then
+        tmux list-clients -F '#{client_tty}' | while read -r tty; do printf '\a' > "$tty"; done
+    fi
+    tmux refresh-client -S 2>/dev/null || true
+    ;;
+clear)
+    p=${2:-${TMUX_PANE:?}}
+    tmux set -pu -t "$p" @attn \; set -pu -t "$p" @attn_t
+    clear_tint "$p"
+    ;;
+busy)
+    p=${TMUX_PANE:?}
+    tmux set -p -t "$p" @agent busy \; set -pu -t "$p" @attn \; set -pu -t "$p" @attn_t
+    clear_tint "$p"
+    tmux refresh-client -S 2>/dev/null || true
+    ;;
+sweep)
+    pane=$3
+    read -r done base < <(tmux display -p -t "$pane" '#{@attn_done} #{@attn_hash}')
+    [ "$done" = 1 ] || exit 0
+    h=$(tmux capture-pane -p -t "$pane" | md5sum | cut -c1-12)
+    if [ -z "$base" ]; then tmux set -p -t "$pane" @attn_hash "$h"
+    elif [ "$h" != "$base" ]; then clear_tint "$pane"
+    fi
+    ;;
+jump)
+    pane=$(tmux list-panes -a -F '#{?@attn,#{@attn_t} #{pane_id},}' | sort -rn | head -1 | cut -d' ' -f2)
+    [ -n "$pane" ] || { tmux display-message ${2:+-c "$2"} "no flagged panes"; exit 0; }
+    tmux switch-client ${2:+-c "$2"} -t "$pane" \; select-window -t "$pane" \; select-pane -t "$pane"
+    ;;
+*)
+    echo "usage: attn set [-q] [-s STATE] TEXT | clear [PANE] | busy | jump [CLIENT] | sweep SOCKET PANE" >&2; exit 1
+    ;;
+esac

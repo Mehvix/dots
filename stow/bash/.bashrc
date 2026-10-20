@@ -20,6 +20,45 @@ shopt -s cmdhist              # multi-line as one entry
 [[ ${BLE_VERSION-} ]] || PROMPT_COMMAND="history -a"   # write history immediately (ble.sh handles this itself)
 HISTFILE=~/.shared_history
 [[ -f "$HISTFILE" ]] || : > "$HISTFILE"  # avoid tac error on first-ever exit
+hs() {
+  # flush session to $HISTFILE, do NOT read
+  [[ ${BLE_VERSION-} ]] || { builtin history -a; return; }
+  ble/builtin/history/.initialize skip0 || return
+  local histfile; ble/builtin/history/.get-histfile || return
+  ble/builtin/history/.check-uncontrolled-change "$histfile" append
+  ble/builtin/history/.write "$histfile" "$_ble_builtin_history_wskip" append
+  builtin history -a /dev/null
+}
+hl() {
+  # load new $HISTFILE entries into session, do NOT write
+  [[ ${BLE_VERSION-} ]] || { builtin history -n; return; }
+  ble/builtin/history/.initialize skip0 || return
+  local histfile; ble/builtin/history/.get-histfile || return
+  # .read marks everything in memory as written; stash unflushed session entries
+  # in ble's pending-append buffer (fetch = no file write) so a later hs/exit still saves them
+  ble/builtin/history/.write "$histfile" "$_ble_builtin_history_wskip" append:fetch
+  local rskip; ble/builtin/history/.get-rskip "$histfile"
+  ble/builtin/history/.read "$histfile" "$rskip"
+}
+# ble.sh inits its history read-offset lazily at the first history op, from the file's
+# line count *then*; if another shell's hs lands before that, hl skips those lines.
+# (Forcing that init early instead races ble's async history load and duplicates the file.)
+# So note the line count at the first prompt (just after bash loaded $HISTFILE) and pin
+# the offset back to it before the first command runs, once ble's lazy init has happened.
+if [[ ${BLE_VERSION-} ]]; then
+  _hl_rskip0=
+  _hl_note_rskip() {
+    blehook PRECMD-=_hl_note_rskip
+    ble/util/assign _hl_rskip0 'ble/bin/wc -l < "$HISTFILE" 2>/dev/null'
+  }
+  _hl_pin_rskip() {
+    [[ $_hl_rskip0 && ${_ble_builtin_history_initialized-} ]] || return 0
+    blehook PREEXEC-=_hl_pin_rskip
+    ble/builtin/history/.set-rskip "$HISTFILE" "$_hl_rskip0"
+  }
+  blehook PRECMD+=_hl_note_rskip
+  blehook PREEXEC+=_hl_pin_rskip
+fi
 
 # Shell Options
 shopt -s autocd         # cd not needed
@@ -311,10 +350,23 @@ if [ -n "$TMUX" ]; then
       [ "$num" = "$__tmux_last_histnum" ] && return
       __tmux_last_histnum=$num
       cmd=${h#"$num"}; cmd=${cmd#"${cmd%%[! ]*}"}
-      tmux set -p @last_cmd "$cmd" 2>/dev/null
+      __tmux_cmd=$cmd __tmux_cmd_t0=$SECONDS
+      tmux set -p @last_cmd "$cmd" \; set -pu @attn \; set -pu @attn_done \; set -pu window-style \; set -pu window-active-style 2>/dev/null   # = attn clear, inline
+    }
+    # A command that ran >=10s raises the pane's attention flag (scripts/attn;
+    # no-op if the pane is in view). Returns the command's status for the prompt.
+    __tmux_precmd() {
+      local rc=$?
+      if [ -n "$__tmux_cmd_t0" ] && (( SECONDS - __tmux_cmd_t0 >= 10 )); then
+        local st=✓; ((rc)) && st="✗$rc"   # cmd cut to 20 so the status survives the bar's truncation
+        ~/.config/tmux/scripts/attn set "${__tmux_cmd:0:20} $st" 2>/dev/null
+      fi
+      __tmux_cmd_t0=
+      return $rc
     }
     if [[ ${BLE_VERSION-} ]]; then
       blehook PREEXEC+='__tmux_preexec'
+      blehook PRECMD+='__tmux_precmd'
       # OSC 133;A (prompt-start) mark that tmux PgUp/PgDn jump between. ble.sh's
       # transient collapse rewrites past prompts from OMP's transient template on
       # every render, so the mark must live in that template to persist on the
@@ -325,6 +377,7 @@ if [ -n "$TMUX" ]; then
     else
       # Plain bash: OMP's primary-prompt 133;A persists on its own; just track @last_cmd.
       trap '__tmux_preexec' DEBUG
+      PROMPT_COMMAND[0]="__tmux_precmd; ${PROMPT_COMMAND[0]}"   # bash <5.1 runs only [0]
     fi
 fi
 
