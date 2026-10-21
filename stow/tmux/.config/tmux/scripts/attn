@@ -1,7 +1,7 @@
 #!/bin/bash
 # Per-pane "needs attention" flag (@attn), set by Claude/pi hooks and the shell's precmd.
 #   attn set [-q] [-s STATE] TEXT
-#                        flag $TMUX_PANE unless it's in view; bell every client
+#                        flag $TMUX_PANE unless it's in view; bell (+ OSC 99 on kitty) its tab
 #                        (-q: no bell if the pane's session is the viewed one, it rang itself;
 #                        -s: also record the agent state, even when in view)
 #                        "In view" = active pane of the session your most recently used client shows.
@@ -44,11 +44,21 @@ set)
         \; set -p -t "$pane" window-style "bg=$tint" \; set -p -t "$pane" window-active-style "bg=$tint"
     # Bell only the tab(s) showing the pane's session (each terminal tab is its own client);
     # if no tab has it open, the most recently used one, so it's never silent.
+    # kitty clients also get an OSC 99 desktop notification, written straight to their tty
+    # (allow-passthrough stays off). kitty is recognised by TERM or its XTVERSION reply.
     if [ -z "$quiet" ] || [ "$sid" != "$viewed" ]; then
-        clients=$(tmux list-clients -F '#{client_activity} #{session_id} #{client_tty}' | sort -rn)
-        ttys=$(awk -v s="$sid" '$2 == s { print $3 }' <<< "$clients")
-        [ -n "$ttys" ] || ttys=$(head -1 <<< "$clients" | cut -d' ' -f3)
-        for tty in $ttys; do printf '\a' > "$tty"; done
+        clients=$(tmux list-clients -F '#{client_activity} #{session_id} #{client_tty} #{client_termname}/#{client_termtype}' | sort -rn)
+        targets=$(awk -v s="$sid" '$2 == s { print $3, $4 }' <<< "$clients")
+        [ -n "$targets" ] || targets=$(head -1 <<< "$clients" | cut -d' ' -f3-4)
+        where=$(tmux display -p -t "$pane" '#S:#I.#P')
+        body=$(tr -d '\000-\037' <<< "$*")
+        id=attn${pane#%}   # per pane: a newer notification replaces that pane's older one
+        while read -r tty term; do
+            printf '\a' > "$tty"
+            case "$term" in
+                *kitty*) printf '\e]99;i=%s:d=0;tmux %s\e\\\e]99;i=%s:p=body;%s\e\\' "$id" "$where" "$id" "$body" > "$tty" ;;
+            esac
+        done <<< "$targets"
     fi
     tmux refresh-client -S 2>/dev/null || true
     ;;
