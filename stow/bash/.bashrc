@@ -115,6 +115,8 @@ print "$_->[1]\n" for sort { $a->[0] cmp $b->[0] || $a->[2] <=> $b->[2] } @r;'
 # which glob-sorts LEXICALLY and ignores -o nosort -- see _natural_path_resort.
 _natural_dir_complete() {
   compopt -o filenames 2>/dev/null
+  # ble.sh: with no dir candidates, its default fallback offers plain files (`cd foo.txt`); opt out
+  [[ ${BLE_VERSION-} ]] && compopt -o ble/no-default 2>/dev/null
   [[ ${comp_type-} ]] && comp_type=${comp_type//:menu-show-prefix:/:}
   mapfile -t COMPREPLY < <(
     compgen -d -- "${COMP_WORDS[COMP_CWORD]}" | perl -e "$_natural_sort_pl"

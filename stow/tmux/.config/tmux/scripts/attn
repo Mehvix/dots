@@ -42,8 +42,13 @@ set)
     tmux set -p -t "$pane" @attn "$*" \; set -p -t "$pane" @attn_t "$(date +%s)" \; set -p -t "$pane" @attn_done 1 \
         \; set -pu -t "$pane" @attn_hash \
         \; set -p -t "$pane" window-style "bg=$tint" \; set -p -t "$pane" window-active-style "bg=$tint"
+    # Bell only the tab(s) showing the pane's session (each terminal tab is its own client);
+    # if no tab has it open, the most recently used one, so it's never silent.
     if [ -z "$quiet" ] || [ "$sid" != "$viewed" ]; then
-        tmux list-clients -F '#{client_tty}' | while read -r tty; do printf '\a' > "$tty"; done
+        clients=$(tmux list-clients -F '#{client_activity} #{session_id} #{client_tty}' | sort -rn)
+        ttys=$(awk -v s="$sid" '$2 == s { print $3 }' <<< "$clients")
+        [ -n "$ttys" ] || ttys=$(head -1 <<< "$clients" | cut -d' ' -f3)
+        for tty in $ttys; do printf '\a' > "$tty"; done
     fi
     tmux refresh-client -S 2>/dev/null || true
     ;;
