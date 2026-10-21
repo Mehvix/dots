@@ -441,13 +441,17 @@ _register_alias_completions() {
     done < <(alias -p)
 }
 
+_comp_lazy uv  'uv generate-shell-completion bash'
+_comp_lazy uvx 'uvx --generate-shell-completion bash'
+
 # shellcheck disable=SC2016 # code strings, eval'd later
 _deferred_evals=(
-  'command -v uv  &>/dev/null && eval "$(uv generate-shell-completion bash)"'
-  'command -v uvx &>/dev/null && eval "$(uvx --generate-shell-completion bash)"'
-  '[[ -z "${VTE_VERSION:-}" && -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
-  'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && builtin source /usr/share/bash-completion/bash_completion; }'
-  'command -v activate-global-python-argcomplete &>/dev/null && eval "$(activate-global-python-argcomplete --dest=-)"'
+  # '[[ -z "${VTE_VERSION:-}" && -f "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash" ]] && builtin source "${HOME}/.local/share/kiro-cli/shell/bash_profile.post.bash"'
+  'shopt -oq posix || { [[ -f /usr/share/bash-completion/bash_completion ]] && { register-python-argcomplete() { :; }; builtin source /usr/share/bash-completion/bash_completion; unset -f register-python-argcomplete; }; }'
+  # global hook (complete -D for PYTHON_ARGCOMPLETE_OK scripts): source the file argcomplete
+  # ships instead of forking python to print it (`activate-global-python-argcomplete --dest=-`
+  # emits it verbatim); globbed from the uv tool venv, so it tracks argcomplete upgrades
+  'for _f in "${UV_TOOL_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/uv/tools}"/argcomplete/lib/python3*/site-packages/argcomplete/bash_completion.d/_python-argcomplete; do [[ -f $_f ]] && builtin source "$_f"; done; unset _f'
   # bash-completion ships `_cd` and `complete -F _cd -o nospace cd pushd` -- clobber em
   '_cd() { _natural_dir_complete; }; complete -o dirnames -o nosort -F _natural_dir_complete cd du rmdir pushd'
   '_register_alias_completions'
@@ -463,6 +467,59 @@ unset _deferred_evals _cmd
 
 # fzf: fallback to eval when not using ble.sh
 [[ ${BLE_VERSION-} ]] || eval "$(fzf --bash)"
+
+# ctrl+r shift-del/del (see FZF_CTRL_R_OPTS) deletes history entries. Replaces upstream's
+# __fzf_history_delete, which drops only the newest copy (older dups resurface), goes behind
+# ble's back with `builtin history -d`, and `history -w`s this session over the shared file.
+# Here every copy goes: in memory via `history -d` (ble's wrapper keeps its state in sync),
+# and from $HISTFILE in place, so other shells' appends survive.
+# perl: stdin = `fc -lnr` dump, args = picked history numbers. Prints the numbers of every
+# copy (newest first), then cuts those lines from $HISTFILE and prints cut=<lines cut below rskip>.
+IFS= read -rd '' _fzf_hist_del_pl <<'PL'
+my $top = $ENV{last_hist} + 0; my $rskip = $ENV{rskip} || 0;
+getc STDIN; $/ = "\n\t"; my @txt;                 # same record split as __fzf_history__
+while (<STDIN>) { chomp; s/\n\z//; s/^[ *]//; push @txt, $_ }   # $txt[i] = entry $top-i
+my %del; $del{$txt[$top - $_]} = 1 for grep { $_ <= $top && $top - $_ < @txt } @ARGV;
+%del or exit;
+for (0..$#txt) { print $top - $_, "\n" if $del{$txt[$_]} }
+for (grep /\n/, keys %del) {                      # ble writes multi-line entries as eval -- $'..'
+  (my $e = $_) =~ s/(['\\])/\\$1/g; $e =~ s/\n/\\n/g; $e =~ s/\t/\\t/g;
+  $del{"eval -- \$'$e'"} = 1;
+}
+$/ = "\n"; open my $fh, '+<', $ENV{HISTFILE} or exit;
+my @l = <$fh>; my @keep; my $cut = 0;
+for my $i (0..$#l) {
+  chomp(my $t = $l[$i]);
+  if ($del{$t}) { $cut++ if $i < $rskip } else { push @keep, $l[$i] }
+}
+if (@keep < @l) { seek $fh, 0, 0; print $fh @keep; truncate $fh, tell $fh }
+print "cut=$cut\n";
+PL
+_fzf_hist_del_install() {
+  __fzf_history_delete() {
+    [[ -s $1 ]] || return 0
+    local rskip= out n
+    # init ble's lazy history state now, so its rskip reflects the file before we cut it
+    [[ ${BLE_VERSION-} ]] && ble/builtin/history/.initialize skip0 &&
+      ble/builtin/history/.get-rskip "$HISTFILE"
+    # shellcheck disable=SC2046 # $1 holds one history number per line
+    out=$(builtin fc -lnr -2147483648 |
+      last_hist=$(HISTTIMEFORMAT='' builtin history 1) rskip=$rskip HISTFILE=$HISTFILE \
+        command perl -e "$_fzf_hist_del_pl" -- $(<"$1"))
+    for n in ${out%cut=*}; do history -d "$n"; done   # descending, so numbers stay valid
+    # lines cut from the already-read part of $HISTFILE would make `hl` skip as many new ones
+    n=${out##*cut=}
+    if [[ $rskip && $n =~ ^[1-9][0-9]*$ ]]; then
+      ble/builtin/history/.set-rskip "$HISTFILE" "$((rskip - n))"
+      [[ $_hl_rskip0 ]] && ((_hl_rskip0 -= n))
+    fi
+  }
+}
+if [[ ${BLE_VERSION-} ]]; then
+  ble/util/import/eval-after-load integration/fzf-key-bindings _fzf_hist_del_install
+else
+  _fzf_hist_del_install
+fi
 
 # alt+r: agent (claude code / pi) command history
 __agent_hist_widget() {

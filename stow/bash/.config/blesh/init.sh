@@ -95,12 +95,18 @@ bleopt history_lazyload=1
 ## go up, it's gone"). It's NOT a one-time startup race either: running a command
 ## re-clears load_done (ble/builtin/history/.load-recent-entries -> reset when a
 ## large delta of builtin-history entries is detected), reopening the window.
-## Fix: a PERSISTENT precmd hook that forces a synchronous load whenever load_done
-## is unset. It's a cheap no-op once loaded (initialize returns immediately), and
-## the first real load is ~70ms for a 20k-line history. Verified: closes the race
-## at every keypress gap (baseline missed 5/5 at a 0.2s gap; this passes 5/5).
+## Fix: force a synchronous load whenever load_done is unset, right before
+## ble/history/add records a command (accept-line adds BEFORE PREEXEC, so a
+## PREEXEC hook is too late). The race is a stale async snapshot missing that add,
+## so syncing first closes it; Up/C-p on their own already sync via
+## ble/history/initialize. It's a cheap no-op once loaded (initialize returns
+## immediately). Was a PRECMD hook, but that blocked every first prompt on the
+## full load (~115ms at 24k lines, linear in history size); at accept-line the
+## idle load has usually finished while you typed. The PRECMD form was verified
+## (baseline missed 5/5 at a 0.2s gap; it passed 5/5); this form passed the same
+## Up-after-command test but the miss didn't reproduce there, so watch for it.
 _ble_hist_force_sync() { [[ ${_ble_history_load_done:-} ]] || ble/history:bash/initialize; }
-blehook PRECMD+='_ble_hist_force_sync'
+ble/function#advice before ble/history/add _ble_hist_force_sync
 
 # shellcheck disable=SC2016 # hook body: $1 expands when ble runs it
 blehook ADDHISTORY+='[[ $1 != ❯\ * ]] || { ble/builtin/history -s -- "${1#❯ }"; return 1; }'
@@ -1611,3 +1617,41 @@ ble-import -d integration/bash-completion
 ## execution will be skipped.  The default value is 5.0 msec.
 
 #bleopt debug_profiler_tree_threshold=5.0
+
+
+##-----------------------------------------------------------------------------
+## Highlight words containing an unset "$VAR" / "${VAR}" as errors.
+##
+## ble.sh colors a word by the file its expansion names, so with ENV_VAR unset
+## "$ENV_VAR/" expands to "/" and is shown as an existing directory.  Forms
+## with an operator such as "${VAR:-x}" are left alone, as are words with
+## single quotes or backslashes (where "$" may not be an expansion).
+
+function blerc/highlight-unset-var/has-unset {
+  local ret
+  ble/syntax:bash/simple-word/extract-parameter-names "$1"
+  ((${#ret[@]})) || return 1
+  local __blerc_defs __blerc_name __blerc_w=$1
+  ble/util/assign __blerc_defs 'ble/util/print-global-definitions --hidden-only "${ret[@]}"'
+  builtin eval -- "$__blerc_defs" &>/dev/null # expose globals shadowed by ble.sh locals
+  local __blerc_rex='\$([_a-zA-Z][_a-zA-Z0-9]*|\{[_a-zA-Z][_a-zA-Z0-9]*\})'
+  while [[ $__blerc_w =~ $__blerc_rex ]]; do
+    __blerc_name=${BASH_REMATCH[1]#'{'}; __blerc_name=${__blerc_name%'}'}
+    [[ ${!__blerc_name+set} ]] || return 0
+    __blerc_w=${__blerc_w#*"${BASH_REMATCH[0]}"}
+  done
+  return 1
+}
+function blerc/highlight-unset-var/advice {
+  local p0=${ADVICE_WORDS[1]%%:*} p1=${ADVICE_WORDS[1]#*:}
+  local wtxt=${text:p0:p1-p0}
+  if [[ $wtxt == *'$'* && $wtxt != *[\'\\]* ]] && blerc/highlight-unset-var/has-unset "$wtxt"; then
+    local -a path=() spec=()
+    ble/progcolor/highlight-filename/.pathspec-with-attr.wattr "$_ble_attr_ERR"
+    ADVICE_EXIT=0
+  else
+    ble/function#advice/do
+  fi
+}
+blehook/eval-after-load syntax \
+  'ble/function#advice around ble/progcolor/highlight-filename/.single.wattr blerc/highlight-unset-var/advice'

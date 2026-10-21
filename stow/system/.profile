@@ -15,29 +15,40 @@ append_path () {
     esac
 }
 
+# moves dir to front if already present (no dups; re-sourcing keeps the same order)
 prepend_path () {
-    case ":$PATH:" in
-        *:"$1":*)
-            ;;
-        *)
-            PATH="$1${PATH:+:$PATH}"
-    esac
+    local p=":$PATH:"
+    p=${p//:"$1":/:}; p=${p#:}; p=${p%:}
+    PATH="$1${p:+:$p}"
 }
 
 # append_path "$HOME/bin"
 append_path "$HOME/.local/bin"
 append_path "/usr/local/bin"
 
-append_path "$HOME/.cargo/env"
 
+# lazy completion: `_comp_lazy cmd 'generator cmd'` registers a stub; the first TAB on cmd
+# evals the generator's output (a completion script that re-registers cmd) and returns 124,
+# which makes bash/ble.sh retry with the real spec. No fork at startup, and nothing cached,
+# so a tool upgrade or a changed script path can't leave a stale completion behind.
+declare -A _comp_lazy_gen=()
+_comp_lazy() {
+    [[ -n ${BASH_VERSION-} ]] || return 0
+    _comp_lazy_gen[$1]=$2
+    complete -F _comp_lazy_load "$1"
+}
+_comp_lazy_load() {
+    local gen=${_comp_lazy_gen[$1]-}
+    complete -r "$1" 2>/dev/null # no retry loop if the generator fails or registers nothing
+    [[ $gen ]] && eval "$(eval "$gen" 2>/dev/null)"
+    complete -p "$1" &>/dev/null && return 124
+}
 
-# cache output to avoid fork
+# alias + argcomplete completion for a script that isn't on PATH
 _ac() {
     # shellcheck disable=SC2139 # define-time expansion is the point
     alias "$1=$2"
-    local _c="${XDG_CACHE_HOME:-$HOME/.cache}/argcomplete-$1.bash"
-    [[ -f $_c ]] || register-python-argcomplete "$1" --external-argcomplete-script "$2" > "$_c" 2>/dev/null
-    [[ -s $_c ]] && source "$_c"
+    _comp_lazy "$1" "register-python-argcomplete $(printf %q "$1") --external-argcomplete-script $(printf %q "$2")"
 } # e.g. `_ac foo /path/to/foo_script_here_w_argcomplete.py`, shebang say `#!/usr/bin/env -S uv run`
 
 # defaults
@@ -69,6 +80,7 @@ export FZF_CTRL_R_OPTS="
 --nth 2..           # dont match w history
 --bind 'ctrl-h:backward-kill-word'      # ctrl+backspace deletes word
 --bind 'esc:become(echo {q})'           # esc keeps typed query on cmdline (not orig line)
+--bind 'del:trigger(shift-delete)'      # del = shift-del: delete entry from history (see .bashrc)
 "
 
 # alt+r: pick a command run by claude code / pi (see dots/scripts/agent-hist); prints it
@@ -131,7 +143,7 @@ case "$_hostname" in
         }
 
         export CODE_ROOT="${HOME}/Documents/Code"   # TODO other hosts
-        export PATH="${HOME}/dots/scripts:${PATH}"  # TODO other hosts
+        prepend_path "${HOME}/dots/scripts"  # TODO other hosts
 
         export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 
@@ -141,20 +153,18 @@ case "$_hostname" in
         export QT_QPA_PLATFORMTHEME="qt5ct"
         export QT_AUTO_SCREEN_SCALE_FACTOR=0
         export QT_SELECT=5
-        export PATH=/usr/local/Qt-5.15.6/bin/:$PATH
-
-        # verilog
-        export PATH="$PATH:/usr/bin/verible-verilog-format"
+        prepend_path /usr/local/Qt-5.15.6/bin/
 
         # haskell
-        export PATH="$HOME/.cabal/bin:$HOME/.ghcup/bin:$PATH"
+        prepend_path "$HOME/.ghcup/bin"
+        prepend_path "$HOME/.cabal/bin"
 
         # go
         export GOPATH=$HOME/go
-        export PATH="$PATH:$GOPATH/bin"
+        append_path "$GOPATH/bin"
 
         # npm
-        export PATH=$HOME/.npm-global/bin:$PATH
+        prepend_path "$HOME/.npm-global/bin"
         #export npm_config_prefix="$HOME/.local"
 
         # nvm
