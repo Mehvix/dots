@@ -325,6 +325,56 @@ swhich() { # swhich -j N: full forensics (submit line, reason, node, workdir)
     sacct -X -o jobid%15,jobname%30,partition%15,submit,start,end,elapsed,state%15,nodelist%25,reason%20,workdir%200,submitline%400 "$@" \
         | less -SX
 }
+# jwatch [-i secs] JOBID...: block until every job has left the queue, then
+# succeed only if all ended COMPLETED, so `jwatch N && next` chains on success.
+# Polls every JWATCH_INTERVAL (default 30) secs; state changes go to stderr. A
+# squeue error other than "Invalid job id" (purged = done) is retried, never
+# read as finished.
+jwatch() {
+    local iv=${JWATCH_INTERVAL:-30} id out qrc st fail=0
+    [[ $1 == -i ]] && { iv=$2; shift 2; }
+    (( $# )) || { echo "usage: jwatch [-i secs] JOBID..." >&2; return 2; }
+    local -a ids=("$@") left
+    local -A seen=()
+    local term='^(COMPLETED|CANCELLED|FAILED|TIMEOUT|OUT_OF_MEMORY|NODE_FAIL|PREEMPTED|BOOT_FAIL|DEADLINE)$'
+    # a mistyped id must not "succeed": it has to exist and be yours
+    local owner
+    for id in "${ids[@]}"; do
+        owner=$(squeue -h -j "$id" -o %u 2>/dev/null | head -1)
+        [[ $owner ]] || owner=$(sacct -j "$id" -X -n -o User%30 2>/dev/null | awk 'NF { print $1; exit }')
+        [[ $owner ]] || { echo "jwatch: no job $id on this cluster (SLURM_CONF=${SLURM_CONF-})" >&2; return 2; }
+        [[ $owner == "$USER" ]] || { echo "jwatch: job $id belongs to $owner, not you" >&2; return 2; }
+    done
+    while (( ${#ids[@]} )); do
+        left=()
+        for id in "${ids[@]}"; do
+            out=$(squeue -h -j "$id" -o %T 2>&1); qrc=$?
+            if [[ $out == *"Invalid job id"* ]]; then
+                continue                    # purged from the queue: done
+            elif (( qrc )); then
+                st="squeue error: ${out%%$'\n'*}"; left+=("$id")
+            elif grep -qvE "$term" <<< "$out" && [[ $out ]]; then
+                st=$(sort -u <<< "$out" | paste -sd,); left+=("$id")
+            else
+                continue                    # only terminal states left: done
+            fi
+            [[ ${seen[$id]-} == "$st" ]] || printf '[%(%T)T] %s %s\n' -1 "$id" "$st" >&2
+            seen[$id]=$st
+        done
+        ids=("${left[@]}")
+        (( ${#ids[@]} )) && sleep "$iv"
+    done
+    # final verdict from accounting (can lag the queue by a few secs)
+    for id in "$@"; do
+        local i=0
+        until out=$(sacct -j "$id" -X -n -o State%30 2>/dev/null | awk 'NF { $1 = $1; print }'); [[ $out ]] || (( ++i > 5 )); do
+            sleep 2
+        done
+        printf '[%(%T)T] %s finished: %s\n' -1 "$id" "$(paste -sd, <<< "${out:-unknown}")" >&2
+        [[ $out ]] && ! grep -qv '^COMPLETED$' <<< "$out" || fail=1
+    done
+    return "$fail"
+}
 
 # git
 function git_busy() {

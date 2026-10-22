@@ -5,6 +5,8 @@
 [[ -o emacs || -o vi ]] || return 0 # nixos build-time bash (ie bash --noediting) cannot run ble.sh/completions.
 [[ -z "${ANTIGRAVITY_AGENT:-}${CLAUDE_CODE:-}${KIRO_AGENT:-}" ]] || return 0
 
+[ "$(ulimit -n)" -lt 4096 ] && ulimit -n 4096 2>/dev/null
+
 _blesh="${BLESH_DIR:-$HOME/.local/share/blesh}/ble.sh"; [[ -f $_blesh ]] && source -- "$_blesh" --attach=none; unset _blesh;
 
 source "$HOME/.profile"
@@ -336,9 +338,13 @@ _dirlabel_update() {
 [[ " ${PROMPT_COMMAND[*]} " == *" _dirlabel_update "* ]] || PROMPT_COMMAND=(_dirlabel_update "${PROMPT_COMMAND[@]}")
 # PS1='$(_omp_get_primary)'
 
-if [ -n "$TMUX" ]; then
+# fix OMP right-prompt off-by-one (it wraps a char): tmux, and kitty with shell integration
+if [ -n "$TMUX" ] || [ -n "${KITTY_WINDOW_ID-}" ]; then
     # shellcheck disable=SC2016 # literal ${COLUMNS...} text for sed to rewrite
-    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')" # fix OMP right-prompt off-by-one
+    eval "$(declare -f _omp_get_primary | sed 's/terminal-width="${COLUMNS-0}"/terminal-width="$((${COLUMNS-0} - 1))"/')"
+fi
+
+if [ -n "$TMUX" ]; then
     tmux set -p @last_cmd "" 2>/dev/null
     __tmux_last_histnum=
     # Record the just-run command into @last_cmd (shown in the pane-border
