@@ -1,0 +1,30 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "phobian@tutanota.com",
+                "Name": "Mark Whittaker"
+            }
+        ],
+        "Category": "Plasma Look And Feel",
+        "Description": "Not Steampunk",
+        "EnabledByDefault": true,
+        "Id": "org.magpie.psion.desktop",
+        "License": "GPL 2+",
+        "Name": "Psion",
+        "ServiceTypes": [
+            "Plasma/LookAndFeel"
+        ],
+        "Version": "7.1",
+        "Website": "https://www.pling.com/u/phob1an/"
+    },
+    "X-KPackage-Dependencies": [
+    "kns://aurorae.knsrc/api.kde-look.org/2137702",
+    "kns://colorschemes.knsrc/api.kde-look.org/1235544",
+    "kns://plasma-themes.knsrc/api.kde-look.org/1235513",
+    "kns://icons.knsrc/api.kde-look.org/1305826",
+    "kns://wallpaper.knsrc/api.kde-look.org/2137692",
+    "kns://sddmtheme.knsrc/api.kde-look.org/1688188"
+    ]
+}

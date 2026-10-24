@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="31.999998"
+   height="32"
+   viewBox="0 0 31.999998 32"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="radiobutton.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#d1d1d1"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="5.872276"
+     inkscape:cx="-28.438718"
+     inkscape:cy="-2.0435007"
+     inkscape:current-layer="layer1"
+     showgrid="true">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="-106"
+       originy="-145"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       dotted="false"
+       gridanglex="30"
+       gridanglez="30"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-105.99999,-145)">
+    <circle
+       id="hint-size"
+       cx="113.99999"
+       cy="153"
+       style="fill:#332f42;fill-opacity:1;fill-rule:evenodd;stroke-width:1.0625"
+       r="8" />
+    <circle
+       id="symbol"
+       cx="132.99998"
+       cy="151"
+       style="opacity:0.9;fill:#847865;fill-opacity:1;fill-rule:evenodd;stroke-width:1.0625"
+       r="3" />
+    <g
+       id="normal"
+       transform="translate(5.9999977,-26)">
+      <circle
+         style="opacity:1;fill:#2c2c2c;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+         id="circle4"
+         cx="107.99999"
+         cy="195"
+         r="8" />
+      <circle
+         style="opacity:1;fill:#847865;fill-opacity:1;stroke:none;stroke-width:0.875;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+         id="circle2"
+         cx="107.99999"
+         cy="195"
+         r="7" />
+      <circle
+         style="opacity:1;fill:#2c2c2c;fill-opacity:1;stroke:none;stroke-width:0.75;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+         id="circle3"
+         cx="107.99999"
+         cy="195"
+         r="5.9999976" />
+    </g>
+    <g
+       id="hover"
+       transform="translate(22,-26)">
+      <circle
+         style="opacity:1;fill:none;fill-opacity:1;stroke:none;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+         id="circle5"
+         cx="107.99999"
+         cy="195"
+         r="8" />
+      <path
+         id="circle6"
+         style="opacity:1;fill:#938570;fill-opacity:1;stroke:none;stroke-width:0.875;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+         d="m 107.99999,188 a 7,7 0 0 0 -7,7 7,7 0 0 0 7,7 7,7 0 0 0 7,-7 7,7 0 0 0 -7,-7 z m 0,1 a 5.9999976,5.9999976 0 0 1 6,6 5.9999976,5.9999976 0 0 1 -6,6 5.9999976,5.9999976 0 0 1 -6,-6 5.9999976,5.9999976 0 0 1 6,-6 z" />
+    </g>
+  </g>
+</svg>

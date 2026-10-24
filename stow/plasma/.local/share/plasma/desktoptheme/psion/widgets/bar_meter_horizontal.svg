@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="42"
+   height="18.000002"
+   viewBox="0 0 42 18.000003"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="bar_meter_horizontal.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#d0d0d0"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="false"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="true"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     borderlayer="false"
+     inkscape:zoom="6.1871843"
+     inkscape:cx="35.55737"
+     inkscape:cy="24.243661"
+     inkscape:current-layer="layer1"
+     showgrid="true">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="-10"
+       originy="-13.999998"
+       spacingx="1"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-10,-13.999997)">
+    <rect
+       style="opacity:1;fill:#292929;fill-opacity:1;stroke-width:0.609474"
+       id="bar-inactive-center"
+       width="6"
+       height="6"
+       x="16"
+       y="20" />
+    <g
+       id="bar-inactive-top"
+       transform="translate(0,1.0000006)">
+      <rect
+         style="opacity:1;fill:#292929;fill-opacity:1;stroke-width:0.497633"
+         id="rect2"
+         width="6"
+         height="3.9999998"
+         x="16"
+         y="14.999999" />
+      <rect
+         style="opacity:1;fill:#565656;fill-opacity:1;stroke-width:0.248816"
+         id="rect3"
+         width="6"
+         height="0.99999923"
+         x="16"
+         y="14" />
+      <rect
+         style="opacity:1;fill:#1c1c1c;fill-opacity:1;stroke-width:0.248816"
+         id="rect4"
+         width="6"
+         height="0.99999923"
+         x="16"
+         y="12.999999" />
+    </g>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-inactive-top"
+       id="bar-inactive-bottom"
+       transform="matrix(1,0,0,-1,0,45.999997)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-inactive-top"
+       id="bar-inactive-right"
+       transform="rotate(90,19,22.999999)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-inactive-top"
+       id="bar-inactive-left"
+       transform="rotate(-90,19,22.999999)" />
+    <g
+       id="bar-inactive-topright"
+       transform="translate(6,1.0000006)">
+      <rect
+         style="opacity:1;fill:#1c1c1c;fill-opacity:1;stroke-width:0.609472"
+         id="rect7"
+         width="6"
+         height="5.9999995"
+         x="16"
+         y="12.999999" />
+      <rect
+         style="opacity:1;fill:#565656;fill-opacity:1;stroke-width:0.507894"
+         id="rect6"
+         width="5"
+         height="4.9999986"
+         x="16"
+         y="14" />
+      <rect
+         style="opacity:1;fill:#292929;fill-opacity:1;stroke-width:0.406316"
+         id="rect5"
+         width="4"
+         height="3.9999998"
+         x="16"
+         y="14.999999" />
+    </g>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-inactive-topright"
+       id="bar-inactive-topleft"
+       transform="matrix(-1,0,0,1,38,0)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-inactive-topright"
+       id="bar-inactive-bottomright"
+       transform="matrix(1,0,0,-1,0,45.999998)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-inactive-topright"
+       id="bar-inactive-bottomleft"
+       transform="rotate(180,19,22.999999)" />
+    <rect
+       style="opacity:1;fill:#847865;fill-opacity:1;stroke-width:0.609474"
+       id="bar-active-center"
+       width="6"
+       height="6"
+       x="40"
+       y="19.999998" />
+    <g
+       id="bar-active-top">
+      <rect
+         style="opacity:1;fill:none;fill-opacity:1;stroke-width:0.609474"
+         id="rect9"
+         width="6"
+         height="6"
+         x="40"
+         y="13.999999" />
+      <rect
+         style="opacity:1;fill:#847865;fill-opacity:1;stroke-width:0.430963"
+         id="rect10"
+         width="6"
+         height="2.9999998"
+         x="40"
+         y="17" />
+    </g>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-active-top"
+       id="bar-active-bottom"
+       transform="matrix(1,0,0,-1,0,45.999998)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-active-top"
+       id="bar-active-right"
+       transform="rotate(90,43.000001,22.999999)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-active-top"
+       id="bar-active-left"
+       transform="rotate(-90,42.999999,22.999999)" />
+    <g
+       id="bar-active-topright"
+       transform="translate(6.0000005)">
+      <rect
+         style="opacity:1;fill:none;fill-opacity:1;stroke-width:0.609474"
+         id="rect11"
+         width="6"
+         height="6"
+         x="40"
+         y="13.999999" />
+      <rect
+         style="opacity:1;fill:#847865;fill-opacity:1;stroke-width:0.304737"
+         id="rect12"
+         width="3"
+         height="2.9999998"
+         x="40"
+         y="17" />
+    </g>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-active-topright"
+       id="bar-active-topleft"
+       transform="matrix(-1,0,0,1,86,-2e-6)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-active-topright"
+       id="bar-active-bottomright"
+       transform="matrix(1,0,0,-1,-5e-7,45.999998)" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#bar-active-topright"
+       id="bar-active-bottomleft"
+       transform="rotate(180,43,22.999999)" />
+  </g>
+</svg>

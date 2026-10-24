@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg viewBox="0 0 50 50"
+ xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.2" baseProfile="tiny">
+<title>Qt SVG Document</title>
+<desc>Generated with Qt</desc>
+<defs>
+</defs>
+<g fill="none" stroke="black" stroke-width="1" fill-rule="evenodd" stroke-linecap="square" stroke-linejoin="bevel" >
+
+<g fill="none" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+</g>
+
+<g fill="#424242" fill-opacity="1" stroke="none" transform="matrix(2.08307,0,0,2.77778,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+<rect x="1.347" y="292.2" width="24" height="18"/>
+</g>
+
+<g fill="#020001" fill-opacity="1" stroke="none" transform="matrix(2.08307,0,0,2.77778,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+<rect x="1.347" y="292.2" width="24" height="1"/>
+</g>
+
+<g fill="#545454" fill-opacity="1" stroke="none" transform="matrix(2.08307,0,0,2.77778,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+opacity="0.964706" >
+<rect x="3.35" y="293.2" width="20" height="1"/>
+</g>
+
+<g fill="#545454" fill-opacity="1" stroke="none" transform="matrix(0,2.77778,-2.08307,0,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+opacity="0.964706" >
+<rect x="293.2" y="-25.35" width="17" height="1"/>
+</g>
+
+<g fill="#545454" fill-opacity="1" stroke="none" transform="matrix(0,2.77778,-2.08307,0,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+opacity="0.964706" >
+<rect x="293.2" y="-2.347" width="17" height="1"/>
+</g>
+
+<g fill="#202020" fill-opacity="1" stroke="none" transform="matrix(0,2.77778,-2.08307,0,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+<rect x="293.2" y="-24.35" width="15" height="1"/>
+</g>
+
+<g fill="#202020" fill-opacity="1" stroke="none" transform="matrix(0,2.77778,-2.08307,0,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+<rect x="293.2" y="-3.35" width="15" height="1"/>
+</g>
+
+<g fill="#545454" fill-opacity="1" stroke="none" transform="matrix(-2.08307,0,0,-2.77778,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+opacity="0.964706" >
+<rect x="-24.35" y="-310.2" width="22" height="1"/>
+</g>
+
+<g fill="#202020" fill-opacity="1" stroke="none" transform="matrix(-2.08307,0,0,-2.77778,-2.8059,-811.667)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+<rect x="-24.36" y="-309.2" width="22" height="1"/>
+</g>
+
+<g fill="#b2b2b2" fill-opacity="1" stroke="#000000" stroke-opacity="1" stroke-width="22" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" transform="matrix(2.08307,0,0,2.77778,-7.62196,-874)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+<path vector-effect="none" fill-rule="nonzero" d="M14.662,319.64 L14.662,322.64 L15.662,322.64 L15.662,320.64 L18.662,320.64 L18.662,323.64 L16.662,323.64 L16.662,324.64 L19.662,324.64 L19.662,319.64 L14.662,319.64 Z M16.662,324.64 L15.662,324.64 L15.662,326.64 L12.662,326.64 L12.662,323.64 L14.662,323.64 L14.662,322.64 L11.662,322.64 L11.662,327.64 L16.662,327.64 L16.662,324.64 Z "/>
+</g>
+
+<g fill="none" stroke="#000000" stroke-opacity="1" stroke-width="1" stroke-linecap="square" stroke-linejoin="bevel" transform="matrix(1,0,0,1,0,0)"
+font-family="PT Mono" font-size="10" font-weight="400" font-style="normal" 
+>
+</g>
+</g>
+</svg>

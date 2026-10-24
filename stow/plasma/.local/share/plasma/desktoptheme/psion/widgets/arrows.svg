@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   id="svg2"
+   width="44"
+   height="44"
+   version="1.1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="arrows.svg"
+   viewBox="0 0 41.25 41.25"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     pagecolor="#d1d1d1"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1447"
+     inkscape:window-height="916"
+     inkscape:document-units="px"
+     id="namedview43"
+     showgrid="true"
+     inkscape:zoom="12.456011"
+     inkscape:cx="10.757858"
+     inkscape:cy="20.311479"
+     inkscape:current-layer="svg2"
+     inkscape:pagecheckerboard="true"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:snap-global="true"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-nodes="true"
+     inkscape:bbox-paths="true"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:showpageshadow="false"
+     fit-margin-top="5"
+     fit-margin-left="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5"
+     inkscape:deskcolor="#d1d1d1">
+    <inkscape:grid
+       id="grid4"
+       units="px"
+       originx="37"
+       originy="-6"
+       spacingx="0.93750001"
+       spacingy="0.9375"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14902"
+       empspacing="5"
+       dotted="false"
+       gridanglex="30"
+       gridanglez="30"
+       visible="true" />
+  </sodipodi:namedview>
+  <defs
+     id="defs4">
+    <style
+       id="current-color-scheme"
+       type="text/css">.ColorScheme-Text {
+        color:#31363b;
+      }
+      .ColorScheme-Background{
+        color:#eff0f1;
+      }
+      .ColorScheme-ViewText {
+        color:#31363b;
+      }
+      .ColorScheme-ViewBackground{
+        color:#fcfcfc;
+      }
+      .ColorScheme-ViewHover {
+        color:#3daee9;
+      }
+      .ColorScheme-ViewFocus{
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonText {
+        color:#31363b;
+      }
+      .ColorScheme-ButtonBackground{
+        color:#eff0f1;
+      }
+      .ColorScheme-ButtonHover {
+        color:#3daee9;
+      }
+      .ColorScheme-ButtonFocus{
+        color:#3daee9;
+      }</style>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="down-arrow"
+     transform="translate(55.3125,-5.625)">
+    <rect
+       style="fill:none;fill-opacity:0.612613;stroke-width:1.47321"
+       height="20.625"
+       width="20.625"
+       x="-34.6875"
+       y="5.625"
+       id="rect5" />
+    <path
+       sodipodi:type="star"
+       style="opacity:1;fill:#ddc9a7;fill-opacity:1;stroke-width:1.94245;stroke-linecap:square;stroke-linejoin:round;paint-order:markers stroke fill"
+       id="path5"
+       inkscape:flatsided="false"
+       sodipodi:sides="3"
+       sodipodi:cx="-34.644417"
+       sodipodi:cy="19.388229"
+       sodipodi:r1="4.6673446"
+       sodipodi:r2="2.333672"
+       sodipodi:arg1="0.52359878"
+       sodipodi:arg2="1.5707963"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m -30.602378,21.721902 -4.042039,-1e-6 -4.042039,1e-6 2.02102,-3.500509 2.021019,-3.500508 2.021019,3.500508 z"
+       inkscape:transform-center-y="1.2499986"
+       transform="matrix(1.5075933,0,0,-1.0712728,27.823439,36.957583)" />
+  </g>
+  <use
+     x="0"
+     y="0"
+     xlink:href="#down-arrow"
+     id="up-arrow"
+     transform="matrix(1,0,0,-1,-20.625,20.625)" />
+  <use
+     x="0"
+     y="0"
+     xlink:href="#down-arrow"
+     id="left-arrow"
+     transform="rotate(90,20.625,20.625)" />
+  <use
+     x="0"
+     y="0"
+     xlink:href="#down-arrow"
+     id="right-arrow"
+     transform="rotate(-90,30.9375,30.9375)" />
+</svg>

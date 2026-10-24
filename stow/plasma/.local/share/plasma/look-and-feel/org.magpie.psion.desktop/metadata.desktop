@@ -1,0 +1,13 @@
+[Desktop Entry]
+Comment=Not Steampunk
+Name=Psion
+X-KDE-PluginInfo-Author=Mark Whittaker
+X-KDE-PluginInfo-Category=Plasma Look And Feel
+X-KDE-PluginInfo-Email=phobian@tutanota.com
+X-KDE-PluginInfo-EnabledByDefault=true
+X-KDE-PluginInfo-License=GPL 2+
+X-KDE-PluginInfo-Name=Psion
+X-KDE-PluginInfo-Version=7.1
+X-KDE-PluginInfo-Website=https://www.pling.com/u/phob1an
+X-KDE-ServiceTypes=Plasma/LookAndFeel
+X-KPackage-Dependencies=kns://aurorae.knsrc/api.kde-look.org/2137702,kns://colorschemes.knsrc/api.kde-look.org/1235544,kns://plasma-themes.knsrc/api.kde-look.org/1235513,kns://icons.knsrc/api.kde-look.org/1305826,kns://wallpaper.knsrc/api.kde-look.org/2137692,kns://sddmtheme.knsrc/api.kde-look.org/1688188
