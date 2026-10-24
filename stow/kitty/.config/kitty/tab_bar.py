@@ -8,11 +8,20 @@ cap only matches its body when the body colour is fully opaque (hence @1 for tha
 nothing is drawn in the window's background colour.
 The text is still tab_title_template (via draw_title), so {bell_symbol}/{activity_symbol} work.
 
+SSH grouping uses the active window's foreground SSH process, not its title (applications
+such as pi replace that). When 2+ tabs connect to the same destination, the host gets a grey
+chip at the start of the bar. Only matching "host: " prefixes are removed from those titles;
+application titles are left intact. A lone SSH tab keeps its prefix.
+
 Layout is our own rather than kitty's even split: every tab is sized to its title, clamped to
 [MIN_TAB, MAX_TAB] cells, and when they don't all fit the row scrolls to keep the active tab
 on screen, with \u2039 / \u203a marking hidden tabs. Hidden tabs draw nothing (so they aren't clickable).
 """
 
+from collections import Counter
+from os.path import basename
+
+from kittens.ssh.utils import get_connection_data
 from kitty.fast_data_types import Screen, get_boss, get_options
 from kitty.tab_bar import DrawData, ExtraData, TabBarData, as_rgb, draw_title
 
@@ -31,9 +40,10 @@ ACTIVE = (rgb("#61afef"), rgb("#2d3139"))    # tmux current window
 INACTIVE_FG = rgb("#a1a8b6")                 # theme inactive_tab_foreground
 ALERT = (rgb("#e06c75"), rgb("#2d3139"))     # bell: tmux ⚑ notification segment
 DIVIDER = rgb("#5c6370")                     # scroll markers
+CHIP = (rgb("#5c6370"), rgb("#2d3139"))      # shared-host chip at the bar's start
 
 _offset: dict = {}     # os_window_id -> index of the first visible tab (kept across redraws)
-_layout: tuple = ()    # (widths, first visible, end) for the pass in progress
+_layout: tuple = ()    # (widths, first visible, end, chips, hosts) for the pass in progress
 
 
 def inactive_bg() -> int:
@@ -53,13 +63,47 @@ def title_width(draw_data: DrawData, tab: TabBarData, index: int) -> int:
     return scratch.cursor.x
 
 
+def host_of(tab: TabBarData) -> str:
+    """Read the live SSH destination; title changes and remote programs cannot change it."""
+    live_tab = get_boss().tab_for_id(tab.tab_id)
+    window = live_tab.active_window if live_tab is not None else None
+    if window is None:
+        return ""
+    # Kitty already knows how to find its SSH kitten, including run-shell wrappers.
+    args = window.ssh_kitten_cmdline()
+    if not args:
+        args = next((p["cmdline"] for p in window.child.foreground_processes
+                     if p["cmdline"] and basename(p["cmdline"][0]).lower() in ("ssh", "ssh.exe")), [])
+    if not args:
+        return ""  # No SSH in the foreground: do not retain a host after disconnecting.
+    connection = get_connection_data(args, extra_args=("--kitten",))
+    return connection.hostname.rsplit("@", 1)[-1].strip("[]").lower() if connection else ""
+
+
+def strip_host(tab: TabBarData, host: str) -> TabBarData:
+    """Remove only a matching prefix, never characters from an app's replacement title."""
+    if host:
+        # Shell integration uses the short hostname even for a fully qualified destination.
+        for name in (host, host.split(".")[0]):
+            prefix = f"{name}: "
+            if tab.title[:len(prefix)].lower() == prefix:
+                return tab._replace(title=tab.title[len(prefix):])
+    return tab
+
+
 def compute_layout(draw_data: DrawData, columns: int) -> tuple:
     tm = get_boss().os_window_map.get(draw_data.os_window_id)
     tabs = list(tm.tab_bar_data) if tm is not None else []
+    hosts = [host_of(t) for t in tabs]
+    counts = Counter(h for h in hosts if h)
+    # hosts with 2+ tabs get a leading chip and are stripped from their tabs' titles
+    chips = sorted((h for h, n in counts.items() if n > 1), key=lambda h: (-counts[h], hosts.index(h)))
+    shown = [strip_host(t, h if h in chips else "") for t, h in zip(tabs, hosts)]
+    chip_cells = sum(len(h) + 4 for h in chips) + bool(chips)   # caps+pads per chip + one gap
     # title + two pads + two caps
-    widths = [min(MAX_TAB, max(MIN_TAB, title_width(draw_data, t, i + 1) + 4)) for i, t in enumerate(tabs)]
+    widths = [min(MAX_TAB, max(MIN_TAB, title_width(draw_data, t, i + 1) + 4)) for i, t in enumerate(shown)]
     active = next((i for i, t in enumerate(tabs) if t.is_active), 0)
-    room = columns - 2                         # leave space for the ‹ / › markers
+    room = columns - 2 - chip_cells            # leave space for the ‹ / › markers
     first = min(_offset.get(draw_data.os_window_id, 0), active)
     while first < active and sum(widths[first:active + 1]) > room:
         first += 1
@@ -68,7 +112,7 @@ def compute_layout(draw_data: DrawData, columns: int) -> tuple:
         used += widths[end]
         end += 1
     _offset[draw_data.os_window_id] = first
-    return widths, first, max(end, active + 1)
+    return widths, first, max(end, active + 1), chips, hosts
 
 
 def draw_tab(
@@ -78,9 +122,22 @@ def draw_tab(
     global _layout
     if index == 1 or not _layout:
         _layout = compute_layout(draw_data, screen.columns)
-    widths, first, end = _layout
+    widths, first, end, chips, hosts = _layout
     i = index - 1
     c = screen.cursor
+    c.bold = c.italic = False       # kitty sets per-tab font flags before calling us
+    if index == 1:                 # the shared-host chip(s) head the bar, even if tab 1 scrolled off
+        for h in chips:
+            c.fg, c.bg = CHIP[0], DEFAULT
+            screen.draw(CAP_L)
+            c.fg, c.bg = CHIP[1], CHIP[0]
+            c.bold = True
+            screen.draw(f" {h} ")
+            c.bold = False
+            c.fg, c.bg = CHIP[0], DEFAULT
+            screen.draw(CAP_R)
+        if chips:
+            screen.draw(" ")
     if i < first:                  # scrolled off to the left
         return c.x
     if i >= end:                   # scrolled off to the right: mark it once
@@ -93,13 +150,15 @@ def draw_tab(
         screen.draw(MORE_LEFT + " ")
 
     width = widths[i] if i < len(widths) else MIN_TAB
+    if i < len(hosts) and hosts[i] in chips:
+        tab = strip_host(tab, hosts[i])
     bg, fg = colors(tab)
 
     start = c.x
     c.fg, c.bg = bg, DEFAULT
     screen.draw(CAP_L)
     c.fg, c.bg = fg, bg
-    c.bold, c.italic = tab.is_active, not tab.is_active
+    c.bold, c.italic = tab.is_active, False
     screen.draw(" ")
     body = start + width - 1       # the last cell is the right cap
     draw_title(draw_data, screen, tab, index, max(1, body - c.x - 1))
