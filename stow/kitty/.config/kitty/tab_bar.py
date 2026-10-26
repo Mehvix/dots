@@ -7,6 +7,9 @@ transparent slant between them is the gap. kitty fades cell backgrounds but neve
 cap only matches its body when the body colour is fully opaque (hence @1 for that colour), and
 nothing is drawn in the window's background colour.
 The text is still tab_title_template (via draw_title), so {bell_symbol}/{activity_symbol} work.
+The focused tab uses the SSH destination's entry in ~/.config/omp/host-colors (the same table
+.profile uses for OMP_HOST_COLOR). Local tabs use OMP_HOST_COLOR or the local host's entry;
+unknown SSH destinations use the current-window blue, never the client's host color.
 
 SSH grouping uses the active window's foreground SSH process, not its title (applications
 such as pi replace that). When 2+ tabs connect to the same destination, the host gets a grey
@@ -18,8 +21,12 @@ Layout is our own rather than kitty's even split: every tab is sized to its titl
 on screen, with \u2039 / \u203a marking hidden tabs. Hidden tabs draw nothing (so they aren't clickable).
 """
 
+import re
 from collections import Counter
+from os import environ
 from os.path import basename
+from pathlib import Path
+from socket import gethostname
 
 from kittens.ssh.utils import get_connection_data
 from kitty.fast_data_types import Screen, get_boss, get_options
@@ -35,8 +42,25 @@ def rgb(hex_color: str) -> int:
     return as_rgb(int(hex_color.lstrip("#"), 16))
 
 
+def load_host_colors() -> dict[str, str]:
+    """Read the profile's shared table once; reloading kitty reloads the entries."""
+    config_home = Path(environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    try:
+        lines = (config_home / "omp/host-colors").read_text().splitlines()
+    except OSError:
+        return {}
+    result = {}
+    for line in lines:
+        fields = line.split()
+        if len(fields) >= 2 and not fields[0].startswith("#") and re.fullmatch(r"#[0-9a-fA-F]{6}", fields[1]):
+            result[fields[0].lower()] = fields[1]
+    return result
+
+
+HOST_COLORS = load_host_colors()
+
 # (background, foreground)
-ACTIVE = (rgb("#61afef"), rgb("#2d3139"))    # tmux current window
+ACTIVE = (rgb("#61afef"), rgb("#2d3139"))    # fallback: tmux current window
 INACTIVE_FG = rgb("#a1a8b6")                 # theme inactive_tab_foreground
 ALERT = (rgb("#e06c75"), rgb("#2d3139"))     # bell: tmux ⚑ notification segment
 DIVIDER = rgb("#5c6370")                     # scroll markers
@@ -54,7 +78,14 @@ def inactive_bg() -> int:
 
 
 def colors(tab: TabBarData) -> tuple:
-    return ACTIVE if tab.is_active else ALERT if tab.needs_attention else (inactive_bg(), INACTIVE_FG)
+    if tab.is_active:
+        remote_host = host_of(tab)
+        host = remote_host or gethostname().lower()
+        color = HOST_COLORS.get(host, HOST_COLORS.get(host.split(".")[0], ""))
+        if not remote_host:
+            color = environ.get("OMP_HOST_COLOR") or color
+        return (rgb(color), ACTIVE[1]) if re.fullmatch(r"#[0-9a-fA-F]{6}", color) else ACTIVE
+    return ALERT if tab.needs_attention else (inactive_bg(), INACTIVE_FG)
 
 
 def title_width(draw_data: DrawData, tab: TabBarData, index: int) -> int:

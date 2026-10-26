@@ -176,7 +176,6 @@ case "$_hostname" in
         export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
         export DOTNET_CLI_TELEMETRY_OPTOUT=1
 
-        export OMP_HOST_COLOR="#98c379"
         export OMP_HOST_ICON=$'\uef09'
 
         alias code="cd \${CODE_ROOT}"
@@ -191,21 +190,33 @@ case "$_hostname" in
     houdini)
         export CODE_ROOT="${HOME}/Documents/code"
         alias code="cd \${CODE_ROOT}"
-        export OMP_HOST_COLOR="#c678dd"
         export OMP_HOST_ICON=$'󱛠'
         append_path "$HOME/Android/Sdk/platform-tools"
         ;;
     wayside)
-        export OMP_HOST_COLOR="#56b6c2"
         export OMP_HOST_ICON=$'󰴺'
         ;;
     etx-maxv)
         # shellcheck disable=SC2155 # hostname -i failing just yields ":1"
         export DISPLAY=$(hostname -i):1
-        export OMP_HOST_COLOR="#6f6bf8"
         export OMP_HOST_ICON=$'\ue2a6'
         ;;
 esac
+
+_omp_host_colors_file="$XDG_CONFIG_HOME/omp/host-colors"
+_omp_host_color=
+if [[ -r $_omp_host_colors_file ]]; then
+    while read -r _host _color _comment; do
+        [[ $_color =~ ^#[[:xdigit:]]{6}$ ]] || continue
+        [[ $_host == "${_hostname%%.*}" ]] && _omp_host_color=$_color
+        if [[ $_host == "$_hostname" ]]; then
+            _omp_host_color=$_color
+            break
+        fi
+    done < "$_omp_host_colors_file"
+fi
+[[ $_omp_host_color ]] && export OMP_HOST_COLOR=$_omp_host_color
+unset _omp_host_colors_file _omp_host_color _host _color _comment
 
 if command -v fnm >/dev/null; then
     export FNM_DIR="$HOME/.local/share/fnm"
