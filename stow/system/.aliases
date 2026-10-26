@@ -7,6 +7,7 @@ alias ❯='' # NOOP prompt 1st char FSO quick and lazy copy paste; ble.sh strips
 alias restart="sudo reboot"
 alias bye="sudo shutdown -r now"
 alias zzz="sudo systemctl suspend -i"
+# alias jf='sudo journalctl --no-pager -n 50 -f -u' # jf SERVICE: recent logs + live follow
 
 alias xcopy='xsel --clipboard --input <'
 
@@ -448,7 +449,8 @@ function glastr() {
 }
 
 # yt-dlp
-alias yt-dlp='yt-dlp --cookies-from-browser brave:~/.config/BraveSoftware/Brave-Browser/Default --extractor-args "youtube:player_client=web_safari"'
+# alias yt-dlp='yt-dlp --cookies-from-browser brave:~/.config/BraveSoftware/Brave-Browser/Default --extractor-args "youtube:player_client=web_safari"'
+# ^take from cfg dont use this
 alias youtube-dl="yt-dlp"
 alias ytvs='yt-dlp --sponsorblock-mark all --sponsorblock-remove sponsor -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'
 alias ytv='yt-dlp -o "~/Pictures/photos-pc/Computer Misc/%(title)s.%(ext)s"'

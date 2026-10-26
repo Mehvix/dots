@@ -1,3 +1,6 @@
+--cookies-from-browser brave+gnomekeyring:~/.config/BraveSoftware/Brave-Browser/Default
+--extractor-args "youtube:player_client=web_safari"
+
 --download-archive ~/.config/yt-dlp/done.txt
 
 #--sponsorblock-mark=all
