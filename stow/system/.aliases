@@ -7,7 +7,6 @@ alias ❯='' # NOOP prompt 1st char FSO quick and lazy copy paste; ble.sh strips
 alias restart="sudo reboot"
 alias bye="sudo shutdown -r now"
 alias zzz="sudo systemctl suspend -i"
-# alias jf='sudo journalctl --no-pager -n 50 -f -u' # jf SERVICE: recent logs + live follow
 
 alias xcopy='xsel --clipboard --input <'
 
@@ -68,6 +67,8 @@ mv() {
     local dir
     dir="$(dirname "$src" 2>/dev/null)"
     [[ -z "$dir" || "$dir" == "." || ! -d "$dir" ]] && return
+    # prompt only if $dir now holds nothing but dotfiles
+    compgen -G "$dir/*" >/dev/null && return
     # check for leftover dotfiles
     local dots
     dots=( "$dir"/.!(.|) )
@@ -138,6 +139,57 @@ vsplit() { # vsplit PATH: a var's value one entry per line (split on : or space)
 }
 prange() { # prange N M file: lines N-M, quits at M so huge logs are fast
     sed -n "${1},${2}p;${2}q" "$3"
+}
+_keys_decode() { # CSI key sequences in $1 -> "ctrl+shift+right press" etc (kitty protocol + xterm modifiers)
+    # introducer: CSI "\e[", SS3 "\eO" (unmodified F1-F4, app-mode arrows), or linux console "\e[[" (F1-F5)
+    local s=$1 re=$'\e''(\[\[?|O)([0-9]*)[0-9:]*(;([0-9]*)(:([0-9]))?)?[0-9;:]*([u~A-Z])' key m name mod out
+    while [[ $s =~ $re ]]; do
+        key=${BASH_REMATCH[2]} m=$(( ${BASH_REMATCH[4]:-1} - 1 ))
+        [[ ${BASH_REMATCH[1]} == '[[' ]] && key=con
+        case ${BASH_REMATCH[7]}${key} in
+            [A-E]con) name=F$(( $(printf %d "'${BASH_REMATCH[7]}") - 64 )) ;;
+            u9) name=tab ;; u13) name=enter ;; u27) name=esc ;; u32) name=space ;; u127) name=backspace ;;
+            u57358) name=capslock ;;
+            u5744[1-9]|u5745[0-2]) # bare modifier keys: 57441-46 left, 57447-52 right
+                name=$( (( key < 57447 )) && echo l || echo r)$(set -- shift ctrl alt super hyper meta; shift $(( (key - 57441) % 6 )); echo "$1") ;;
+            u*) if (( key < 57344 )); then printf -v name "\\U$(printf %08x "$key")"; else name=key$key; fi ;;
+            A*) name=up ;; B*) name=down ;; C*) name=right ;; D*) name=left ;; H*) name=home ;; F*) name=end ;;
+            P*) name=F1 ;; Q*) name=F2 ;; R*) name=F3 ;; S*) name=F4 ;; E*) name=kp5 ;;
+            '~2') name=insert ;; '~3') name=delete ;; '~5') name=pgup ;; '~6') name=pgdn ;;
+            '~7') name=home ;; '~8') name=end ;; '~1'[1-5]) name=F$(( key - 10 )) ;;
+            '~1'[7-9]|'~2'[01]) name=F$(( key - 11 )) ;; '~2'[34]) name=F$(( key - 12 )) ;;
+            *) name=${BASH_REMATCH[0]#?} ;;
+        esac
+        mod=
+        (( m & 4 )) && mod+=ctrl+;  (( m & 2 )) && mod+=alt+;   (( m & 1 )) && mod+=shift+
+        (( m & 8 )) && mod+=super+; (( m & 16 )) && mod+=hyper+; (( m & 32 )) && mod+=meta+
+        case ${BASH_REMATCH[6]} in 2) name+=' repeat' ;; 3) name+=' release' ;; esac
+        out+="$mod$name  "
+        s=${s#*"${BASH_REMATCH[0]}"}
+    done
+    printf '%s' "$out"
+}
+keys() { # show what each key sends: caret notation (as ctrl-v shows it), decoded name, hex; ctrl-c quits
+    # uses the kitty keyboard protocol when the terminal has it, so bare modifiers and releases show up
+    # (-l: legacy bytes only). Cmd = super, and only if the terminal/OS doesn't swallow the combo first.
+    # not bash `read -n`: it puts the tty back in cbreak mode, re-enabling CR->LF and ctrl-c as SIGINT
+    local old hex s kitty=
+    old=$(command stty -g) || return
+    command stty raw -echo min 1 time 1 # a read returns once 100ms pass with no new byte, so one key = one read
+    if [[ $1 != -l ]]; then
+        printf '\e[?u\e[c' # kitty-protocol query, then primary DA which every terminal answers
+        s=$(command dd bs=256 count=1 2>/dev/null)
+        [[ $s =~ $'\e'\[\?[0-9]+u ]] && kitty=1 && printf '\e[>11u' # disambiguate + event types + all keys
+    fi
+    if [[ $kitty ]]; then printf 'press keys, ctrl-c to quit (kitty protocol: modifiers and releases shown)\r\n'
+    else printf 'press keys, ctrl-c to quit (no kitty keyboard protocol%s: bare modifiers are invisible)\r\n' "${TMUX:+ through tmux}"; fi
+    while hex=$(command dd bs=256 count=1 2>/dev/null | command od -An -tx1 -v | command tr -s ' \n' ' ') && [[ $hex ]]; do
+        s=$(command xxd -r -p <<< "$hex" | command tr -d '\0')
+        printf '%-18s %-30s %s\r\n' "$(command xxd -r -p <<< "$hex" | command cat -v)" "$(_keys_decode "$s")" "${hex# }"
+        [[ $hex == ' 03 ' || $s =~ $'\e'\[99\;5(:1)?u ]] && break
+    done
+    [[ $kitty ]] && printf '\e[<u'
+    command stty "$old"
 }
 function tls() { # pick a tmux session (most recent first) and attach/switch; ctrl-x kills
   # rows are "<date> <*|space><!|space>\t<name>"; the prefix is fixed-width so names line up
@@ -376,6 +428,59 @@ jwatch() {
     done
     return "$fail"
 }
+
+# journalctl (systemd logs), jc* since jf is taken by slurm. sudo so system
+# units are readable. SINCE takes journalctl syntax: "1h ago", today,
+# "2026-10-27 09:00". Without SINCE, history views cover this boot only.
+_jc() { sudo journalctl "$@"; }
+jcf() { # jcf UNIT [N]: last N (default 50) lines of UNIT, then live follow
+    [[ $1 ]] || { echo "usage: jcf UNIT [N]" >&2; return 2; }
+    _jc --no-pager -n "${2:-50}" -f -u "$1"
+}
+jcfu() { # jcfu UNIT [N]: jcf for a --user unit (no sudo)
+    [[ $1 ]] || { echo "usage: jcfu UNIT [N]" >&2; return 2; }
+    journalctl --user --no-pager -n "${2:-50}" -f -u "$1"
+}
+jcu() { # jcu UNIT [SINCE]: UNIT's full log in the pager, opened at the end
+    [[ $1 ]] || { echo "usage: jcu UNIT [SINCE]" >&2; return 2; }
+    if [[ $2 ]]; then _jc -e -u "$1" --since "$2"; else _jc -e -b -u "$1"; fi
+}
+jce() { # jce [SINCE]: err and worse, all units
+    if [[ $1 ]]; then _jc -e -p err --since "$1"; else _jc -e -b -p err; fi
+}
+jcg() { # jcg REGEX [SINCE]: grep messages, all units (lowercase REGEX = case-insensitive)
+    [[ $1 ]] || { echo "usage: jcg REGEX [SINCE]" >&2; return 2; }
+    if [[ $2 ]]; then _jc -e -g "$1" --since "$2"; else _jc -e -b -g "$1"; fi
+}
+jck() { _jc --no-pager -k -n "${1:-50}" -f; } # jck [N]: kernel messages (dmesg), live follow
+jcb() { _jc -e -b "${1:--1}"; }               # jcb [N]: boot N (default -1 = previous), e.g. after a crash
+alias jcbl="sudo journalctl --list-boots"     # boot ids/offsets for jcb
+alias jcdu="sudo journalctl --disk-usage"
+jcfail() { # failed units, each with its last 10 log lines
+    local -a units; local u
+    mapfile -t units < <(systemctl --failed --no-legend --plain | awk '{ print $1 }')
+    (( ${#units[@]} )) || { echo "no failed units"; return; }
+    for u in "${units[@]}"; do
+        printf '\e[31m== %s\e[0m\n' "$u"
+        _jc --no-pager -n 10 -u "$u"
+    done
+}
+# completion: UNIT from systemctl (loaded + installed; --user for jcfu), jcb from
+# --list-boots. No sudo here (a password prompt would hang Tab), so jcb only
+# completes when the journal is readable as you.
+_jc_complete() {
+    (( COMP_CWORD == 1 )) || return
+    local words
+    case $1 in
+        jcb) words=$(journalctl --list-boots --no-pager 2>/dev/null | awk '{ print $1 }') ;;
+        *)   local -a scope=(); [[ $1 == jcfu ]] && scope=(--user)
+             words=$( { systemctl "${scope[@]}" list-units --all --plain --no-legend --full
+                        systemctl "${scope[@]}" list-unit-files --no-legend --full; } 2>/dev/null \
+                      | awk '{ print $1 }' | sort -u) ;;
+    esac
+    mapfile -t COMPREPLY < <(compgen -W "$words" -- "$2")
+}
+complete -F _jc_complete jcf jcfu jcu jcb
 
 # git
 function git_busy() {
