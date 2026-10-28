@@ -87,6 +87,17 @@ mv() {
     fi
 }
 
+# Clear the screen AND saved scrollback (kitty's terminfo omits E3).
+clear() {
+    # Preserve the external command's explicit options, e.g. clear -x.
+    if (( $# )); then command clear "$@"; return; fi
+    command clear || return
+    printf '\033[3J'
+    if [[ -n "$TMUX" ]]; then
+        tmux clear-history
+    fi
+}
+
 # shortcuts
 alias h=history
 alias c=clear

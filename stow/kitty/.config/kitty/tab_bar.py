@@ -10,6 +10,10 @@ The text is still tab_title_template (via draw_title), so {bell_symbol}/{activit
 The focused tab uses the SSH destination's entry in ~/.config/omp/host-colors (the same table
 .profile uses for OMP_HOST_COLOR). Local tabs use OMP_HOST_COLOR or the local host's entry;
 unknown SSH destinations use the current-window blue, never the client's host color.
+While a new window's foreground process is unresolved, its background stays unset rather
+than briefly using the client's color. A confirmed local process restores local coloring.
+Foreground SSH changes are checked every 250ms, redrawing only when destinations change:
+kitty does not emit a tab-bar event when a foreground process forks/execs into SSH.
 
 SSH grouping uses the active window's foreground SSH process, not its title (applications
 such as pi replace that). When 2+ tabs connect to the same destination, the host gets a grey
@@ -28,8 +32,9 @@ from os.path import basename
 from pathlib import Path
 from socket import gethostname
 
-from kittens.ssh.utils import get_connection_data
-from kitty.fast_data_types import Screen, get_boss, get_options
+from kittens.ssh.utils import get_connection_data, is_kitten_cmdline
+from kitty.child import cached_process_data
+from kitty.fast_data_types import Screen, add_timer, get_boss, get_options, remove_timer
 from kitty.tab_bar import DrawData, ExtraData, TabBarData, as_rgb, draw_title
 
 CAP_L, CAP_R = "\ue0ba", "\ue0bc"   # solid slant caps
@@ -68,6 +73,34 @@ CHIP = (rgb("#5c6370"), rgb("#2d3139"))      # shared-host chip at the bar's sta
 
 _offset: dict = {}     # os_window_id -> index of the first visible tab (kept across redraws)
 _layout: tuple = ()    # (widths, first visible, end, chips, hosts) for the pass in progress
+_host_states: dict = {}   # os_window_id -> (tab_id, host) pairs; None=pending, ''=local
+_host_timer: int | None = None
+
+
+def check_host_changes(timer_id: int) -> None:
+    """Catch SSH startup/exit even when neither the title nor focus changes."""
+    states = {}
+    # Share one fresh process-group scan across all tabs in this tick.
+    with cached_process_data():
+        for os_window_id, tm in tuple(get_boss().os_window_map.items()):
+            state = tuple((tab.tab_id, host_of(tab)) for tab in tm.tab_bar_data)
+            states[os_window_id] = state
+            if state != _host_states.get(os_window_id):
+                tm.mark_tab_bar_dirty()
+    _host_states.clear()
+    _host_states.update(states)
+
+
+def ensure_host_monitor() -> None:
+    """One monitor per kitty process; replace the old module's timer on config reload."""
+    global _host_timer
+    if _host_timer is not None:
+        return
+    boss = get_boss()
+    previous = getattr(boss, "_dots_tab_host_timer", None)
+    if previous is not None:
+        remove_timer(previous)
+    _host_timer = boss._dots_tab_host_timer = add_timer(check_host_changes, 0.25, True)
 
 
 def inactive_bg() -> int:
@@ -80,6 +113,8 @@ def inactive_bg() -> int:
 def colors(tab: TabBarData) -> tuple:
     if tab.is_active:
         remote_host = host_of(tab)
+        if remote_host is None:
+            return DEFAULT, INACTIVE_FG
         host = remote_host or gethostname().lower()
         color = HOST_COLORS.get(host, HOST_COLORS.get(host.split(".")[0], ""))
         if not remote_host:
@@ -94,21 +129,33 @@ def title_width(draw_data: DrawData, tab: TabBarData, index: int) -> int:
     return scratch.cursor.x
 
 
-def host_of(tab: TabBarData) -> str:
-    """Read the live SSH destination; title changes and remote programs cannot change it."""
+def is_ssh_command(args: list[str]) -> bool:
+    """Recognize the original launch command, including the hold-after-SSH wrapper."""
+    if len(args) > 2 and basename(args[0]) == "kitten" and args[1] == "run-shell":
+        args = args[2:]
+    return bool(args and (basename(args[0]).lower() in ("ssh", "ssh.exe") or is_kitten_cmdline(args)))
+
+
+def host_of(tab: TabBarData) -> str | None:
+    """Live destination, '' for a confirmed local process, or None while starting up."""
     live_tab = get_boss().tab_for_id(tab.tab_id)
     window = live_tab.active_window if live_tab is not None else None
     if window is None:
-        return ""
+        return None
     # Kitty already knows how to find its SSH kitten, including run-shell wrappers.
     args = window.ssh_kitten_cmdline()
     if not args:
-        args = next((p["cmdline"] for p in window.child.foreground_processes
-                     if p["cmdline"] and basename(p["cmdline"][0]).lower() in ("ssh", "ssh.exe")), [])
-    if not args:
-        return ""  # No SSH in the foreground: do not retain a host after disconnecting.
+        commands = [p["cmdline"] for p in window.child.foreground_processes if p["cmdline"]]
+        args = next((q for q in commands if basename(q[0]).lower() in ("ssh", "ssh.exe")), [])
+        if not args:
+            # A forked SSH child may still have kitty/kitten's bootstrap argv before exec.
+            # Missing process information is not evidence that this is a local shell.
+            if not commands or (is_ssh_command(window.child.argv) and
+                                all(basename(q[0]).lower() in ("kitty", "kitten") for q in commands)):
+                return None
+            return ""  # Confirmed local process, including the shell after SSH exits.
     connection = get_connection_data(args, extra_args=("--kitten",))
-    return connection.hostname.rsplit("@", 1)[-1].strip("[]").lower() if connection else ""
+    return connection.hostname.rsplit("@", 1)[-1].strip("[]").lower() if connection else None
 
 
 def strip_host(tab: TabBarData, host: str) -> TabBarData:
@@ -126,6 +173,7 @@ def compute_layout(draw_data: DrawData, columns: int) -> tuple:
     tm = get_boss().os_window_map.get(draw_data.os_window_id)
     tabs = list(tm.tab_bar_data) if tm is not None else []
     hosts = [host_of(t) for t in tabs]
+    _host_states[draw_data.os_window_id] = tuple((t.tab_id, h) for t, h in zip(tabs, hosts))
     counts = Counter(h for h in hosts if h)
     # hosts with 2+ tabs get a leading chip and are stripped from their tabs' titles
     chips = sorted((h for h, n in counts.items() if n > 1), key=lambda h: (-counts[h], hosts.index(h)))
@@ -152,6 +200,7 @@ def draw_tab(
 ) -> int:
     global _layout
     if index == 1 or not _layout:
+        ensure_host_monitor()
         _layout = compute_layout(draw_data, screen.columns)
     widths, first, end, chips, hosts = _layout
     i = index - 1
@@ -187,7 +236,8 @@ def draw_tab(
 
     start = c.x
     c.fg, c.bg = bg, DEFAULT
-    screen.draw(CAP_L)
+    # Default foreground means text color, not background: blank caps on uncolored tabs.
+    screen.draw(CAP_L if bg != DEFAULT else " ")
     c.fg, c.bg = fg, bg
     c.bold, c.italic = tab.is_active, False
     screen.draw(" ")
@@ -200,5 +250,5 @@ def draw_tab(
         screen.draw(" ")
     c.bold = c.italic = False
     c.fg, c.bg = bg, DEFAULT
-    screen.draw(CAP_R)
+    screen.draw(CAP_R if bg != DEFAULT else " ")
     return c.x
