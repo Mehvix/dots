@@ -30,14 +30,21 @@ Plug 'nvim-tree/nvim-tree.lua'
 Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 Plug 'eero-lehtinen/oklch-color-picker.nvim'
 
-Plug 'tpope/vim-fugitive'
+Plug 'sindrets/diffview.nvim'
+" local fork (branch fast-branch-status): branch info from refs, not a full `git status`
+if isdirectory(expand('~/src/neogit'))
+  Plug '~/src/neogit'
+else
+  Plug 'NeogitOrg/neogit'
+endif
 Plug 'tpope/vim-sleuth'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-surround'
 " Plug 'chaoren/vim-wordmotion'
 Plug 'lukas-reineke/indent-blankline.nvim'
 Plug 'echasnovski/mini.indentscope'
-Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'master', 'do': ':TSUpdate \| TSInstall! lua python javascript typescript c cpp bash diff git_config git_rebase haskell ini latex perl nix' }
+" main = the nvim 0.12+ rewrite (master is frozen, 0.11 max); needs tree-sitter-cli >= 0.26.1
+Plug 'nvim-treesitter/nvim-treesitter', { 'branch': 'main', 'do': ':TSUpdate \| TSInstall lua python javascript typescript c cpp bash diff git_config git_rebase haskell ini latex perl nix systemverilog' }
 Plug 'nvim-treesitter/nvim-treesitter-context'
 Plug 'stevearc/conform.nvim'
 " Plug 'godlygeek/tabular'
@@ -90,6 +97,12 @@ vim.g.gitgutter_sign_modified = '>'
 vim.g.gitgutter_sign_removed = '-'
 vim.g.gitgutter_sign_removed_first_line = '^'
 vim.g.gitgutter_sign_modified_removed = '<'
+
+-- neogit (status/stage/commit) + diffview (side-by-side review, editable worktree side)
+require('diffview').setup({ enhanced_diff_hl = true })
+require('neogit').setup({
+  integrations = { diffview = true, telescope = true },
+})
 
 -- formatting with conform
 require("conform").setup({
@@ -371,15 +384,17 @@ require('telescope').setup {
 }
 require('telescope').load_extension('fzf')
 
--- Store oldfiles relative to the roots named in $PATH_ABBREV_VARS (colon-
--- separated var names, set per-site, see .profile _hist_rewrite_abbrev): a path
--- under a root is folded to a literal "$NAME/..." token on save, and expanded
--- back to the *current* $NAME on read. This makes the recent-files list
--- portable across checkouts (a file remembered in one checkout opens in
--- another). Longest root wins for nested roots. Note: nvim does NOT auto-expand
--- $VAR in paths (filereadable/:edit see the literal), so we keep the in-memory
--- list absolute and only write tokens to ShaDa. $HOME is always an implicit
--- root, folded to "~/..." (same as the shell history rewrite).
+-- Recent files are kept in our own list (stdpath('state')/recent_files), on top
+-- of ShaDa oldfiles: ShaDa writes buffer marks under their absolute names and
+-- ignores v:oldfiles, so it can't hold folded paths. Paths under the roots named
+-- in $PATH_ABBREV_VARS (colon-separated var names, set per-site, see .profile
+-- _hist_rewrite_abbrev) are folded to a literal "$NAME/..." token on save, and
+-- expanded back to the *current* $NAME on read. This makes the list portable
+-- across checkouts (a file remembered in one checkout opens in another).
+-- Longest root wins for nested roots. Note: nvim does NOT auto-expand $VAR in
+-- paths (filereadable/:edit see the literal), so tokens only live in the file.
+-- $HOME is always an implicit root, folded to "~/..." (same as the shell
+-- history rewrite).
 local function abbrev_roots()        -- { {name, value}, ... } longest value first
   local roots = {}
   for name in (vim.env.PATH_ABBREV_VARS or ''):gmatch('[^:]+') do
@@ -423,14 +438,40 @@ local function oldfile_is_junk(file)
     or vim.fn.filereadable(file) == 0
 end
 
--- junk-free telescope old-files
+-- Folded recent-files list, newest first. Re-read and rewritten (tmp+rename)
+-- on every add, so concurrent nvims merge instead of clobbering each other.
+local recent_path = vim.fn.stdpath('state') .. '/recent_files'
+local recent_max = 500
+local function recent_read()
+  return vim.fn.filereadable(recent_path) == 1 and vim.fn.readfile(recent_path) or {}
+end
+local function recent_add(file)
+  local tok = path_abbrev(file, abbrev_roots())
+  local out = { tok }
+  for _, f in ipairs(recent_read()) do
+    if f ~= tok and #out < recent_max then out[#out + 1] = f end
+  end
+  local tmp = recent_path .. '.' .. vim.fn.getpid()
+  if vim.fn.writefile(out, tmp) == 0 then os.rename(tmp, recent_path) end
+end
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost' }, {
+  callback = function(ev)
+    if vim.bo[ev.buf].buftype ~= '' then return end
+    local file = vim.api.nvim_buf_get_name(ev.buf)
+    if file ~= '' and not oldfile_is_junk(file) then recent_add(file) end
+  end,
+})
+
+-- junk-free telescope old-files: our list first, then ShaDa oldfiles
 local function telescope_oldfiles()
   local seen, cleaned = {}, {}
-  for _, f in ipairs(vim.v.oldfiles) do
-    f = path_expand(f)
-    if not seen[f] and not oldfile_is_junk(f) then
-      seen[f] = true
-      cleaned[#cleaned + 1] = f
+  for _, list in ipairs({ recent_read(), vim.v.oldfiles }) do
+    for _, f in ipairs(list) do
+      f = path_expand(f)
+      if not seen[f] and not oldfile_is_junk(f) then
+        seen[f] = true
+        cleaned[#cleaned + 1] = f
+      end
     end
   end
   vim.v.oldfiles = cleaned
@@ -499,6 +540,10 @@ for _, m in ipairs({
   -- git hunks
   { 'n', '<A-k>',       '<cmd>GitGutterPrevHunk<cr>' },                  -- alt+k, jump to next git hunk
   { 'n', '<A-j>',       '<cmd>GitGutterNextHunk<cr>' },                  -- alt+j, jump to next git hunk
+  -- neogit / diffview
+  { 'n', '<leader>g',   '<cmd>Neogit<cr>' },                             -- status: s/u stage/unstage, c commit
+  { 'n', '<leader>d',   '<cmd>DiffviewOpen<cr>' },                       -- review worktree vs index
+  { 'n', '<leader>D',   '<cmd>DiffviewClose<cr>' },
   -- treesitter context
   { 'n', '[c',          function() require('treesitter-context').go_to_context(vim.v.count1) end }, -- jump to enclosing context header
   { 'n', ']c',          function() _G.tsctx_go_to_context_end(vim.v.count1) end },                  -- jump to enclosing context end/tail
@@ -553,18 +598,6 @@ end
 
 vim.keymap.set('c', '/', function() return expand_dot_to_current_dir('/') end, { expr = true })
 vim.keymap.set('c', '<Space>', function() return expand_dot_to_current_dir(' ') end, { expr = true })
-
--- Clean up oldfiles before saving ShaDa: drop junk, then fold paths under $PATH_ABBREV_VARS
-vim.api.nvim_create_autocmd("VimLeavePre", {
-  callback = function()
-    local out, roots = {}, abbrev_roots()
-    for _, f in ipairs(vim.v.oldfiles) do
-      f = path_expand(f)
-      if not oldfile_is_junk(f) then out[#out + 1] = path_abbrev(f, roots) end
-    end
-    vim.v.oldfiles = out
-  end,
-})
 EOF
 
 

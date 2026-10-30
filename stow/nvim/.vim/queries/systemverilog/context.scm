@@ -1,7 +1,6 @@
-; Sticky-scroll context for (System)Verilog — the parser language is `verilog`
-; but nvim-treesitter-context ships its query under `systemverilog/`, so that
-; query is never found (it looks up by parser lang). This file supplies one for
-; `verilog` and, crucially, pins the enclosing `module` header.
+; Sticky-scroll context for (System)Verilog. Overrides (no `; extends`) the
+; query nvim-treesitter-context ships for `systemverilog`, which lacks the
+; enclosing `module` header, functions/tasks and generate blocks.
 
 (module_declaration) @context
 

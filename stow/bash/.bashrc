@@ -387,6 +387,11 @@ if [ -n "$TMUX" ]; then
       trap '__tmux_preexec' DEBUG
       PROMPT_COMMAND[0]="__tmux_precmd; ${PROMPT_COMMAND[0]}"   # bash <5.1 runs only [0]
     fi
+    tfix() {
+      # TODO botchbotchbotchbotch wtf is underlying issue
+      local s; s=$(tmux display -p '#S') || return
+      tmux detach-client -E "tmux attach -t '=$s'"
+    }
 fi
 
 # Attach ble.sh- everything prior is buffered
