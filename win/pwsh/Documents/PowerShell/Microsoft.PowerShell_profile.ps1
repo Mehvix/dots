@@ -36,11 +36,14 @@ if ($ompExe) {
 # reporting and the wheel stops scrolling / cycles history. Programs re-enable
 # what they need on startup, so this only clears leftovers. Same idea as the
 # ble.sh PRECMD reset in stow/bash/.config/blesh/init.sh.
+# No ?1049l (leave alt-screen): WT 1.27+ restores the saved cursor on it even when
+# already on the main screen, and since this also runs during omp's transient
+# redraw on Enter, command output then overwrites the prompt line.
 $__promptInner = $function:prompt
 function prompt {
     $p = & $__promptInner   # first: omp reads $? / $LASTEXITCODE, which any statement here would clobber
     $e = [char]27
-    [Console]::Write("$e[?1000l$e[?1002l$e[?1003l$e[?1006l$e[?1004l$e[?2004l$e[?1049l$e[?25h")
+    [Console]::Write("$e[?1000l$e[?1002l$e[?1003l$e[?1006l$e[?1004l$e[?2004l$e[?25h")
     $p
 }
 
@@ -100,8 +103,12 @@ function get { curl.exe -O -L @args }
 function ipp { Write-Host "Your ip is:"; (Invoke-RestMethod https://api.ipify.org) }
 function npp { & "C:\Program Files\Notepad++\notepad++.exe" $args }
 function m { mwinit.exe -f }
-function s { ssh.exe @args }
-function se { ssh.exe etx }
+# Pin the GitHub Win32-OpenSSH build (winget Microsoft.OpenSSH.Preview); the inbox
+# C:\Windows\System32\OpenSSH copy lags behind and can win on PATH.
+$sshExe = 'C:\Program Files\OpenSSH\ssh.exe'
+if (-not (Test-Path $sshExe)) { $sshExe = 'ssh.exe' }
+function s { & $sshExe @args }
+function se { & $sshExe etx }
 
 # git
 'gl', 'gp', 'gcm' | ForEach-Object { Remove-Item "Alias:$_" -Force -ErrorAction SilentlyContinue }
