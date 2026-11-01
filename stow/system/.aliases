@@ -132,6 +132,46 @@ alias pic=picard
 alias pt=puddletag
 alias sk="QT_QPA_PLATFORM=xcb ./SoulseekQt-2024-6-30.AppImage"
 
+# X11 screen capture: pishot [output.png] [ssh-host]
+pishot() (
+    set -o pipefail
+    local output="${1:-pi-display.png}" host="${2:-pi}"
+    ssh "$host" 'DISPLAY=:0 xwd -root -silent' | command magick xwd:- "$output" || return
+    printf '%s\n' "$output"
+)
+
+pistream() (
+    set -o pipefail
+    local host="${1:-pi}" fps="${2:-3}"
+    if (( $# == 1 )) && [[ $1 =~ ^[0-9]+$ ]]; then
+        host=pi fps=$1
+    fi
+    if [[ ! $fps =~ ^[1-9][0-9]*$ ]]; then
+        printf '%s\n' 'pistream: fps must be a positive integer.' >&2
+        return 2
+    fi
+    ssh -n "$host" "ffmpeg -hide_banner -loglevel error -nostdin \
+        -f x11grab -framerate $fps -i :0 \
+        -vf scale=1280:-2 -c:v mjpeg -q:v 5 -f mjpeg -" |
+        command mpv --no-config --vo=kitty --profile=low-latency --no-audio \
+            --demuxer=lavf --demuxer-lavf-format=mjpeg \
+            --demuxer-lavf-probesize=32 --demuxer-lavf-analyzeduration=0 \
+            --no-correct-pts --container-fps-override="$fps" --cache=no -
+)
+
+ocr() {
+    local image="${1:-pi-display.png}" language="${2:-eng}"
+    if command -v tesseract >/dev/null 2>&1; then
+        command tesseract "$image" stdout -l "$language" --psm 11
+    elif command -v nix-shell >/dev/null 2>&1; then
+        OCR_IMAGE="$image" OCR_LANGUAGE="$language" nix-shell -p tesseract --run \
+            'exec tesseract "$OCR_IMAGE" stdout -l "$OCR_LANGUAGE" --psm 11'
+    else
+        printf '%s\n' 'ocr: install Tesseract (or nix-shell) first.' >&2
+        return 127
+    fi
+}
+
 # new commands
 alias ipp="echo Your ip is; dig +short myip.opendns.com @resolver1.opendns.com;"
 alias speedtest='curl -o /dev/null http://speedtest.wdc01.softlayer.com/downloads/test10.zip'
@@ -276,7 +316,7 @@ alias sw="ssh wayside"
 alias se="ssh etx"
 alias sa="ssh ark"
 alias sp="ssh thepod"
-alias si="ssh pi"
+alias sm="ssh pi" # moode
 alias sn="ssh pon"
 
 alias v=nvim
