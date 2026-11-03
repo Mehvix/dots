@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# ff - find files by path regex, using the fastest source that can answer.
+#
+# Usage:
+#   ff [-i] [-u] [-F] PATTERN... [-- DIR...]
+#      PATTERN  rg regex matched against the path (index: cwd-relative; fd fallback: full
+#               path, so don't anchor with ^); several are OR'd.
+#               'paxi_if\.sv$'  '/rtl/.*fifo'  'hierarchy\.yaml$'
+#      -i       case-insensitive
+#      -F       patterns are literal strings, not regexes
+#      -u       also search untracked/ignored/generated files (fd -u; ~1-2 s per checkout)
+#      DIR...   limit to these dirs (default: cwd); paths print relative to cwd
+#
+# Inside a git checkout, tracked files come from the index: `git ls-files | rg` takes ~0.15 s
+# on a monorepo on NFS, vs 4-16 s for fd and ~18 s for find. If nothing tracked matches
+# (or with -u) it falls back to `fd -u -E .git`. Outside git it uses fd -u directly.
+set -uo pipefail
+
+usage() { sed -n '2,/^set -uo/p' "$0" | sed '$d; s/^# \{0,1\}//'; }
+rgopt=() fdopt=() pats=() dirs=() untracked=0
+while (( $# )); do case $1 in
+    -h|--help) usage; exit 0 ;;
+    -i) rgopt+=(-i); fdopt+=(-i); shift ;;
+    -F) rgopt+=(-F); fdopt+=(-F); shift ;;
+    -u) untracked=1; shift ;;
+    --) shift; dirs=("$@"); break ;;
+    -*) echo "ff: unknown option $1" >&2; exit 2 ;;
+    *) pats+=("$1"); shift ;;
+esac; done
+(( ${#pats[@]} )) || { usage; exit 2; }
+(( ${#dirs[@]} )) || dirs=(.)
+rge=(); for p in "${pats[@]}"; do rge+=(-e "$p"); done
+
+hits=0
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    # tracked files from the index (no worktree walk); --full-name off so paths are cwd-relative
+    out=$(GIT_OPTIONAL_LOCKS=0 git ls-files -- "${dirs[@]}" | rg "${rgopt[@]}" "${rge[@]}")
+    [[ $out ]] && { printf '%s\n' "$out"; hits=1; }
+fi
+if (( untracked || ! hits )); then
+    fpat=$(IFS='|'; echo "${pats[*]}")
+    (( ${#pats[@]} > 1 )) && [[ " ${fdopt[*]-} " == *" -F "* ]] && { echo "ff: -F with several patterns needs the git index; use regexes" >&2; exit 2; }
+    (( hits )) && echo "-- untracked/ignored (fd -u):" >&2
+    # fd matches the full path; drop what the index already printed
+    fd -u -E .git "${fdopt[@]}" --full-path "$fpat" "${dirs[@]}" | sed 's|^\./||' |
+        if (( hits )); then grep -vxF -f <(printf '%s\n' "$out"); else cat; fi
+fi

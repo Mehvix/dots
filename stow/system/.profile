@@ -25,7 +25,10 @@ prepend_path () {
 # append_path "$HOME/bin"
 append_path "$HOME/.local/bin"
 append_path "/usr/local/bin"
+append_path "$HOME/dots/scripts"
 
+
+[ -r "$HOME/.config/rg/ripgreprc" ] && export RIPGREP_CONFIG_PATH="$HOME/.config/rg/ripgreprc"
 
 # lazy completion: `_comp_lazy cmd 'generator cmd'` registers a stub; the first TAB on cmd
 # evals the generator's output (a completion script that re-registers cmd) and returns 124,
@@ -143,7 +146,6 @@ case "$_hostname" in
         }
 
         export CODE_ROOT="${HOME}/Documents/Code"   # TODO other hosts
-        prepend_path "${HOME}/dots/scripts"  # TODO other hosts
 
         export DEBUGINFOD_URLS="https://debuginfod.archlinux.org"
 

@@ -1,0 +1,21 @@
+#!/bin/bash
+# mkwt <dest> <rev> <dir>...  - cone-sparse worktree of the current (big) checkout, LFS smudge skipped.
+#   <dest>: an absolute path outside the checkout, e.g. <scratch>/<task>/wt_<name> (a bare name
+#   lands inside the checkout). Run from inside the source checkout.
+#   ~4 s and a few MB instead of a full monorepo worktree.
+#   LFS files in the cone stay pointer stubs; real content: git lfs pull -I <dirs>
+#   Remove later with: git worktree remove --force <dest>
+set -euo pipefail
+[ $# -ge 3 ] || { echo "usage: mkwt <abs scratch dir>/<task>/wt_<name> <rev> <dir>...  (run from the source checkout)" >&2; exit 2; }
+dest=$1 rev=$2; shift 2
+export GIT_LFS_SKIP_SMUDGE=1
+git worktree add -q --no-checkout --detach "$dest" "$rev"
+cd "$dest"
+git sparse-checkout init --cone
+git sparse-checkout set "$@"
+git checkout -q --detach "$rev"
+# attrs of the materialized files only: a ':(attr:filter=lfs)' pathspec tests every index entry (20-40 s on NFS)
+files=$(git ls-files -t | sed -n 's/^[^S] //p')   # one index read feeds both counts
+lfs=$(printf '%s\n' "$files" | git check-attr --stdin filter | grep -c ': filter: lfs$' || true)
+[ "$lfs" -gt 0 ] && echo "mkwt: note: $lfs LFS file(s) in the cone are pointer stubs (smudge skipped); for the content: git -C $PWD lfs pull -I '$(IFS=,; echo "$*")'" >&2
+echo "ready: $dest  ($(printf '%s\n' "$files" | grep -c .) files materialized)"

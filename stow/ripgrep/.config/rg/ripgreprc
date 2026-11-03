@@ -1,0 +1,9 @@
+# ~/.config/rg/ripgreprc  (RIPGREP_CONFIG_PATH; bypass with --no-config)
+# Host-local skip list for bulk test-data dirs, kept out of this repo (gitignored). rg errors on a
+# missing ignore file, so only export RIPGREP_CONFIG_PATH on hosts that have one.
+# Absolute on purpose: rg passes config lines verbatim (no ~ or $HOME expansion).
+--ignore-file=/home/maxv/.config/rg/ignore
+# default 12, helps w latency bound filesys
+--threads=48
+# rg -t rtl: the built-in 'sv' type misses .vh/.svi/.inc
+--type-add=rtl:*.{sv,svh,v,vh,svi,inc}

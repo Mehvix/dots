@@ -1,0 +1,33 @@
+#!/bin/bash
+# ghist <string> <path>... [-- extra git-log args, e.g. --all -n 5 --since=2026-10-01]
+#   When was <string> added/removed in these paths? (git log -S with a mandatory pathspec)
+#   Scoped: 0.2-0.8 s. Unscoped -S walks every commit (~9 min on a NFS monorepo) -> refused
+#   here, and so are repo-wide paths: . ./ :/ * and any top-level dir or <top-level dir>/* (judged
+#   repo-relative; '.' in a leaf dir is fine). Only in big repos, and not with --since/--after in the git-log args.
+#   Tip: find candidate files first with   rg -l '<string>' <dirs>
+usage="usage: ghist <string> <path>... [-- git-log args] (a pathspec is required; find files with: rg -l STRING <dirs>)"
+[ $# -ge 2 ] || { echo "$usage" >&2; exit 2; }
+s=$1; shift
+[ "$1" = -- ] && shift   # tolerate: ghist STR -- <path>... [-- args]
+paths=() extra=()
+while [ $# -gt 0 ]; do [ "$1" = -- ] && { shift; extra=("$@"); break; }; paths+=("$1"); shift; done
+[ ${#paths[@]} -gt 0 ] || { echo "$usage" >&2; exit 2; }
+{ read -r top; read -r pre; } < <(git rev-parse --show-toplevel --show-prefix) || exit 2
+# repo-wide refusal only for big repos (index > 2 MB; a 139k-file monorepo's is 13-17 MB, small repos' KB)
+# and unbounded walks
+big=0; [ "$(stat -c %s "$(git rev-parse --git-path index)" 2>/dev/null || echo 0)" -gt 2000000 ] && big=1
+[[ " ${extra[*]} " == *" --since"* || " ${extra[*]} " == *" --after"* ]] && big=0
+for p in "${paths[@]}"; do
+    [[ $p == -* ]] && { echo "ghist: '$p' is not a path; git-log args go last: ghist STR <path>... -- $p" >&2; exit 2; }
+    (( big )) || continue
+    case $p in :/*) a=$top/${p#:/} ;; /*) a=$p ;; *) a=$top/$pre$p ;; esac
+    rel=$(realpath -m --relative-to="$top" "$a") wide=0
+    case $rel in
+        .|\*) wide=1 ;;
+        */\*) [[ ${rel%/\*} != */* ]] && wide=1 ;;   # <top-level dir>/*
+        */*) ;;
+        *) [ -d "$top/$rel" ] && wide=1 ;;           # a top-level dir
+    esac
+    (( wide )) && { echo "ghist: '$p' is repo-wide (-S over it takes minutes). Find the files first: rg -l '$s' <dirs>, then ghist '$s' <files or leaf dir>" >&2; exit 2; }
+done
+exec git log --no-renames --format='%h %ad %an %s' --date=short "${extra[@]}" -S"$s" -- "${paths[@]}"

@@ -191,6 +191,11 @@ vsplit() { # vsplit PATH: a var's value one entry per line (split on : or space)
 prange() { # prange N M file: lines N-M, quits at M so huge logs are fast
     sed -n "${1},${2}p;${2}q" "$3"
 }
+savetok() { # savetok FILE: paste a secret (hidden) into FILE, mode 600, no trailing newline
+    [[ $1 ]] || { echo "usage: savetok FILE" >&2; return 1; }
+    local t
+    install -m 600 /dev/null "$1" && read -rsp 'token: ' t && echo && printf '%s' "$t" > "$1"
+}
 _keys_decode() { # CSI key sequences in $1 -> "ctrl+shift+right press" etc (kitty protocol + xterm modifiers)
     # introducer: CSI "\e[", SS3 "\eO" (unmodified F1-F4, app-mode arrows), or linux console "\e[[" (F1-F5)
     local s=$1 re=$'\e''(\[\[?|O)([0-9]*)[0-9:]*(;([0-9]*)(:([0-9]))?)?[0-9;:]*([u~A-Z])' key m name mod out
@@ -243,15 +248,17 @@ keys() { # show what each key sends: caret notation (as ctrl-v shows it), decode
     command stty "$old"
 }
 function tls() { # pick a tmux session (most recent first) and attach/switch; ctrl-x kills
-  # rows are "<date> <*|space><!|space>\t<name>"; the prefix is fixed-width so names line up
-  local list='tmux ls -F "#{session_activity}	#{t/f/%b %d %H#:%M:session_activity} #{?session_attached,*, }#{?#{W:#{P:#{@attn}}},!, }	#{session_name}" | sort -rn | cut -f2-'
+  # rows are "<date> <*|space><!|space>\t<name>\t<dirs>"; the prefix is fixed-width so names line up.
+  # dirs = deduped basenames of each window's active pane path, dimmed and padded into a column (the
+  # padding lives in the dirs field so {2} stays the bare name); the query matches name or dirs
+  local list='tmux ls -F "#{session_activity}	#{t/f/%b %d %H#:%M:session_activity} #{?session_attached,*, }#{?#{W:#{P:#{@attn}}},!, }	#{session_name}	#{W:#{b:pane_current_path} }" | sort -rn | cut -f2- | awk -F"\t" -v OFS="\t" "{n=split(\$3,a,\" \");s=\"\";split(\"\",seen);for(i=1;i<=n;i++)if(!seen[a[i]]++)s=s\" \"a[i];p[NR]=\$1;nm[NR]=\$2;d[NR]=s;if(length(\$2)>w)w=length(\$2)} END{for(r=1;r<=NR;r++)printf \"%s\t%s\t\033[2m%*s%s\033[0m\n\",p[r],nm[r],w-length(nm[r])+1,\"\",d[r]}"'
   local sel
-  sel=$(eval "$list" | fzf --delimiter='\t' --nth=2 --tabstop=1 --no-sort --reverse --height=60% \
+  sel=$(eval "$list" | fzf --ansi --delimiter='\t' --nth=2,3 --tabstop=1 --no-sort --reverse --height=60% \
       --header='enter: attach  ctrl-x: kill  (* attached, ! needs attention)' \
       --bind="ctrl-x:execute-silent(tmux kill-session -t ={2})+reload:$list" \
       --preview='tmux list-panes -s -t ={2} -F "#{?@attn,⚑ #I.#P #{@attn},}" | grep .; tmux list-panes -s -t ={2} -F "#{pane_current_path}" | sort -u; echo; tmux capture-pane -ep -t ={2}:' \
       --preview-window=right,60%) || return
-  sel=${sel#*$'\t'}
+  sel=${sel#*$'\t'} sel=${sel%%$'\t'*}
   if [[ $TMUX ]]; then tmux switch-client -t "=$sel"; else tmux attach -t "=$sel"; fi
 }
 function extract() {

@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# waitfor: block until every TARGET is finished, then exit. Built to be launched
+# by Claude Code with run_in_background (the harness notifies on exit, so nothing
+# polls), or in the foreground with -t SECS below the 600 s Bash cap.
+#
+# usage: waitfor [-t SECS] [-i SECS] [-q] TARGET...
+#   JOBID | job:JOBID    slurm job left the queue (squeue), verdict from sacct
+#   task:ID | PATH.output Claude Code background task (ID like bq8re4twv): the
+#                        harness appends "[exited with code N]" / "[killed]"
+#   pid:N                local process gone (any owner, same node only)
+#   proc:REGEX           no process of $USER matches `pgrep -f REGEX`, ignoring
+#                        waitfor itself, its ancestors (the bash -c that carries
+#                        REGEX in its argv) and its children
+#   file:PATH            PATH exists (rc file, *_DONE sentinel)
+#   log:PATH=REGEX       REGEX (grep -E) appears in PATH, e.g. 'log:sim.log=CPU time'
+#   -t SECS   give up after SECS (exit 124). Default 0 = no limit.
+#   -i SECS   poll interval. Default 30 for slurm, 5 otherwise.
+#   -q        no state-change chatter on stderr
+# exit: 0 all finished OK; 1 any finished badly (slurm state != COMPLETED, task
+# exit != 0 or killed); 124 timeout; 2 usage / unknown target.
+# One summary line per target goes to stdout at the end.
+set -u
+timeout=0 iv='' quiet=0
+while getopts ':t:i:qh' o; do
+    case $o in
+        t) timeout=$OPTARG ;; i) iv=$OPTARG ;; q) quiet=1 ;;
+        h) sed -n '2,/^set -u/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
+        *) echo "waitfor: bad option -$OPTARG (see -h)" >&2; exit 2 ;;
+    esac
+done
+shift $((OPTIND - 1))
+(( $# )) || { echo "usage: waitfor [-t SECS] [-i SECS] [-q] TARGET... (see -h)" >&2; exit 2; }
+
+say() { (( quiet )) || printf '[%(%T)T] %s\n' -1 "$*" >&2; }
+TERM_RE='^(COMPLETED|CANCELLED.*|FAILED|TIMEOUT|OUT_OF_MEMORY|NODE_FAIL|PREEMPTED|BOOT_FAIL|DEADLINE)$'
+
+# own ancestry, so proc:REGEX never matches the shell whose argv holds REGEX
+declare -A mine=()
+p=$$
+while [[ $p && $p != 0 && $p != 1 ]]; do
+    mine[$p]=1
+    p=$(awk '{print $4}' "/proc/$p/stat" 2>/dev/null)
+done
+is_child_of_me() {  # $1 pid: true if $$ is one of its ancestors
+    local q=$1
+    while [[ $q && $q != 0 && $q != 1 ]]; do
+        [[ $q == "$$" ]] && return 0
+        q=$(awk '{print $4}' "/proc/$q/stat" 2>/dev/null)
+    done
+    return 1
+}
+
+task_path() {  # resolve a harness task id to its .output file (this node's /tmp)
+    local id=$1 f
+    [[ $id == */* ]] && { printf '%s\n' "$id"; return; }
+    for f in /tmp/claude-"$(id -u)"/*/*/tasks/"$id".output; do
+        [[ -e $f ]] && { printf '%s\n' "$f"; return; }
+    done
+    return 1
+}
+
+# normalise targets -> kind|arg ; validate up front so a typo can't "succeed"
+declare -a kinds=() args=()
+need_slurm=0
+for t in "$@"; do
+    case $t in
+        job:*|[0-9][0-9][0-9][0-9]*) k=job a=${t#job:}; [[ $a =~ ^[0-9]+(_[0-9]+)?$ ]] || { echo "waitfor: bad job id '$a'" >&2; exit 2; }; need_slurm=1 ;;
+        task:*|*.output) k=task; a=$(task_path "${t#task:}") || { echo "waitfor: no task output for '${t#task:}' under /tmp/claude-$(id -u) on $(hostname -s) (tasks are node-local)" >&2; exit 2; } ;;
+        pid:*) k=pid a=${t#pid:}; [[ $a =~ ^[0-9]+$ ]] || { echo "waitfor: bad pid '$a'" >&2; exit 2; } ;;
+        proc:*) k=proc a=${t#proc:} ;;
+        file:*) k=file a=${t#file:} ;;
+        log:*=*) k=log a=${t#log:} ;;
+        *) echo "waitfor: unknown target '$t' (see -h)" >&2; exit 2 ;;
+    esac
+    kinds+=("$k"); args+=("$a")
+done
+if (( need_slurm )); then
+    command -v squeue >/dev/null && command -v sacct >/dev/null || { echo "waitfor: squeue/sacct not on PATH (module load slurm?)" >&2; exit 2; }
+    for i in "${!kinds[@]}"; do
+        [[ ${kinds[$i]} == job ]] || continue
+        a=${args[$i]}
+        owner=$(squeue -h -j "$a" -o %u 2>/dev/null | head -1)
+        [[ $owner ]] || owner=$(sacct -j "$a" -X -n -o User%30 2>/dev/null | awk 'NF { print $1; exit }')
+        hint=; command -v sj >/dev/null && hint="; on another cluster? try: sj wait $a"
+        [[ $owner ]] || { echo "waitfor: no job $a on this cluster (SLURM_CONF=${SLURM_CONF-unset})$hint" >&2; exit 2; }
+        [[ $owner == "$USER" ]] || say "job $a belongs to $owner"
+    done
+fi
+[[ $iv ]] || { (( need_slurm )) && iv=30 || iv=5; }
+
+# check one target: prints state, returns 0 = finished, 1 = still waiting
+check() {
+    local k=$1 a=$2 out rc last pids p
+    case $k in
+        job)
+            out=$(squeue -h -j "$a" -o %T 2>&1); rc=$?
+            if [[ $out == *"Invalid job id"* ]]; then echo gone; return 0; fi
+            if (( rc )); then echo "squeue error: ${out%%$'\n'*}"; return 1; fi  # never read an error as done
+            [[ -z $out ]] && { echo gone; return 0; }
+            grep -qvE "$TERM_RE" <<< "$out" && { sort -u <<< "$out" | paste -sd,; return 1; }
+            echo gone; return 0 ;;
+        task)
+            last=$(tail -n 1 "$a" 2>/dev/null)
+            [[ $last =~ ^\[(exited\ with\ code\ -?[0-9]+|killed)\]$ ]] && { echo "${last//[\[\]]/}"; return 0; }
+            echo running; return 1 ;;
+        pid)
+            [[ -d /proc/$a ]] && { echo running; return 1; }; echo gone; return 0 ;;
+        proc)
+            pids=()
+            for p in $(pgrep -u "$USER" -f -- "$a"); do
+                [[ ${mine[$p]-} ]] && continue
+                is_child_of_me "$p" && continue
+                pids+=("$p")
+            done
+            (( ${#pids[@]} )) && { echo "running (pids ${pids[*]:0:5})"; return 1; }
+            echo gone; return 0 ;;
+        file)
+            [[ -e $a ]] && { echo exists; return 0; }; echo waiting; return 1 ;;
+        log)
+            local f=${a%%=*} re=${a#*=}
+            [[ -e $f ]] || { echo "no file yet"; return 1; }
+            grep -qE -- "$re" "$f" && { echo matched; return 0; }
+            echo waiting; return 1 ;;
+    esac
+}
+
+start=$SECONDS
+declare -A seen=() done_at=()
+left=("${!kinds[@]}")
+while (( ${#left[@]} )); do
+    next=()
+    for i in "${left[@]}"; do
+        st=$(check "${kinds[$i]}" "${args[$i]}"); r=$?
+        [[ ${seen[$i]-} == "$st" ]] || say "${kinds[$i]}:${args[$i]} $st"
+        seen[$i]=$st
+        if (( r == 0 )); then done_at[$i]=$((SECONDS - start)); else next+=("$i"); fi
+    done
+    left=("${next[@]}")
+    (( ${#left[@]} )) || break
+    if (( timeout > 0 && SECONDS - start >= timeout )); then
+        for i in "${left[@]}"; do echo "${kinds[$i]}:${args[$i]}: TIMEOUT after ${timeout}s (last: ${seen[$i]})"; done
+        for i in "${!done_at[@]}"; do echo "${kinds[$i]}:${args[$i]}: ${seen[$i]} (+${done_at[$i]}s)"; done
+        exit 124
+    fi
+    s=$iv
+    (( timeout > 0 && SECONDS - start + s > timeout )) && s=$(( timeout - (SECONDS - start) ))
+    (( s > 0 )) && sleep "$s"
+done
+
+# verdicts
+fail=0
+for i in "${!kinds[@]}"; do
+    k=${kinds[$i]} a=${args[$i]} v=${seen[$i]}
+    case $k in
+        job)  # accounting can lag the queue by a few seconds
+            n=0
+            until v=$(sacct -j "$a" -X -n -o State%30 2>/dev/null | awk 'NF { $1 = $1; print }' | paste -sd,); [[ $v ]] || (( ++n > 5 )); do sleep 2; done
+            [[ ${v:-unknown} =~ ^(COMPLETED,?)+$ ]] || fail=1 ;;
+        task) [[ $v == "exited with code 0" ]] || fail=1 ;;
+    esac
+    echo "$k:$a: ${v:-unknown} (+${done_at[$i]-?}s)"
+done
+exit "$fail"

@@ -1,0 +1,56 @@
+# bash-completion looks here before the system dirs, so this wraps the stock
+# git completion: source the real one, then patch it.
+IFS=: read -ra _gitcomp_dirs <<< "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+for _gitcomp_dir in "${_gitcomp_dirs[@]}"; do
+  [[ -f $_gitcomp_dir/bash-completion/completions/git ]] || continue
+  . "$_gitcomp_dir/bash-completion/completions/git"
+  break
+done
+unset _gitcomp_dir _gitcomp_dirs
+
+# `git add`/`checkout`/`restore` path completion runs `ls-files --modified`,
+# which lstat()s every tracked file under the match one at a time. On NFS with
+# the attribute cache cold (idle > ~1min) that's a round trip each: 18s for
+# 1.8k files in a big checkout, so the TAB watchdog kills it and TAB just
+# bells. `diff-files --name-only` lists the same set (changed + deleted) but
+# preloads the index stats across threads (core.preloadIndex): 0.5s cold.
+# So --modified is split off to diff-files; the rest (--others --directory
+# ...) stays on ls-files, cheap with core.untrackedCache.
+# Each git call is also bounded to GIT_COMP_LS_TIMEOUT secs (two of them stay
+# under COMPLETE_TIMEOUT); on timeout list the filesystem instead, in the same
+# shape (paths relative to $1; __git_index_files keeps the first component).
+# That offers unchanged files too, but beats no answer.
+if declare -F __git_ls_files_helper &>/dev/null; then
+  _gitcomp_bounded() {
+    timeout "${GIT_COMP_LS_TIMEOUT:-0.9}" \
+      git ${__git_C_args:+"${__git_C_args[@]}"} ${__git_dir:+--git-dir="$__git_dir"} \
+        -c core.quotePath=false "$@" 2>/dev/null
+  }
+  __git_ls_files_helper ()
+  {
+    local pat="${3//\\/\\\\}*"
+    if [ "$2" = "--committable" ]; then
+      __git -C "$1" -c core.quotePath=false diff-index \
+        --name-only --relative HEAD -- "$pat"
+      return
+    fi
+    local out= part rc=0 opts=" $2 "
+    if [[ $opts == *' --modified '* ]]; then
+      opts=${opts// --modified / }
+      part=$(_gitcomp_bounded -C "$1" diff-files --name-only --relative -- "$pat")
+      rc=$?; out+=$part${part:+$'\n'}
+    fi
+    # NOTE: $opts is not quoted in order to support multiple options
+    if ((rc != 124)) && [[ ${opts// } ]]; then
+      part=$(_gitcomp_bounded -C "$1" ls-files --exclude-standard $opts -- "$pat")
+      rc=$?; out+=$part
+    fi
+    if ((rc != 124)); then
+      [[ $out ]] && printf '%s\n' "${out%$'\n'}"
+      return "$rc"
+    fi
+    # __git_index_files passes "?" for an empty match (a glob for ls-files)
+    local m=$3; [[ $m == '?' ]] && m=
+    (builtin cd -- "${1:-.}" 2>/dev/null && compgen -f -- "$m")
+  }
+fi
