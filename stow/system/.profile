@@ -28,7 +28,7 @@ append_path "/usr/local/bin"
 append_path "$HOME/dots/scripts"
 
 
-[ -r "$HOME/.config/rg/ripgreprc" ] && export RIPGREP_CONFIG_PATH="$HOME/.config/rg/ripgreprc"
+[ -r "$HOME/.config/rg/ignore" ] && export RIPGREP_CONFIG_PATH="$HOME/.config/rg/ripgreprc"
 
 # lazy completion: `_comp_lazy cmd 'generator cmd'` registers a stub; the first TAB on cmd
 # evals the generator's output (a completion script that re-registers cmd) and returns 124,

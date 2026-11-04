@@ -250,8 +250,10 @@ keys() { # show what each key sends: caret notation (as ctrl-v shows it), decode
 function tls() { # pick a tmux session (most recent first) and attach/switch; ctrl-x kills
   # rows are "<date> <*|space><!|space>\t<name>\t<dirs>"; the prefix is fixed-width so names line up.
   # dirs = deduped basenames of each window's active pane path, dimmed and padded into a column (the
-  # padding lives in the dirs field so {2} stays the bare name); the query matches name or dirs
-  local list='tmux ls -F "#{session_activity}	#{t/f/%b %d %H#:%M:session_activity} #{?session_attached,*, }#{?#{W:#{P:#{@attn}}},!, }	#{session_name}	#{W:#{b:pane_current_path} }" | sort -rn | cut -f2- | awk -F"\t" -v OFS="\t" "{n=split(\$3,a,\" \");s=\"\";split(\"\",seen);for(i=1;i<=n;i++)if(!seen[a[i]]++)s=s\" \"a[i];p[NR]=\$1;nm[NR]=\$2;d[NR]=s;if(length(\$2)>w)w=length(\$2)} END{for(r=1;r<=NR;r++)printf \"%s\t%s\t\033[2m%*s%s\033[0m\n\",p[r],nm[r],w-length(nm[r])+1,\"\",d[r]}"'
+  # padding lives in the dirs field so {2} stays the bare name), preceded in cyan by the names of
+  # manually renamed windows (automatic-rename off; auto names are just bash/claude noise); the
+  # query matches name, window names or dirs
+  local list='tmux ls -F "#{session_activity}	#{t/f/%b %d %H#:%M:session_activity} #{?session_attached,*, }#{?#{W:#{P:#{@attn}}},!, }	#{session_name}	#{W:#{b:pane_current_path} }	#{W:#{?automatic-rename,,#{window_name} }}" | sort -rn | cut -f2- | awk -F"\t" -v OFS="\t" "{n=split(\$3,a,\" \");s=\"\";split(\"\",seen);for(i=1;i<=n;i++)if(!seen[a[i]]++)s=s\" \"a[i];x=\$4;sub(/ +\$/,\"\",x);p[NR]=\$1;nm[NR]=\$2;d[NR]=s;wn[NR]=x==\"\"?\"\":\" \"x;if(length(\$2)>w)w=length(\$2)} END{for(r=1;r<=NR;r++)printf \"%s\t%s\t%*s\033[36m%s\033[0m\033[2m%s\033[0m\n\",p[r],nm[r],w-length(nm[r])+1,\"\",wn[r],d[r]}"'
   local sel
   sel=$(eval "$list" | fzf --ansi --delimiter='\t' --nth=2,3 --tabstop=1 --no-sort --reverse --height=60% \
       --header='enter: attach  ctrl-x: kill  (* attached, ! needs attention)' \
