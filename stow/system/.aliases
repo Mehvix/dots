@@ -110,6 +110,7 @@ alias p="ps uaxf"
 alias x="chmod +x"
 
 # non-core shortcuts
+alias i="kitten icat" 
 alias python3='uv run python'
 alias py='uv tool run bpython'
 alias dl=dirlabel # see omp cfg
