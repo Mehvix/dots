@@ -39,11 +39,44 @@ from kitty.fast_data_types import (
     patch_global_colors, remove_timer,
 )
 from kitty.tab_bar import DrawData, ExtraData, TabBarData, as_rgb, draw_title
+from kitty.window import Window
 
 CAP_L, CAP_R = "\ue0ba", "\ue0bc"   # solid slant caps
 MORE_LEFT, MORE_RIGHT = "\u2039", "\u203a"   # ‹ ›
 MIN_TAB, MAX_TAB = 14, 36   # cells per tab, including padding and both caps
 DEFAULT = 0                 # cell colour "default": the (translucent) background
+
+
+def install_split_margins() -> None:
+    """Keep full outer margins, but share one margin between adjacent split panes.
+
+    Kitty has no separate inner-gap option. Use the split tree's outer edges,
+    not previous frame geometry, so adding/removing/rotating panes works immediately.
+    Preserve the original method across config reloads rather than wrapping twice.
+    """
+    original = getattr(Window, "_dots_original_margin", Window.effective_margin)
+    Window._dots_original_margin = original
+
+    def effective_margin(window, edge):
+        margin = original(window, edge)
+        # Explicit per-window overrides retain Kitty's normal semantics.
+        if getattr(window.margin, edge) is not None:
+            return margin
+        tab = window.tabref()
+        if tab is None or tab.current_layout.name != "splits" or tab.has_single_window_visible():
+            return margin
+        group = tab.windows.group_for_window(window)
+        if group is None:
+            return margin
+        root = tab.current_layout.pairs_root
+        if group.id in root.edge_windows(edge):
+            return margin
+        # The gap includes both panes' borders. Split odd pixel counts between
+        # opposing edges so the combined gap is one full margin, not two.
+        available = max(0, margin - 2 * window.effective_border())
+        return (available + (edge in ("right", "bottom"))) // 2
+
+    Window.effective_margin = effective_margin
 
 
 def rgb(hex_color: str) -> int:
@@ -282,4 +315,5 @@ def draw_tab(
 # A single tab hides the bar, but its split-pane borders still need host updates.
 # Outside a running Kitty instance (e.g. unit tests), there is no boss yet.
 if get_boss() is not None:
+    install_split_margins()
     ensure_host_monitor()
