@@ -34,7 +34,10 @@ from socket import gethostname
 
 from kittens.ssh.utils import get_connection_data, is_kitten_cmdline
 from kitty.child import cached_process_data
-from kitty.fast_data_types import Screen, add_timer, get_boss, get_options, remove_timer
+from kitty.fast_data_types import (
+    Screen, add_timer, current_focused_os_window_id, get_boss, get_options,
+    patch_global_colors, remove_timer,
+)
 from kitty.tab_bar import DrawData, ExtraData, TabBarData, as_rgb, draw_title
 
 CAP_L, CAP_R = "\ue0ba", "\ue0bc"   # solid slant caps
@@ -75,6 +78,7 @@ _offset: dict = {}     # os_window_id -> index of the first visible tab (kept ac
 _layout: tuple = ()    # (widths, first visible, end, chips, hosts) for the pass in progress
 _host_states: dict = {}   # os_window_id -> (tab_id, host) pairs; None=pending, ''=local
 _host_timer: int | None = None
+_border_colors: dict = {}  # global border color (Kitty does not store this per pane)
 
 
 def check_host_changes(timer_id: int) -> None:
@@ -85,6 +89,8 @@ def check_host_changes(timer_id: int) -> None:
         for os_window_id, tm in tuple(get_boss().os_window_map.items()):
             state = tuple((tab.tab_id, host_of(tab)) for tab in tm.tab_bar_data)
             states[os_window_id] = state
+            for tab in tm.tab_bar_data:
+                sync_host_border(tab)
             if state != _host_states.get(os_window_id):
                 tm.mark_tab_bar_dirty()
     _host_states.clear()
@@ -121,6 +127,23 @@ def colors(tab: TabBarData) -> tuple:
             color = environ.get("OMP_HOST_COLOR") or color
         return (rgb(color), ACTIVE[1]) if re.fullmatch(r"#[0-9a-fA-F]{6}", color) else ACTIVE
     return ALERT if tab.needs_attention else (inactive_bg(), INACTIVE_FG)
+
+
+def sync_host_border(tab: TabBarData) -> None:
+    """Kitty's border color is global: follow the focused OS window's active tab."""
+    if not tab.is_active:
+        return
+    live_tab = get_boss().tab_for_id(tab.tab_id)
+    window = live_tab.active_window if live_tab is not None else None
+    if window is None or window.os_window_id != current_focused_os_window_id():
+        return
+    color = colors(tab)[0]
+    # An unresolved foreground process must not acquire a local-host color.
+    color = (color if color != DEFAULT else ACTIVE[0]) >> 8
+    if _border_colors.get("active") != color:
+        patch_global_colors({"active_border_color": color}, False)
+        _border_colors["active"] = color
+        window.refresh()
 
 
 def title_width(draw_data: DrawData, tab: TabBarData, index: int) -> int:
@@ -173,6 +196,8 @@ def compute_layout(draw_data: DrawData, columns: int) -> tuple:
     tm = get_boss().os_window_map.get(draw_data.os_window_id)
     tabs = list(tm.tab_bar_data) if tm is not None else []
     hosts = [host_of(t) for t in tabs]
+    for tab in tabs:
+        sync_host_border(tab)
     _host_states[draw_data.os_window_id] = tuple((t.tab_id, h) for t, h in zip(tabs, hosts))
     counts = Counter(h for h in hosts if h)
     # hosts with 2+ tabs get a leading chip and are stripped from their tabs' titles
@@ -252,3 +277,9 @@ def draw_tab(
     c.fg, c.bg = bg, DEFAULT
     screen.draw(CAP_R if bg != DEFAULT else " ")
     return c.x
+
+
+# A single tab hides the bar, but its split-pane borders still need host updates.
+# Outside a running Kitty instance (e.g. unit tests), there is no boss yet.
+if get_boss() is not None:
+    ensure_host_monitor()

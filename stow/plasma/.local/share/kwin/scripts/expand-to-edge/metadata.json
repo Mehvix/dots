@@ -1,0 +1,11 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Id": "expand-to-edge",
+        "Name": "Expand Window to Screen Edge",
+        "Description": "Grow one window edge to the usable screen boundary with Meta+Alt+Arrow",
+        "Version": "1.0"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}

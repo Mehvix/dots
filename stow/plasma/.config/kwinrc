@@ -10,6 +10,7 @@ EdgeBarrier=1
 Active=true
 
 [Plugins]
+expand-to-edgeEnabled=true
 shakecursorEnabled=false
 
 [Tiling][0f6c9d71-9f6e-590c-828a-52614b70ee45]
@@ -21,7 +22,7 @@ tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"wi
 
 [Tiling][1d736f72-f872-43e9-ae7d-2e93dedbe2c8][8dba02a9-9ede-44fa-ae53-f049da654743]
 padding=0
-tiles={"layoutDirection":"horizontal","tiles":[{"width":0.25},{"width":0.5},{"layoutDirection":"vertical","tiles":[{"height":0.5},{"height":0.5}],"width":0.25}]}
+tiles={"layoutDirection":"horizontal","tiles":[{"width":0.15046875},{"width":0.1501171875},{"layoutDirection":"vertical","tiles":[{"height":0.30375},{"height":0.69625}],"width":0.6994140625}]}
 
 [Tiling][1d736f72-f872-43e9-ae7d-2e93dedbe2c8][ab45aa0e-89f3-47e4-a9a5-ba897062abe0]
 padding=0
