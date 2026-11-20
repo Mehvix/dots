@@ -357,15 +357,20 @@ if [ -n "$TMUX" ]; then
       h=${h#"${h%%[! ]*}"}; num=${h%%[!0-9]*}
       [ "$num" = "$__tmux_last_histnum" ] && return
       __tmux_last_histnum=$num
-      cmd=${h#"$num"}; cmd=${cmd#"${cmd%%[! ]*}"}
+      # history prints "num  line": a 3rd space means the line itself began with one, the
+      # quiet prefix (no attention flag when it finishes; HISTCONTROL has no ignorespace, so
+      # it's still recorded)
+      cmd=${h#"$num"}; cmd=${cmd#  }; __tmux_quiet=; [[ $cmd == ' '* ]] && __tmux_quiet=1
+      cmd=${cmd#"${cmd%%[! ]*}"}
       __tmux_cmd=$cmd __tmux_cmd_t0=$SECONDS
       tmux set -p @last_cmd "$cmd" \; set -pu @attn \; set -pu @attn_done \; set -pu window-style \; set -pu window-active-style 2>/dev/null   # = attn clear, inline
     }
     # A command that ran >=10s raises the pane's attention flag (scripts/attn;
-    # no-op if the pane is in view). Returns the command's status for the prompt.
+    # no-op if the pane is in view, or if the command was typed with a leading space).
+    # Returns the command's status for the prompt.
     __tmux_precmd() {
       local rc=$?
-      if [ -n "$__tmux_cmd_t0" ] && (( SECONDS - __tmux_cmd_t0 >= 10 )); then
+      if [ -n "$__tmux_cmd_t0" ] && [ -z "$__tmux_quiet" ] && (( SECONDS - __tmux_cmd_t0 >= 10 )); then
         local st=✓; ((rc)) && st="✗$rc"   # cmd cut to 20 so the status survives the bar's truncation
         ~/.config/tmux/scripts/attn set "${__tmux_cmd:0:20} $st" 2>/dev/null
       fi

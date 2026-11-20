@@ -86,6 +86,25 @@ mv() {
         [[ "$ans" =~ ^[Yy]$ ]] && rmdir "$dir"
     fi
 }
+# cd FILE -> cd to the dir holding it (`cd src/foo.c` lands in src/); otherwise plain cd.
+# `function` form: once fnm's `alias cd=__fnmcd` exists, `cd() {` would alias-expand
+# and redefine __fnmcd instead.
+# shellcheck disable=SC2164 # builtin cd's status is the function's return
+function cd() {
+    # count operands: args that aren't options, plus everything after --
+    local a t='' n=0 opts=1; local -a o=()
+    for a; do
+        if [[ -n $opts && $a == -?* ]]; then [[ $a == -- ]] && opts=; o+=("$a"); continue; fi
+        t=$a; ((++n))
+    done
+    # one operand, given last, naming a non-dir; `-` is $OLDPWD, never a file
+    if ((n == 1)) && [[ $t == "$a" && $t != - && -e $t && ! -d $t ]]; then
+        [[ $t == */* ]] && t=${t%/*} || t=.
+        builtin cd "${o[@]}" "${t:-/}"
+    else
+        builtin cd "$@"
+    fi
+}
 
 # Clear the screen AND saved scrollback (kitty's terminfo omits E3).
 clear() {

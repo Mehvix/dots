@@ -6,12 +6,15 @@
 #                        -s: also record the agent state, even when in view)
 #                        "In view" = active pane of the session your most recently used client shows.
 #   attn clear [PANE]    drop the flag and tint (default $TMUX_PANE)
-#   attn busy            agent started working: clear, and mark @agent busy
+#   attn busy [-k]       agent started working: clear, and mark @agent busy
+#                        (-k: keep the tint, the agent resumed on its own; unless it was
+#                        waiting on you (@agent input), since then the tool ran because you answered)
 #   attn jump [CLIENT]   switch CLIENT to the most recently flagged pane
 #   attn sweep SOCKET PANE
 #                        run from the status line while the viewed pane is tinted: snapshot
-#                        its screen the first time, clear the tint once it changes (= you typed
-#                        or scrolled; tmux has no keystroke hook)
+#                        its screen the first time, clear the tint once it changes (= you typed;
+#                        tmux has no keystroke hook). Claude panes: only text typed into the prompt
+#                        box counts, since the rest redraws on its own; pi panes are skipped.
 # Shown by window-status-format, the status-left segment (patch-status.sh) and tls.
 # @agent (busy/input/done) drives the per-pane glyphs in set-titles-string (tmux.conf).
 [ "$1" = sweep ] && export TMUX="$2,0,0"   # status #() jobs don't get $TMUX
@@ -35,6 +38,9 @@ set)
     # elsewhere don't count.
     viewed=$(tmux list-clients -F '#{client_activity} #{session_id}' | sort -rn | head -1 | cut -d' ' -f2)
     [ "$active" = 1 ] && [ "$sid" = "$viewed" ] && exit 0   # already looking at it
+    # Already flagged with this text (a permission prompt fires PermissionRequest, then
+    # Notification ~6 s later): keep the flag, don't ring twice.
+    again=; [ "$(tmux display -p -t "$pane" '#{@attn}')" = "$*" ] && again=1
     # @attn (status bar) clears when you look at the pane; @attn_done and its background tint
     # (@attn_tint) stay until you interact: next shell command / Claude prompt / pi run.
     # window-style is a real pane option (unlike pane-border-style, which is per-window).
@@ -46,7 +52,7 @@ set)
     # if no tab has it open, the most recently used one, so it's never silent.
     # kitty clients also get an OSC 99 desktop notification, written straight to their tty
     # (allow-passthrough stays off). kitty is recognised by TERM or its XTVERSION reply.
-    if [ -z "$quiet" ] || [ "$sid" != "$viewed" ]; then
+    if [ -z "$again" ] && { [ -z "$quiet" ] || [ "$sid" != "$viewed" ]; }; then
         clients=$(tmux list-clients -F '#{client_activity} #{session_id} #{client_tty} #{client_termname}/#{client_termtype}' | sort -rn)
         targets=$(awk -v s="$sid" '$2 == s { print $3, $4 }' <<< "$clients")
         [ -n "$targets" ] || targets=$(head -1 <<< "$clients" | cut -d' ' -f3-4)
@@ -69,17 +75,36 @@ clear)
     ;;
 busy)
     p=${TMUX_PANE:?}
+    was=$(tmux display -p -t "$p" '#{@agent}')
     tmux set -p -t "$p" @agent busy \; set -pu -t "$p" @attn \; set -pu -t "$p" @attn_t
-    clear_tint "$p"
+    # -k still clears if the agent was waiting on you: the tool ran because you answered
+    [ "$2" = -k ] && [ "$was" != input ] || clear_tint "$p"
     tmux refresh-client -S 2>/dev/null || true
     ;;
 sweep)
     pane=$3
-    read -r done base < <(tmux display -p -t "$pane" '#{@attn_done} #{@attn_hash}')
+    read -r done base cmd < <(tmux display -p -t "$pane" '#{@attn_done} #{?@attn_hash,#{@attn_hash},-} #{pane_current_command}')
     [ "$done" = 1 ] || exit 0
-    h=$(tmux capture-pane -p -t "$pane" | md5sum | cut -c1-12)
+    [ "$base" = - ] && base=
+    case "$cmd" in
+    claude)
+        # Only the prompt box (between the last two ─── rules) counts: the rest redraws on its
+        # own. A box that went empty (stash, or Enter, which UserPromptSubmit already handles)
+        # doesn't count either, only text you typed.
+        # (byte-safe: status-line jobs may run in the C locale; \xc2\xa0 is the nbsp after ❯)
+        # A permission/question dialog has no ❯ box (the region is then transcript): skip it,
+        # Enter or the answer clears the tint instead.
+        box=$(tmux capture-pane -p -t "$pane" | awk '/^(─){10}/ { lo = hi; hi = NR } { l[NR] = $0 }
+            END { for (i = lo + 1; i < hi; i++) print l[i] }')
+        [[ $box == ❯* ]] || exit 0
+        box=$(sed 's/^❯//; s/\xc2\xa0/ /g; s/[[:space:]]*$//' <<< "$box")
+        [ -n "${box//[[:space:]]/}" ] || box= ;;
+    pi) exit 0 ;;
+    *) box=$(tmux capture-pane -p -t "$pane") ;;
+    esac
+    h=$(md5sum <<< "$box" | cut -c1-12)
     if [ -z "$base" ]; then tmux set -p -t "$pane" @attn_hash "$h"
-    elif [ "$h" != "$base" ]; then clear_tint "$pane"
+    elif [ "$h" != "$base" ] && { [ -n "$box" ] || [ "$cmd" != claude ]; }; then clear_tint "$pane"
     fi
     ;;
 jump)
