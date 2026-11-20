@@ -26,6 +26,14 @@ prepend_path () {
 append_path "$HOME/.local/bin"
 append_path "/usr/local/bin"
 append_path "$HOME/dots/scripts"
+# ssh'd in: web links open on the machine we came from, never here (scripts/open-local;
+# the forward comes from the client's ssh wrapper, Invoke-Ssh in the pwsh profile).
+# --gc deletes sockets left behind by ended sessions.
+if [ -n "${SSH_CONNECTION-}" ] && [ -x "$HOME/dots/scripts/open-local" ]; then
+    prepend_path "$HOME/dots/scripts/urlshim"
+    export BROWSER="$HOME/dots/scripts/open-local"
+    ( "$BROWSER" --gc >/dev/null 2>&1 & )
+fi
 
 
 [ -r "$HOME/.config/rg/ignore" ] && export RIPGREP_CONFIG_PATH="$HOME/.config/rg/ripgreprc"

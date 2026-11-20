@@ -65,6 +65,7 @@
     "copyOnSelect": true,
     "defaultProfile": "{7f2a1b3c-9d4e-4a5b-8c6d-1e2f3a4b5c6d}",
     "disableAnimations": true,
+    "newTabPosition": "afterCurrentTab",
     "keybindings":
     [
         {

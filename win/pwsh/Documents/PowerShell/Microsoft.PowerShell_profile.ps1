@@ -107,8 +107,37 @@ function m { mwinit.exe -f }
 # C:\Windows\System32\OpenSSH copy lags behind and can win on PATH.
 $sshExe = 'C:\Program Files\OpenSSH\ssh.exe'
 if (-not (Test-Path $sshExe)) { $sshExe = 'ssh.exe' }
-function s { & $sshExe @args }
-function se { & $sshExe etx }
+# A dropped connection (e.g. PC sleep) kills ssh before the remote tmux sends rmcup,
+# so WT stays in alt-screen: the cursor sits a line off and the next tmux comes up a
+# row short until a resize. ?1049h then ?1049l gets back to the main screen either
+# way. If ssh exited cleanly it's a save+restore no-op; a lone ?1049l would restore
+# a stale cursor (see the prompt wrapper note above). Only runs after ssh, never per prompt.
+#
+# Remote link opens: for hosts with dots/scripts/open-local (it's $BROWSER and xdg-open
+# there), forward a socket to ssh-url-opener.ps1 so links open in the Windows browser,
+# never on the remote. Fresh socket path per connection, because sshd leaves the file
+# behind when a session ends and won't bind over it (open-local --gc cleans up).
+$sshUrlOpener = "$PSScriptRoot\Scripts\ssh-url-opener.ps1"
+$sshUrlHosts  = 'etx', 'etx-slurm'
+function Invoke-Ssh {
+    $fwd = @()
+    if (($args | Where-Object { $_ -in $sshUrlHosts }) -and (Test-Path $sshUrlOpener)) {
+        $m = $null
+        if ([Threading.Mutex]::TryOpenExisting('Local\ssh-url-opener', [ref]$m)) { $m.Dispose() }
+        else {
+            Start-Process "$PSHOME\pwsh.exe" -WindowStyle Hidden -ArgumentList '-NoProfile', '-NonInteractive', '-File', "`"$sshUrlOpener`""
+        }
+        $id = [guid]::NewGuid().ToString('N').Substring(0, 12)
+        $fwd = '-R', "/tmp/$env:USERNAME-open-local.$id.sock:127.0.0.1:47213"
+    }
+    & $sshExe @fwd @args
+    $rc = $LASTEXITCODE
+    $e = [char]27
+    [Console]::Write("$e[?1049h$e[?1049l")
+    $global:LASTEXITCODE = $rc
+}
+function s { Invoke-Ssh @args }
+function se { s etx @args }
 
 # git
 'gl', 'gp', 'gcm' | ForEach-Object { Remove-Item "Alias:$_" -Force -ErrorAction SilentlyContinue }

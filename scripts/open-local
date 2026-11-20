@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""open-local: open http(s) URLs on the machine you ssh'd in from, never on this host.
+
+Used as $BROWSER and (via urlshim/xdg-open) as xdg-open in ssh sessions; see
+stow/system/.profile. Each URL goes over a Unix socket that ssh RemoteForwards to a
+listener on the local side (Windows: the pwsh profile's Invoke-Ssh adds the -R and starts
+win/pwsh/.../Scripts/ssh-url-opener.ps1). If no forward answers, the URL is printed
+instead of opened here.
+
+Sockets are /tmp/<user>-open-local.<id>.sock, a fresh <id> per connection: sshd leaves
+a forwarded socket's file behind when the session ends (even cleanly), and without
+StreamLocalBindUnlink in sshd_config a fixed path would stay blocked. Newest is tried
+first; `open-local --gc` (run at ssh login) deletes the ones nobody listens on.
+
+  open-local URL...         send URLs to the local machine
+  open-local --xdg ARG      xdg-open shim: http(s) goes local, anything else to /usr/bin/xdg-open
+  open-local --gc           delete stale sockets
+"""
+import errno
+import glob
+import os
+import pwd
+import re
+import socket
+import stat
+import sys
+
+TIMEOUT = 3  # s; a forward whose ssh client died hangs instead of refusing
+URL_RE = re.compile(r"^https?://\S+$", re.I)
+REAL_XDG_OPEN = "/usr/bin/xdg-open"
+
+
+def slot_paths():
+    """This user's forwarded sockets, newest (most likely live) first."""
+    user = pwd.getpwuid(os.getuid()).pw_name
+    paths = []
+    for p in glob.glob("/tmp/%s-open-local.*.sock" % glob.escape(user)):
+        try:
+            paths.append((os.lstat(p).st_mtime, p))
+        except OSError:
+            pass
+    return [p for _, p in sorted(paths, reverse=True)]
+
+
+def own_socket(path):
+    # /tmp is shared: only use sockets we own, so another user can't pose as a slot
+    try:
+        st = os.lstat(path)
+    except OSError:
+        return False
+    return stat.S_ISSOCK(st.st_mode) and st.st_uid == os.getuid()
+
+
+def send(url):
+    for path in slot_paths():
+        if not own_socket(path):
+            continue
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(TIMEOUT)
+        try:
+            s.connect(path)
+            s.sendall(url.encode("utf-8") + b"\n")
+            reply = s.recv(64)
+        except (OSError, socket.timeout):
+            continue
+        finally:
+            s.close()
+        if reply.startswith(b"ok"):
+            return True
+        if reply:  # listener answered but refused the URL; other slots reach the same listener
+            sys.stderr.write("open-local: local side rejected: %s\n" % url)
+            return False
+    sys.stderr.write("open-local: no local opener reachable (ssh RemoteForward down); not opening here:\n  %s\n" % url)
+    return False
+
+
+def gc():
+    for path in slot_paths():
+        if not own_socket(path):
+            continue
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(1)
+        try:
+            s.connect(path)
+        except OSError as e:
+            if e.errno in (errno.ECONNREFUSED, errno.ENOENT):
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+        except socket.timeout:
+            pass
+        finally:
+            s.close()
+
+
+def main(argv):
+    if argv[:1] == ["--gc"]:
+        gc()
+        return 0
+    xdg = argv[:1] == ["--xdg"]
+    if xdg:
+        argv = argv[1:]
+        if len(argv) == 1 and not URL_RE.match(argv[0]):
+            os.execv(REAL_XDG_OPEN, [REAL_XDG_OPEN] + argv)
+    if not argv:
+        sys.stderr.write(__doc__)
+        return 2
+    ok = True
+    for url in argv:
+        if not URL_RE.match(url):
+            sys.stderr.write("open-local: not an http(s) URL: %s\n" % url)
+            ok = False
+            continue
+        ok = send(url) and ok
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

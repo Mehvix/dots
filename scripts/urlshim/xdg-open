@@ -1,0 +1,4 @@
+#!/bin/sh
+# Put ahead of /usr/bin in ssh sessions (stow/system/.profile) so programs that call
+# xdg-open directly send web links to the local machine instead of opening them here.
+exec "$HOME/dots/scripts/open-local" --xdg "$@"
